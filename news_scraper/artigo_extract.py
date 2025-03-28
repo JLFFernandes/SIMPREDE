@@ -18,18 +18,22 @@ def extrair_texto_da_pagina(url):
     try:
         response = requests.get(url, headers=HEADERS, timeout=15)
         if response.status_code == 200:
+            # Try JSON parsing if available
+            try:
+                data_json = response.json()
+                # Suppose 'text' is the field containing the extracted content
+                texto = data_json.get("text", "").strip()
+                if texto:
+                    return texto
+            except:
+                pass
+
+            # Fallback to HTML parsing
             soup = BeautifulSoup(response.text, "html.parser")
-            paragrafos = soup.find_all("p")
-            texto = " ".join(p.get_text() for p in paragrafos).strip()
-
-            # Fallback: If no text is found in <p> tags, try extracting from <div> or <article>
+            texto = soup.get_text().strip()
             if not texto:
-                divs = soup.find_all("div")
-                texto = " ".join(div.get_text() for div in divs).strip()
-            if not texto:
-                article = soup.find("article")
-                texto = article.get_text().strip() if article else ""
-
+                container = soup.find("div", {"id": "content"})
+                texto = container.get_text().strip() if container else ""
             if texto:
                 return texto
             else:
