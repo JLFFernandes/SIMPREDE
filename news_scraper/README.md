@@ -108,7 +108,7 @@ python processors/gera_db_ready.py
 
 ---
 
-## 🗺️ Georreferenciação (`config/municipios.json`)
+## 🗺️ Georreferenciação (`config/municipios_por_distrito.json`)
 
 Contém todos os municípios portugueses para localizar geograficamente os eventos extraídos.
 
