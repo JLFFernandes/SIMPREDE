@@ -4,7 +4,7 @@ from processors.gera_db_ready import gerar_disaster_db_ready
 
 # 🔧 Definir os domínios dos jornais
 PUBLICO = "www.publico.pt"
-JN = "www.jn.pt"
+DN = "www.DN.pt"
 OUTPUT_CSV = "data/artigos_brutos.csv"
 
 
@@ -12,7 +12,7 @@ def run_all():
     print("\n🚀 Iniciando scraping de fontes de notícias (Arquivo.pt)...\n")
     all_articles = []
 
-    for jornal in [PUBLICO, JN]:
+    for jornal in [PUBLICO, DN]:
         artigos = arquivo_pt.scrape(site=jornal)
         all_articles.extend(artigos)
 

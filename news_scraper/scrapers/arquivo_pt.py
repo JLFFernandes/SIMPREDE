@@ -51,8 +51,8 @@ def scrape(site: str) -> list[dict]:
     keywords = KEYWORDS
     municipios = MUNICIPIOS
 #TEST:
-    municipios = municipios[:3]  # limitar para testes
-    keywords = keywords[:5]  # por exemplo, 5 termos meteorológicos
+    municipios = municipios  # limitar para testes
+    keywords = keywords  # 
 #TEST:
 
     combinacoes = [f"{kw} {loc}" for kw in keywords for loc in municipios]
