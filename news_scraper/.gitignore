@@ -1,2 +1,5 @@
 #raw data
-/data 
+data 
+
+#virtual environment
+venv
