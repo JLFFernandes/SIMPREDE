@@ -1,0 +1,24 @@
+.vscode/
+
+.DS_Store
+
+#virtual environment
+.venv
+venv
+.env
+.venv*/
+
+#backups
+old_vs
+
+news_scraper/scrapers/backup
+
+news_scraper_mz
+
+config/gcs-credentials.json
+
+# Airflow logs
+logs/
+
+# Data files
+data/
