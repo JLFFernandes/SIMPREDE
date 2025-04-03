@@ -12,7 +12,7 @@ def run_all():
     print("\n🚀 Iniciando scraping de fontes de notícias (Arquivo.pt)...\n")
     all_articles = []
 
-    for jornal in [PUBLICO, DN]:
+    for jornal in [PUBLICO]:
         artigos = arquivo_pt.scrape(site=jornal)
         all_articles.extend(artigos)
 

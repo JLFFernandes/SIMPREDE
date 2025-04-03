@@ -20,7 +20,6 @@ def load_keywords(filepath: str, idioma: str = "portuguese") -> list[str]:
         data = json.load(f)
     return data.get("weather_terms", {}).get(idioma, [])
 
-
 # Replace helpers.load_municipios_distritos with an inline implementation
 def load_municipios_distritos(filepath: str) -> list[dict]:
     with open(filepath, "r", encoding="utf-8") as f:
@@ -36,8 +35,8 @@ MUNICIPIOS = [
     for municipio in distrito.keys()
 ]
 
-DATA_INICIO = "20200101000000"
-DATA_FIM = "20241231000000"
+DATA_INICIO = "20190101000000"
+DATA_FIM = "20191231000000"
 DELAY = 1  # segundos entre requests
 MAX_ITEMS = 500  # máximo permitido pela API
 
@@ -50,10 +49,6 @@ def scrape(site: str) -> list[dict]:
 
     keywords = KEYWORDS
     municipios = MUNICIPIOS
-#TEST:
-    municipios = municipios  # limitar para testes
-    keywords = keywords  # 
-#TEST:
 
     combinacoes = [f"{kw} {loc}" for kw in keywords for loc in municipios]
 

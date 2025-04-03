@@ -1,0 +1,10 @@
+{
+  "weather_terms": {
+    "portuguese": [
+      "cheias", "inundação", "água a subir", "ruas alagadas", "rua inundada", "água acumulada",
+      "transbordo do rio", "rio cheio", "rio subiu", "água invadiu", "alagamento",
+      "deslizamento", "derrocada", "queda de terra", "encosta caiu", "barro deslizou",
+      "muito barro", "corrente de lama", "chuva forte", "choveu muito", "muita água"
+    ]
+  }
+}

@@ -1,0 +1,753 @@
+{
+  "Nampula": {
+    "Meconta": [
+      "7 De Abril",
+      "Corrane",
+      "Meconta",
+      "Namialo"
+    ],
+    "Erati": [
+      "Alua",
+      "Namapa",
+      "Namiroa"
+    ],
+    "Rapale": [
+      "Anchilo",
+      "Mutivasse",
+      "Namaita",
+      "Rapale"
+    ],
+    "Angoche": [
+      "Angoche",
+      "Aube",
+      "Boila",
+      "Namaponda"
+    ],
+    "Mogovolas": [
+      "Calipo",
+      "Iuluti",
+      "Muatua",
+      "Nametil",
+      "Nanhupo Rio"
+    ],
+    "Moma": [
+      "Chalaua",
+      "Moma"
+    ],
+    "Malema": [
+      "Chihulo",
+      "Malema",
+      "Mutuali"
+    ],
+    "Murrupula": [
+      "Chinga",
+      "Murrupula",
+      "Nihessiue"
+    ],
+    "Memba": [
+      "Chipene",
+      "Lurio",
+      "Mazula",
+      "Memba"
+    ],
+    "Cidade De Nampula": [
+      "Cidade De Nampula"
+    ],
+    "Nacala-A-Velha": [
+      "Covo",
+      "Nacala-A-Velha"
+    ],
+    "Ribaue": [
+      "Cunle",
+      "Iapala",
+      "Ribaue"
+    ],
+    "Ilha De Moçambique": [
+      "Ilha De Moçambique",
+      "Lumbo"
+    ],
+    "Muecate": [
+      "Imala",
+      "Muculoene",
+      "Muecate"
+    ],
+    "Nacaroa": [
+      "Intete",
+      "Nacaroa",
+      "Saua-Saua"
+    ],
+    "Monapo": [
+      "Itoculo",
+      "Monapo",
+      "Netia"
+    ],
+    "Lalaua": [
+      "Lalaua",
+      "Meti"
+    ],
+    "Larde": [
+      "Larde",
+      "Mucuali"
+    ],
+    "Liúpo": [
+      "Liúpo",
+      "Quinga"
+    ],
+    "Mossuril": [
+      "Lunga",
+      "Matibane",
+      "Mossuril"
+    ],
+    "Mecuburi": [
+      "Mecuburi",
+      "Milhana",
+      "Muite",
+      "Namina"
+    ],
+    "Nacala": [
+      "Nacala"
+    ],
+    "Mogincual": [
+      "Namige",
+      "Quixaxe"
+    ]
+  },
+  "Gaza": {
+    "Chibuto": [
+      "Alto Changane",
+      "Chaimite",
+      "Changanine",
+      "Chibuto",
+      "Godide",
+      "Malehice"
+    ],
+    "Guija": [
+      "Caniçado",
+      "Chivongoene",
+      "Mubangoene",
+      "Nalazi"
+    ],
+    "Mandlakaze": [
+      "Chibonzane",
+      "Chidenguele",
+      "Macuacua",
+      "Mandlakaze",
+      "Xhalala"
+    ],
+    "Limpopo": [
+      "Chicumbane",
+      "Chissano",
+      "Zongoene"
+    ],
+    "Chigubo": [
+      "Chigubo",
+      "Dindiza"
+    ],
+    "Chokwe": [
+      "Chokwe",
+      "Lionde",
+      "Macarretane",
+      "Xilembene"
+    ],
+    "Chongoene": [
+      "Chongoene",
+      "Madzucane",
+      "Nguzene"
+    ],
+    "Cidade De Xai-Xai": [
+      "Cidade De Xai-Xai"
+    ],
+    "Mabalane": [
+      "Combomune",
+      "Mabalane",
+      "Ntlavene"
+    ],
+    "Bilene": [
+      "Macia",
+      "Makluane",
+      "Mazivila",
+      "Messano",
+      "Praia De Bilene"
+    ],
+    "Mapai": [
+      "Mapai"
+    ],
+    "Massangena": [
+      "Massangena",
+      "Mavue"
+    ],
+    "Massingir": [
+      "Massingir",
+      "Mavodze",
+      "Zulo"
+    ],
+    "Chicualacuala": [
+      "Pafuri",
+      "Vila Eduardo Mondlane"
+    ]
+  },
+  "Zambezia": {
+    "Gile": [
+      "Alto Ligonha",
+      "Gile"
+    ],
+    "Alto Molocue": [
+      "Alto Molocue",
+      "Nauela"
+    ],
+    "Mocubela": [
+      "Bajone",
+      "Mocubela"
+    ],
+    "Mopeia": [
+      "Campo",
+      "Mopeia"
+    ],
+    "Chinde": [
+      "Chinde",
+      "Micaune"
+    ],
+    "Morrumbala": [
+      "Chire",
+      "Megaza",
+      "Morrumbala"
+    ],
+    "Cidade De Quelimane": [
+      "Cidade De Quelimane"
+    ],
+    "Derre": [
+      "Derre"
+    ],
+    "Inhassunge": [
+      "Gonhane",
+      "Inhassunge"
+    ],
+    "Gurue": [
+      "Gurue",
+      "Lioma",
+      "Mepuagiua"
+    ],
+    "Ile": [
+      "Ile",
+      "Socone"
+    ],
+    "Luabo": [
+      "Luabo"
+    ],
+    "Lugela": [
+      "Lugela",
+      "Muabanama",
+      "Munhamade",
+      "Tacuane"
+    ],
+    "Namacurra": [
+      "Macuze",
+      "Namacurra"
+    ],
+    "Maganja Da Costa": [
+      "Maganja",
+      "Nante"
+    ],
+    "Milange": [
+      "Majaua",
+      "Milange",
+      "Mongue"
+    ],
+    "Maquival": [
+      "Maquival"
+    ],
+    "Mocuba": [
+      "Mocuba",
+      "Mugeba",
+      "Namanjavira"
+    ],
+    "Molumbo": [
+      "Molumbo"
+    ],
+    "Pebane": [
+      "Mualama",
+      "Naburi",
+      "Pebane"
+    ],
+    "Mulevala": [
+      "Mulevala"
+    ],
+    "Namarroi": [
+      "Namarroi",
+      "Regone"
+    ],
+    "Nicoadala": [
+      "Nicoadala"
+    ]
+  },
+  "Manica": {
+    "Gondola": [
+      "Amatongas",
+      "Cafumpe",
+      "Gondola",
+      "Inchope"
+    ],
+    "Tambara": [
+      "Bazua",
+      "Nhacafula",
+      "Nhacolo"
+    ],
+    "Barue": [
+      "Catandica",
+      "Choa",
+      "Nhampassa"
+    ],
+    "Machaze": [
+      "Chitobe",
+      "Save"
+    ],
+    "Mossurize": [
+      "Chiurairue",
+      "Dacata",
+      "Espungabera"
+    ],
+    "Cidade De Chimoio": [
+      "Cidade De Chimoio"
+    ],
+    "Sussundenga": [
+      "Dombe",
+      "Muoha",
+      "Rotanda",
+      "Sussundenga"
+    ],
+    "Guro": [
+      "Guro",
+      "Mandie",
+      "Mungari",
+      "Nhamassonge"
+    ],
+    "Macate": [
+      "Macate",
+      "Zembe"
+    ],
+    "Manica": [
+      "Machipanda",
+      "Manica",
+      "Mavonde",
+      "Messica"
+    ],
+    "Macossa": [
+      "Macossa",
+      "Nguawala",
+      "Nhamagua"
+    ],
+    "Vanduzi": [
+      "Matsinho",
+      "Vanduzi"
+    ]
+  },
+  "Cabo Delgado": {
+    "Ancuabe": [
+      "Ancuabe",
+      "Mesa",
+      "Metoro"
+    ],
+    "Balama": [
+      "Balama",
+      "Impiri",
+      "Kuekue",
+      "Mavala"
+    ],
+    "Quissanga": [
+      "Bilibiza",
+      "Mahate",
+      "Quissanga"
+    ],
+    "Macomia": [
+      "Chai",
+      "Macomia",
+      "Mucojo",
+      "Quiterajo"
+    ],
+    "Mueda": [
+      "Chapa",
+      "Imbuo",
+      "Mueda",
+      "N'Gapa",
+      "Negomano"
+    ],
+    "Muidumbe": [
+      "Chitunda",
+      "Miteda",
+      "Muidumbe"
+    ],
+    "Chiure": [
+      "Chiure",
+      "Chiure Velho",
+      "Katapua",
+      "Mazeze",
+      "Namogelia",
+      "Ocua"
+    ],
+    "Cidade De Pemba": [
+      "Cidade De Pemba"
+    ],
+    "Mocimboa Da Praia": [
+      "Diaca",
+      "Mbau",
+      "Mocimboa Da Praia"
+    ],
+    "Namuno": [
+      "Hucula",
+      "Machoca",
+      "Meloco",
+      "N'Cumpe",
+      "Namuno",
+      "Papai"
+    ],
+    "Ibo": [
+      "Ibo",
+      "Quirimba"
+    ],
+    "Nangade": [
+      "M'Tamba",
+      "Nangade"
+    ],
+    "Montepuez": [
+      "Mapupulo",
+      "Mirate",
+      "Montepuez",
+      "Nairoto",
+      "Namanhumbir"
+    ],
+    "Mecufi": [
+      "Mecufi",
+      "Murrebue"
+    ],
+    "Meluco": [
+      "Meluco",
+      "Muaguide"
+    ],
+    "Metuge": [
+      "Metuge",
+      "Mieze"
+    ],
+    "Palma": [
+      "Olumbi",
+      "Palma",
+      "Pundanhar",
+      "Quionga"
+    ]
+  },
+  "Inhambane": {
+    "Inhassoro": [
+      "Bazaruto",
+      "Inhassoro"
+    ],
+    "Massinga": [
+      "Chicomo",
+      "Massinga"
+    ],
+    "Cidade De Inhambane": [
+      "Cidade De Inhambane"
+    ],
+    "Jangamo": [
+      "Cumbana",
+      "Jangamo"
+    ],
+    "Funhalouro": [
+      "Funhalouro",
+      "Tome"
+    ],
+    "Homoine": [
+      "Homoine",
+      "Pembe"
+    ],
+    "Inharrime": [
+      "Inharrime",
+      "Mocumbi"
+    ],
+    "Mabote": [
+      "Mabote",
+      "Zimane",
+      "Zinave"
+    ],
+    "Vilankulo": [
+      "Mapinhane",
+      "Vilankulo"
+    ],
+    "Panda": [
+      "Mawayela",
+      "Panda",
+      "Urrene"
+    ],
+    "Maxixe": [
+      "Maxixe"
+    ],
+    "Morrumbene": [
+      "Morrumbene",
+      "Mucoduene"
+    ],
+    "Govuro": [
+      "Nova Mambone",
+      "Save"
+    ],
+    "Zavala": [
+      "Quissico",
+      "Zandamela"
+    ]
+  },
+  "Maputo": {
+    "Matutuine": [
+      "Bela Vista",
+      "Catuane",
+      "Mugazine",
+      "Ndelane",
+      "Zitundo"
+    ],
+    "Boane": [
+      "Boane",
+      "Matola Rio"
+    ],
+    "Manhiça": [
+      "Calanga",
+      "Ilha Josina Machel",
+      "Maluana",
+      "Manhiça",
+      "Palmeira",
+      "Xinavane"
+    ],
+    "Namaacha": [
+      "Changalane",
+      "Namaacha"
+    ],
+    "Cidade Da Matola": [
+      "Cidade Da Matola"
+    ],
+    "Marracuene": [
+      "Machubo",
+      "Marracuene"
+    ],
+    "Magude": [
+      "Magude",
+      "Mahele",
+      "Mapulanguene",
+      "Motaze",
+      "Panjane"
+    ],
+    "Moamba": [
+      "Moamba",
+      "Pessene",
+      "Ressano Garcia",
+      "Sabie"
+    ]
+  },
+  "Sofala": {
+    "Buzi": [
+      "Buzi",
+      "Estaquinha",
+      "Sofala"
+    ],
+    "Caia": [
+      "Caia",
+      "Murraça",
+      "Sena"
+    ],
+    "Maringue": [
+      "Canxixe",
+      "Maringue",
+      "Subwe"
+    ],
+    "Chemba": [
+      "Chemba",
+      "Chiramba",
+      "Mulima"
+    ],
+    "Chibabava": [
+      "Chibabava",
+      "Goonda",
+      "Muxungue"
+    ],
+    "Marromeu": [
+      "Chupanga",
+      "Marromeu"
+    ],
+    "Cidade Da Beira": [
+      "Cidade Da Beira"
+    ],
+    "Machanga": [
+      "Divinhe",
+      "Machanga"
+    ],
+    "Dondo": [
+      "Dondo",
+      "Mafambisse"
+    ],
+    "Muanza": [
+      "Galinha",
+      "Muanza"
+    ],
+    "Gorongosa": [
+      "Gorongosa",
+      "Nhamadze",
+      "Vanduzi"
+    ],
+    "Cheringoma": [
+      "Inhaminga",
+      "Inhamitanga"
+    ],
+    "Nhamatanda": [
+      "Nhamatanda",
+      "Tica"
+    ]
+  },
+  "Tete": {
+    "Mutarara": [
+      "Charre",
+      "Inhangoma",
+      "Nhamayabue"
+    ],
+    "Macanga": [
+      "Chidzolomondo",
+      "Furancungo"
+    ],
+    "Chifunde": [
+      "Chifunde",
+      "Mualadze",
+      "Nsadzu"
+    ],
+    "Cahora Bassa": [
+      "Chintholo",
+      "Chitima",
+      "Songo"
+    ],
+    "Magoe": [
+      "Chinthopo",
+      "Mphende",
+      "Mukumbura"
+    ],
+    "Changara": [
+      "Chipembere",
+      "Luenha"
+    ],
+    "Maravia": [
+      "Chipera",
+      "Chiputu",
+      "Fingoe",
+      "Malowera"
+    ],
+    "Cidade De Tete": [
+      "Cidade De Tete"
+    ],
+    "Doa": [
+      "Doa"
+    ],
+    "Angonia": [
+      "Domue",
+      "Ulongue"
+    ],
+    "Moatize": [
+      "Kambulatsisi",
+      "Moatize",
+      "Zobue"
+    ],
+    "Chiuta": [
+      "Kazula",
+      "Manje"
+    ],
+    "Marara": [
+      "Marara"
+    ],
+    "Zumbu": [
+      "Muze",
+      "Zambue",
+      "Zumbu"
+    ],
+    "Tsangano": [
+      "Ntengo-Wa-Mbalame",
+      "Tsangano"
+    ]
+  },
+  "Niassa": {
+    "Muembe": [
+      "Chiconono",
+      "Muembe"
+    ],
+    "Chimbonila": [
+      "Chimbonila",
+      "Lione",
+      "Meponda"
+    ],
+    "Mecanhelas": [
+      "Chiuta",
+      "Insaca"
+    ],
+    "Cidade De Lichinga": [
+      "Cidade De Lichinga"
+    ],
+    "Lago": [
+      "Cobue",
+      "Lunho",
+      "Maniamba",
+      "Metangula"
+    ],
+    "Cuamba": [
+      "Cuamba",
+      "Etarara",
+      "Lurio"
+    ],
+    "Ilha Licom": [
+      "Ilha Licom"
+    ],
+    "Ilha Risunodo": [
+      "Ilha Risunodo"
+    ],
+    "Ngauma": [
+      "Itepela",
+      "Massangulo"
+    ],
+    "Lago Niassa": [
+      "Lago Niassa"
+    ],
+    "Sanga": [
+      "Lussimbesse",
+      "Macaloge",
+      "Matchedje",
+      "Unango"
+    ],
+    "Mavago": [
+      "M'Sawize",
+      "Mavago"
+    ],
+    "Maua": [
+      "Maiaca",
+      "Maua"
+    ],
+    "Majune": [
+      "Malanga",
+      "Muaquia",
+      "Nairrubi"
+    ],
+    "Mandimba": [
+      "Mandimba",
+      "Mitande"
+    ],
+    "Marrupa": [
+      "Marangira",
+      "Marrupa",
+      "Nungo"
+    ],
+    "Mecula": [
+      "Matondovela",
+      "Mecula"
+    ],
+    "Metarica": [
+      "Metarica",
+      "Nacumua"
+    ],
+    "Nipepe": [
+      "Muipite",
+      "Nipepe"
+    ]
+  },
+  "Maputo City": {
+    "Cidade De Maputo": [
+      "Cidade De Maputo"
+    ]
+  }
+}

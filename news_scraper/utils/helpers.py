@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup
 from difflib import SequenceMatcher
 import json
 import csv
+import os
+
 
 # ----------------------------- Normalização -----------------------------
 def normalize(text):
@@ -26,6 +28,33 @@ for distrito, municipios in raw_data.items():
 def load_municipios_distritos(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+def detect_municipality(texto, localidades):
+    texto_norm = normalize(texto)
+    for mun in localidades:
+        if normalize(mun) in texto_norm:
+            return mun
+    return None
+
+def load_keywords(path, idioma="portuguese"):
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if isinstance(data.get("weather_terms"), dict):
+        return data["weather_terms"].get(idioma, [])
+    return data.get(idioma, [])
+
+
+def load_localidades(path):
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    localidades = []
+    for provincia, distritos in data.items():
+        for distrito, postos in distritos.items():
+            localidades.extend(postos)  
+            localidades.append(distrito)  
+    return localidades
+
 
 # --------------------------- Localização ---------------------------
 def verificar_localizacao(texto):
@@ -107,10 +136,9 @@ def extract_victim_counts(text: str) -> dict:
     return results
 
 # --------------------------- Relevância ---------------------------
-def is_potentially_disaster_related(text: str) -> bool:
-    termos = ["cheia", "inundação", "derrocada", "deslizamento", "inundações", "desabamento"]
+def is_potentially_disaster_related(text: str, keywords: list[str]) -> bool:
     text_norm = normalize(text)
-    return any(t in text_norm for t in termos)
+    return any(t in text_norm for t in keywords)
 
 # --------------------------- Limpeza de texto bruto ---------------------------
 def limpar_texto_lixo(texto: str) -> str:
@@ -165,3 +193,15 @@ def guardar_disaster_db_ready(artigos: list[dict], ficheiro: str):
         writer.writeheader()
         for artigo in artigos_filtrados:
             writer.writerow({col: artigo.get(col, "") for col in colunas})
+
+# --------------------------- Guardar CSV genérico ---------------------------
+def guardar_csv(caminho, artigos: list[dict]):
+    if not artigos:
+        print("⚠️ Nenhum artigo para guardar.")
+        return
+    with open(caminho, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=artigos[0].keys())
+        writer.writeheader()
+        for artigo in artigos:
+            writer.writerow(artigo)
+    print(f"✅ Guardado com sucesso em {caminho}")
