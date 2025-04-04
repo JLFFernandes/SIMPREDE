@@ -1,0 +1,13 @@
+#raw data
+data 
+
+#virtual environment
+venv
+
+#backups
+old_vs
+
+
+news_scraper/scrapers/backup
+
+news_scraper_mz
