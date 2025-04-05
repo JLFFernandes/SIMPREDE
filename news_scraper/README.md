@@ -1,114 +1,53 @@
-# 📚 Projeto de Extração de Artigos sobre Desastres Naturais
+# Scraper de Notícias para Eventos de Desastres
 
-Este projeto tem como objetivo **recolher, filtrar e enriquecer artigos de notícias relacionadas com desastres naturais** (como cheias, inundações, tempestades) publicados em Portugal.
+Este projeto é um scraper de notícias projetado para coletar e processar artigos relacionados a desastres de várias fontes. Ele utiliza feeds RSS do Google News e outras ferramentas para extrair, filtrar e transformar dados em um formato estruturado para análise posterior.
 
-Usa como fonte principal o **Arquivo.pt**, extraindo notícias do **Diário de Notícias** e do **Público** entre os anos de **2020 e 2024**. O objetivo final é gerar uma base de dados pronta para uso analítico: `disaster_db_ready.csv`.
+## Funcionalidades
 
----
+- **Resolução Dinâmica de URLs**: Resolve URLs reais de links do Google News usando Selenium.
+- **Extração de Conteúdo**: Extrai o texto dos artigos usando BeautifulSoup e Selenium.
+- **Detecção de Desastres**: Identifica tipos de desastres, número de vítimas e locais afetados.
+- **Armazenamento de Dados**: Salva os dados processados em arquivos CSV para fácil acesso e análise.
+- **Mapeamento de Localização**: Mapeia artigos para municípios, distritos e freguesias usando configurações JSON predefinidas.
 
-## 🧩 Estrutura Geral do Projeto
+## Estrutura do Projeto
 
-```bash
-news_scraper/
-├── config/                # Configurações de keywords e municípios
-├── data/                  # Dados extraídos e processados
-├── processors/            # Scripts de limpeza e transformação
-├── scrapers/              # Scrapers (ex: Arquivo.pt)
-├── utils/                 # Funções auxiliares
-├── main.py                # Ponto de entrada principal
-├── requirements.txt       # Dependências do projeto
-└── README.md              # Este ficheiro
-```
+- **`scrapers/`**: Contém a lógica de scraping, incluindo os scrapers do Google News e Arquivo.pt.
+- **`processors/`**: Inclui scripts para filtrar e transformar dados brutos.
+- **`utils/`**: Funções utilitárias para normalização, localização e manipulação de dados.
+- **`config/`**: Arquivos JSON para palavras-chave, municípios e códigos de freguesias.
+- **`data/`**: Diretório para armazenar os arquivos CSV de saída.
 
----
+## Como Executar
 
-## 🔍 Etapas do Processo
+1. **Instalar Dependências**:
+   Certifique-se de ter o Python instalado. Instale as bibliotecas necessárias usando:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 1. **Coleta de Dados (Arquivo.pt)**
+2. **Configurar o ChromeDriver**:
+   Baixe e coloque o binário do ChromeDriver no PATH do sistema ou atualize o `driver_path` no código.
 
-- O ficheiro `scrapers/arquivo_pt.py`:
-  - Acede à API do Arquivo.pt.
-  - Pesquisa notícias com combinações `keyword + município`.
-  - Extrai título, texto principal, data, e metadados.
+3. **Executar o Scraper**:
+   Execute o script principal para iniciar o pipeline de scraping:
+   ```bash
+   python main.py
+   ```
 
-### 2. **Filtragem e Classificação**
+4. **Saída**:
+   Os artigos processados serão salvos no diretório `data/`.
 
-- O ficheiro `processors/filtra_desastres.py`:
-  - Aplica filtros semânticos para garantir que os artigos são relevantes.
-  - Identifica tipo e subtipo de desastre.
-  - Extrai número de vítimas, hora do evento e município mencionado.
-  - Guarda o resultado em `artigos_filtrados.csv`.
+## Configuração
 
-### 3. **Transformação Final**
+- **Palavras-chave**: Atualize `config/keywords.json` para adicionar ou modificar palavras-chave para detecção de desastres.
+- **Municípios**: Atualize `config/municipios_por_distrito.json` para mapeamento de localizações.
+- **Códigos de Freguesias**: Atualize `config/freguesias_com_codigos.json` para mapeamento de códigos de freguesias.
 
-- O ficheiro `processors/gera_db_ready.py`:
-  - Limpa, normaliza e estrutura os dados para análise.
-  - Produz o ficheiro `disaster_db_ready.csv` com os seguintes campos principais:
+## Requisitos
 
-```csv
-ID, type, subtype, date, year, month, day, hour,
-georef, district, municipali, parish, DICOFREG,
-source, sourcedate, sourcetype, page,
-fatalities, injured, evacuated, displaced, missing,
-DataScraping
-```
-
----
-
-## ⚙️ Requisitos
-
-Instalar dependências com:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## ▶️ Como Executar
-
-1. **Raspar artigos do Arquivo.pt**:
-
-```bash
-python scrapers/arquivo_pt.py
-```
-
-2. **Filtrar artigos relevantes sobre desastres**:
-
-```bash
-python processors/filtra_desastres.py
-```
-
-3. **Gerar dataset final para análise**:
-
-```bash
-python processors/gera_db_ready.py
-```
-
----
-
-## 📦 Output Esperado
-
-- `artigos_filtrados.csv`: artigos classificados como relevantes.
-- `disaster_db_ready.csv`: dataset limpo e estruturado, pronto para análise.
-
----
-
-## 🧠 Exemplos de Keywords (`config/keywords.json`)
-
-```json
-{
-  "weather_terms": {
-    "portuguese": [
-      "cheias", "inundação", "deslizamento", "tempestade", ...
-    ]
-  }
-}
-```
-
----
-
-## 🗺️ Georreferenciação (`config/municipios_por_distrito.json`)
-
-Contém todos os municípios portugueses para localizar geograficamente os eventos extraídos.
-
+- Python 3.7+
+- Selenium
+- BeautifulSoup
+- Pandas
+- ChromeDriver

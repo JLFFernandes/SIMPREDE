@@ -6,3 +6,6 @@ venv
 
 #backups
 old_vs
+
+
+news_scraper/scrapers/backup
