@@ -7,6 +7,13 @@ from difflib import SequenceMatcher
 import json
 import csv
 import os
+import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 # ----------------------------- Normalização -----------------------------
@@ -18,16 +25,25 @@ with open("config/municipios_por_distrito.json", "r", encoding="utf-8") as f:
     raw_data = json.load(f)
 
 MAPA_LOCALIZACOES = []
-for distrito, municipios in raw_data.items():
-    for municipio in municipios:
+for provincia, distritos in raw_data.items():
+    for distrito, postos in distritos.items():
+        for posto in postos:
+            MAPA_LOCALIZACOES.append({
+                "provincia": provincia,
+                "distrito": distrito,
+                "municipio": posto
+            })
         MAPA_LOCALIZACOES.append({
+            "provincia": provincia,
             "distrito": distrito,
-            "municipio": municipio
+            "municipio": distrito
         })
+
 
 def load_municipios_distritos(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 def detect_municipality(texto, localidades):
     texto_norm = normalize(texto)
@@ -35,6 +51,7 @@ def detect_municipality(texto, localidades):
         if normalize(mun) in texto_norm:
             return mun
     return None
+
 
 def load_keywords(path, idioma="portuguese"):
     with open(path, "r", encoding="utf-8") as f:
@@ -51,10 +68,65 @@ def load_localidades(path):
     localidades = []
     for provincia, distritos in data.items():
         for distrito, postos in distritos.items():
-            localidades.extend(postos)  
-            localidades.append(distrito)  
+            localidades.extend(postos)
+            localidades.append(distrito)
     return localidades
 
+def carregar_dicofreg(filepath="config/freguesias_com_codigos.json"):
+    with open(filepath, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+
+    mapping = {}
+    for distrito, municipios in raw.items():
+        for municipio, freguesias in municipios.items():
+            for freg in freguesias:
+                nome = normalize(freg["nome"])
+                mapping[nome] = freg["codigo"]
+    return mapping
+
+
+def carregar_municipios_distritos(caminho_json):
+    with open(caminho_json, "r", encoding="utf-8") as f:
+        dados = json.load(f)
+
+    localidades = {}
+    for distrito, municipios in dados.items():
+        for municipio in municipios:
+            localidades[municipio.lower()] = distrito
+    return localidades
+
+
+def carregar_paroquias_com_municipios(caminho_json):
+    """
+    Carrega as paróquias, municípios e distritos de um JSON estruturado e retorna um dicionário.
+    Cada paróquia é mapeada para o seu município e distrito correspondente.
+    """
+    with open(caminho_json, "r", encoding="utf-8") as f:
+        dados = json.load(f)
+
+    localidades = {}
+    for distrito, municipios in dados.items():
+        for municipio, parishes in municipios.items():
+            for parish in parishes:
+                localidades[parish.lower()] = {
+                    "district": distrito,
+                    "municipality": municipio
+                }
+    return localidades
+
+def load_freguesias_codigos(filepath):
+    """Load the freguesias_com_codigos.json file and return a mapping of parish to codigo."""
+    with open(filepath, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    mapping = {}
+    for district, municipalities in data.items():
+        for municipality, parishes in municipalities.items():
+            for parish in parishes:
+                if isinstance(parish, dict):
+                    mapping[parish['name']] = parish['codigo']
+                else:
+                    mapping[parish] = None  # Handle cases where no codigo is provided
+    return mapping
 
 # --------------------------- Localização ---------------------------
 def verificar_localizacao(texto):
@@ -65,25 +137,22 @@ def verificar_localizacao(texto):
             return {
                 "municipali": item["municipio"].upper(),
                 "district": item["distrito"].upper(),
-                "parish": item.get("freguesia", None),
-                "dicofreg": item.get("dicofreg", None),
+                "parish": None,
+                "dicofreg": None,
                 "georef": "location based on text scraping"
             }
     return None
 
 # --------------------------- Verificação ---------------------------
 def is_in_portugal(title: str, article_text: str) -> bool:
-    content = normalize(f"{title} {article_text}")
-    for item in MAPA_LOCALIZACOES:
-        if normalize(item["municipio"]) in content:
-            return True
-    return False
+    return False  # Moçambique only, desativa validação de Portugal
 
 # --------------------------- Extrações ---------------------------
 def extract_title_from_text(texto: str) -> str:
     linhas = texto.splitlines()
     candidatas = [linha.strip() for linha in linhas if 15 < len(linha.strip()) < 120]
     return candidatas[0] if candidatas else ""
+
 
 def parse_event_date(date_str):
     if not date_str:
@@ -93,6 +162,7 @@ def parse_event_date(date_str):
         return date_obj, date_obj.year, date_obj.month, date_obj.day
     except ValueError:
         return None, None, None, None
+
 
 def extract_event_hour(text: str) -> str | None:
     text = text.lower()
@@ -137,13 +207,26 @@ def extract_victim_counts(text: str) -> dict:
 
 # --------------------------- Relevância ---------------------------
 def is_potentially_disaster_related(text: str, keywords: list[str]) -> bool:
-    text_norm = normalize(text)
-    return any(t in text_norm for t in keywords)
+    # Accept all texts as potentially disaster-related
+    return True
 
 # --------------------------- Limpeza de texto bruto ---------------------------
 def limpar_texto_lixo(texto: str) -> str:
     if not texto:
         return ""
+
+    # Remove repetitive beginning text using regex for variations
+    repetitive_patterns = [
+        r"we usecookiesand data to.*?if you choose to “accept all,”",  # Match variations of the repetitive text
+        r"we will also use cookies and data to.*?if you"  # Additional pattern for variations
+    ]
+    for pattern in repetitive_patterns:
+        texto = re.sub(pattern, "", texto, flags=re.IGNORECASE).strip()
+
+    # Debugging: Print the cleaned text for verification
+    print(f"🔍 Texto após limpeza inicial: {texto[:100]}...")
+
+    # Remove other predefined "lixo"
     lixo = [
         "Saltar para o conteudo", "Este site utiliza cookies", "Iniciar sessao",
         "Politica de Privacidade", "Publicidade", "Registe-se", "Assine ja",
@@ -173,6 +256,120 @@ def extract_article_text(soup):
     paragraphs = soup.find_all('p')
     texto = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
     return " ".join(texto).strip()
+
+def fetch_and_extract_article_text(url: str) -> str:
+    """
+    Fetches the content of a webpage and extracts the main article text.
+    """
+    import requests
+    try:
+        print(f"🌐 Fetching URL: {url}")
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()  # Raise an error for HTTP issues
+        print(f"✅ Successfully fetched URL: {url}")
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Attempt to extract the main article text
+        containers = [
+            soup.find('article'),
+            soup.find('main'),
+            soup.find('div', class_='article-body'),
+            soup.find('div', class_='story'),
+            soup.find('div', class_='content'),
+            soup.find('body')
+        ]
+        for container in containers:
+            if container:
+                paragraphs = container.find_all('p')
+                text = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
+                if text:
+                    print(f"🔍 Extracted text from container: {container.name}")
+                    return " ".join(text).strip()
+
+        # Fallback: Try extracting all <p> tags if no container is found
+        paragraphs = soup.find_all('p')
+        text = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
+        if text:
+            print(f"🔍 Extracted text from fallback <p> tags.")
+            return " ".join(text).strip()
+
+        # Final fallback: Extract text from all visible elements
+        visible_text = soup.stripped_strings
+        combined_text = " ".join(visible_text)
+        if combined_text:
+            print(f"🔍 Extracted text from all visible elements.")
+            return combined_text.strip()
+
+        print(f"⚠️ No article or content found for URL: {url}")
+        return ""
+
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️ Error fetching URL {url}: {e}")
+        return ""
+    except Exception as e:
+        print(f"⚠️ Unexpected error for URL {url}: {e}")
+        return ""
+
+def fetch_and_extract_article_text_dynamic(url: str) -> str:
+    """
+    Fetches the content of a webpage using Selenium and extracts the main article text.
+    """
+    try:
+        print(f"🌐 Fetching URL dynamically: {url}")
+        options = Options()
+        options.add_argument("--headless")  # Run in headless mode
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        service = Service("/path/to/chromedriver")  # Update with the path to your ChromeDriver
+        driver = webdriver.Chrome(service=service, options=options)
+
+        driver.get(url)
+
+        # Remove pop-ups and overlays
+        driver.execute_script("""
+            let modals = document.querySelectorAll('[class*="popup"], [class*="modal"], [id*="popup"]');
+            modals.forEach(el => el.remove());
+        """)
+
+        # Wait for the main content to load
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "article, .article-body, .content"))
+        )
+
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        driver.quit()
+
+        # Attempt to extract the main article text
+        containers = [
+            soup.find('article'),
+            soup.find('main'),
+            soup.find('div', class_='article-body'),
+            soup.find('div', class_="story"),  # Fixed syntax error
+            soup.find('div', 'content'),
+            soup.find('body')
+        ]
+        for container in containers:
+            if container:
+                paragraphs = container.find_all('p')
+                text = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
+                if text:
+                    print(f"🔍 Extracted text from container: {container.name}")
+                    return " ".join(text).strip()
+
+        # Fallback: Try extracting all <p> tags if no container is found
+        paragraphs = soup.find_all('p')
+        text = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
+        if text:
+            print(f"🔍 Extracted text from fallback <p> tags.")
+            return " ".join(text).strip()
+
+        print(f"⚠️ No article or content found for URL: {url}")
+        return ""
+
+    except Exception as e:
+        print(f"⚠️ Error fetching URL dynamically {url}: {e}")
+        return ""
 
 # --------------------------- Exportar eventos com vítimas ---------------------------
 def guardar_disaster_db_ready(artigos: list[dict], ficheiro: str):
@@ -205,3 +402,47 @@ def guardar_csv(caminho, artigos: list[dict]):
         for artigo in artigos:
             writer.writerow(artigo)
     print(f"✅ Guardado com sucesso em {caminho}")
+
+# --------------------------- Guardar incremental ---------------------------
+def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
+    if not novos_artigos:
+        print("⚠️ Nenhum novo artigo recebido.")
+        return
+
+    print(f"Novos artigos recebidos: {len(novos_artigos)}")
+
+    # Ensure all articles have valid IDs
+    novos_artigos = [a for a in novos_artigos if a.get("ID")]
+    if not novos_artigos:
+        print("⚠️ Nenhum artigo com ID válido encontrado.")
+        return
+
+    # Check for existing articles in the file
+    if os.path.exists(caminho):
+        with open(caminho, "r", encoding="utf-8") as f:
+            existentes = {row["ID"] for row in csv.DictReader(f)}
+    else:
+        existentes = set()
+
+    print(f"IDs existentes no arquivo: {existentes}")
+
+    # Filter out articles with duplicate IDs
+    artigos_unicos = [a for a in novos_artigos if a["ID"] not in existentes]
+    print(f"Artigos únicos para salvar: {len(artigos_unicos)}")
+
+    if not artigos_unicos:
+        print("⚠️ Nenhum artigo único para salvar.")
+        return
+
+    # Append articles to the single CSV file in batches of 10
+    with open(caminho, "a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=artigos_unicos[0].keys())
+        if os.stat(caminho).st_size == 0:  # Write header if file is empty
+            writer.writeheader()
+
+        batch_size = 10
+        for i in range(0, len(artigos_unicos), batch_size):
+            batch = artigos_unicos[i:i + batch_size]
+            for artigo in batch:
+                writer.writerow(artigo)
+            print(f"💾 Guardados {len(batch)} artigos no arquivo {caminho} (batch {i // batch_size + 1})")
