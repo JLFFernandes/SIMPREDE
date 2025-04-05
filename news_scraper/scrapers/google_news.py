@@ -5,45 +5,73 @@ import hashlib
 from bs4 import BeautifulSoup
 from datetime import datetime
 import pandas as pd
-from utils.helpers import (
-    extract_article_text, extract_victim_counts,
-    detect_disaster_type, detect_municipality, load_keywords,
-    load_localidades, is_potentially_disaster_related,
-    parse_event_date, guardar_csv, guardar_csv_incremental,
-    carregar_municipios_distritos, carregar_paroquias_com_municipios,
-    load_freguesias_codigos, carregar_dicofreg, normalize
-)
 import sys
 import os
-import signal
+import json
 import csv
 from pathlib import Path
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from test_scraper import get_real_url_with_newspaper, extract_article_content
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
+from extracao.normalizador import (
+    extract_victim_counts,
+    detect_disaster_type,
+    is_potentially_disaster_related,
+    normalize,
+    parse_event_date,
+)
+from extracao.extractor import (
+    fetch_and_extract_article_text,
+    extrair_conteudo,
+    get_real_url_with_newspaper,
+    load_freguesias_codigos,
+    resolve_with_newspaper
+)
+from utils.helpers import (
+    guardar_csv_incremental, 
+    guardar_csv,
+    load_keywords,
+    carregar_paroquias_com_municipios,
+    carregar_dicofreg,
+    process_urls_in_parallel,
+    detect_municipality,
+    execute_in_parallel
+)
+
 
 # ==============================
 # CONFIG
 # ==============================
-GOOGLE_NEWS_TEMPLATE = "https://news.google.com/rss/search?q={query}+{municipio}+Portugal&hl=pt-PT&gl=MZ&ceid=MZ:pt-150"
+GOOGLE_NEWS_TEMPLATE = "https://news.google.com/rss/search?q={query}+{municipio}+Portugal&hl=pt-PT&gl=PT&ceid=PT:pt"
+
 KEYWORDS = load_keywords("config/keywords.json", idioma="portuguese")
 LOCALIDADES = carregar_paroquias_com_municipios("config/municipios_por_distrito.json")
 
+# Load the mapping of parishes to codes (FREGUESIAS_COM_CODIGOS)
+with open("config/freguesias_com_codigos.json", "r", encoding="utf-8") as f:
+    FREGUESIAS_COM_CODIGOS = json.load(f)
 
 OUTPUT_CSV = "data/artigos_google_municipios_pt.csv"
 HEADERS = {"User-Agent": "MunicipioNewsBot/1.0"}
 
+INTERMEDIATE_CSV = "data/intermediate_links.csv"  # File to store intermediate results
 
 # ==============================
 # FUNCOES AUXILIARES
 # ==============================
-def gerar_id(texto):
-    return hashlib.md5(texto.encode()).hexdigest()
+def gerar_id(titulo, real_url, texto):
+    """
+    Generate a unique ID for an article based on its title, real URL, and content.
+    """
+    if not titulo or not real_url or not texto:
+        return None
+    return hashlib.md5((real_url + texto[:300]).encode("utf-8")).hexdigest()
 
 class TimeoutException(Exception):
     pass
@@ -51,104 +79,6 @@ class TimeoutException(Exception):
 def timeout_handler(signum, frame):
     raise TimeoutException("Timeout while resolving the real URL.")
 
-# Update the extrair_conteudo function to use dynamic URL resolution and content extraction
-def extrair_conteudo(link):
-    try:
-        # Set a timeout for resolving the real URL
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(10)  # Set timeout to 10 seconds
-
-        # Resolve the real URL
-        driver_path = "/usr/bin/chromedriver"  # Update this path as needed
-        real_url = get_real_url_with_newspaper(link, driver_path)
-
-        # Add fallback if real_url is None
-        if not real_url:
-            print(f"⚠️ Não consegui resolver o URL real, vou usar o link do Google News mesmo.")
-            real_url = link  # Fallback to the original Google News link
-
-        # Disable the alarm after successful resolution
-        signal.alarm(0)
-
-        if not real_url or not isinstance(real_url, str):
-            print(f"⚠️ URL inválido ou não resolvido: {real_url}. Tentando usar o link original.")
-            real_url = link  # Fallback to the original link
-
-        # Extract content from the resolved URL using Selenium
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        service = Service(driver_path)
-        driver = None
-        try:
-            driver = webdriver.Chrome(service=service, options=options)
-            driver.implicitly_wait(5)  # Implicit wait for elements
-            driver.get(real_url)
-
-            # Handle consent pop-ups
-            try:
-                aceitar_btn = driver.find_element(By.XPATH, "//button[contains(translate(text(),'ACEITAR','aceitar'),'aceitar')]")
-                aceitar_btn.click()
-                print("✅ Consentimento aceite!")
-            except:
-                pass  # No consent button visible
-
-            # Remove pop-ups and overlays
-            driver.execute_script("""
-                let modals = document.querySelectorAll('[class*="popup"], [class*="modal"], [id*="popup"]');
-                modals.forEach(el => el.remove());
-            """)
-
-            # Scroll to ensure content loads
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(2)
-
-            # Wait for the main content to load
-            try:
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "article, .article-body, .content"))
-                )
-            except Exception as e:
-                print(f"⚠️ Conteúdo principal não carregado: {e}")
-
-            # Extract the main article text
-            soup = BeautifulSoup(driver.page_source, "html.parser")
-            article = soup.find("article") or soup.find("div", class_="article-body") or soup.find("div", class_="content")
-            texto = article.get_text(separator="\n").strip() if article else soup.get_text()
-
-            driver.quit()
-            return texto
-        except TimeoutException:
-            if driver: driver.quit()
-            print(f"⚠️ Timeout: Não foi possível resolver o URL real para o link {link} dentro do tempo limite.")
-            return ""
-        except Exception as e:
-            if driver: driver.quit()
-            print(f"❌ Erro ao extrair conteúdo: {e}")
-            return ""
-        finally:
-            # Ensure the alarm is disabled
-            signal.alarm(0)
-    except Exception as e:
-        print(f"❌ Erro geral: {e}")
-        return ""
-    finally:
-        # Ensure the alarm is disabled
-        signal.alarm(0)
-
-# Load parish codes from a JSON file
-def carregar_freguesias_com_codigos(filepath):
-    import json
-    try:
-        with open(filepath, "r", encoding="utf-8") as file:
-            return json.load(file)
-    except Exception as e:
-        print(f"❌ Erro ao carregar o arquivo {filepath}: {e}")
-        return {}
-
-# Load parish codes
-FREGUESIAS_COM_CODIGOS = carregar_dicofreg("config/freguesias_com_codigos.json")
 
 # Atualizar a função processar_item para usar o LOCALIDADES mapeado
 def processar_item(item, keyword, parish):
@@ -156,13 +86,21 @@ def processar_item(item, keyword, parish):
     titulo = item.get("title", "")
     publicado = item.get("published", "")
 
+    # Validar o link antes de processar
+    if not link or not link.startswith("http"):
+        print(f"⚠️ Link inválido: {link}")
+        return None
+
     # Skip non-disaster-related news based on the title
     if not is_potentially_disaster_related(titulo, [keyword]):
         return None
 
     texto = extrair_conteudo(link)
-    if not texto:
+    if not texto or len(texto.split()) < 50:  # Garantir que o texto tenha pelo menos 50 palavras
+        print(f"⚠️ Conteúdo insuficiente para o link: {link}")
         return None
+
+    print("✅ Conteúdo do artigo extraído com sucesso!")  # Log success message
 
     tipo, subtipo = detect_disaster_type(texto)
     vitimas = extract_victim_counts(texto)
@@ -196,8 +134,15 @@ def processar_item(item, keyword, parish):
     newspaper_name = real_url.split("//")[1].split("/")[0]
     main_website = f"https://{newspaper_name}"
 
-    return {
-        "ID": gerar_id(titulo + link),
+    # Generate a unique ID for the article
+    article_id = gerar_id(titulo, real_url, texto)
+    if not article_id:
+        print(f"⚠️ Não foi possível gerar um ID válido para o artigo: {titulo}")
+        return None
+
+    # Create the article record
+    artigo = {
+        "ID": article_id,
         "type": tipo,
         "subtype": subtipo,
         "date": data_evt or publicado[:10],  # Use parsed date or fallback to raw published date
@@ -220,6 +165,21 @@ def processar_item(item, keyword, parish):
         "displaced": vitimas["displaced"],
         "missing": vitimas["missing"]
     }
+
+    # Validate required fields before saving
+    required_fields = ["ID", "type", "date", "source"]
+    if not all(artigo.get(field) for field in required_fields):
+        print(f"⚠️ Artigo inválido, campos obrigatórios ausentes: {artigo}")
+        return None
+
+    # Save the article immediately
+    try:
+        guardar_csv_incremental(OUTPUT_CSV, [artigo])
+        print(f"✅ Artigo salvo imediatamente no arquivo {OUTPUT_CSV}.")
+    except Exception as e:
+        print(f"❌ Erro ao salvar o artigo no arquivo CSV: {e}")
+
+    return artigo
 
 def carregar_existentes():
     if os.path.exists(OUTPUT_CSV):
@@ -280,39 +240,174 @@ def update_dicofreg_column(csv_filepath, json_filepath):
     # Replace the original file with the updated file
     temp_filepath.replace(csv_filepath)
 
-# ==============================
-# MAIN
-# ==============================
-def run_scraper():
-    print(f"🔍 A pesquisar combinações de {len(KEYWORDS)} palavras com {len(LOCALIDADES)} freguesias...")
-    batch = []
-    existentes = carregar_existentes()
+def fetch_feed_parallel(keyword_parish_pairs, max_threads=10):
+    """
+    Busca feeds RSS do Google News em paralelo para combinações de palavras-chave e freguesias.
+    """
+    def fetch_feed(pair):
+        keyword, parish = pair
+        query_url = GOOGLE_NEWS_TEMPLATE.format(
+            query=keyword.replace(" ", "+"), municipio=parish.replace(" ", "+")
+        )
+        feed = feedparser.parse(query_url)
+        print(f"🔎 {keyword} em {parish} ({len(feed.entries)} notícias)")
+        return (keyword, parish, feed.entries)
 
-    for i, keyword in enumerate(KEYWORDS):
-        for j, parish in enumerate(LOCALIDADES):
-            query_url = GOOGLE_NEWS_TEMPLATE.format(query=keyword.replace(" ", "+"), municipio=parish.replace(" ", "+"))
+    results = []
+    with ThreadPoolExecutor(max_threads) as executor:
+        futures = {executor.submit(fetch_feed, pair): pair for pair in keyword_parish_pairs}
+
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                results.append(result)
+            except Exception as e:
+                print(f"❌ Erro ao buscar feed para {futures[future]}: {e}")
+
+    return results
+
+def save_intermediate_links(links):
+    """
+    Save intermediate links and metadata to a CSV file.
+    """
+    if not links:
+        print("⚠️ Nenhum link para salvar no arquivo intermediário.")
+        return
+
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(INTERMEDIATE_CSV), exist_okay=True)
+
+    # Save links to the intermediate CSV
+    with open(INTERMEDIATE_CSV, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=links[0].keys())
+        writer.writeheader()
+        writer.writerows(links)
+    print(f"✅ Links intermediários salvos em INTERMEDIATE_CSV.")
+
+def processar_artigos_em_lote(feed_entries, keyword, parish, max_threads=4):
+    """
+    Processa artigos em paralelo para extrair links reais e textos.
+    """
+    def worker(item):
+        return processar_item(item, keyword, parish)
+    
+    return execute_in_parallel(feed_entries, worker, max_threads)
+
+def processar_links_em_lote(feed_entries, max_workers=4):
+    """
+    Resolve os links reais em paralelo usando process_urls_in_parallel.
+    """
+    urls = [item.get("link", "") for item in feed_entries if item.get("link", "").startswith("http")]
+    if not urls:
+        print("⚠️ Nenhum URL válido encontrado para processar.")
+        return []
+    return process_urls_in_parallel(urls, fetch_and_extract_article_text, max_workers=max_workers)
+
+def run_scraper():
+    """
+    Executa o scraper para o Google News Feed com suporte a resolução de links reais.
+    Salva os links do Google News e os artigos encontrados no CSV incrementalmente.
+    """
+    print(f"🔍 A pesquisar combinações de {len(KEYWORDS)} palavras com {len(LOCALIDADES)} freguesias...")
+
+    batch = []
+    total_articles = 0
+    intermediate_links = []
+
+    for keyword in KEYWORDS:
+        for parish in LOCALIDADES:
+            query_url = GOOGLE_NEWS_TEMPLATE.format(
+                query=keyword.replace(" ", "+"),
+                municipio=parish.replace(" ", "+")
+            )
             feed = feedparser.parse(query_url)
             print(f"🔎 {keyword} em {parish} ({len(feed.entries)} notícias)")
 
             for item in feed.entries:
+                # Salvar metadados intermediários
+                intermediate_links.append({
+                    "keyword": keyword,
+                    "parish": parish,
+                    "title": item.get("title", ""),
+                    "link": item.get("link", ""),
+                    "published": item.get("published", "")
+                })
+
+                # Resolver o link real
+                resolved_url = resolve_with_newspaper(item.get("link", ""))
+                if not resolved_url:
+                    continue
+                item["link"] = resolved_url  # sobrescreve o link com o final
+
                 artigo = processar_item(item, keyword, parish)
                 if artigo:
                     batch.append(artigo)
-                time.sleep(1)
 
-            # Append articles to the main CSV file
+                time.sleep(1)  # evitar bloqueios por abuso
+
+            # Guardar artigos em batch
             if batch:
-                print(f"💾 Guardando {len(batch)} artigos no arquivo principal {OUTPUT_CSV}...")
                 guardar_csv_incremental(OUTPUT_CSV, batch)
+                total_articles += len(batch)
+                print(f"✅ {len(batch)} artigos salvos em {OUTPUT_CSV}.")
                 batch.clear()
 
-    if batch:  # Save remaining articles
-        print(f"💾 Guardando {len(batch)} artigos restantes no arquivo principal {OUTPUT_CSV}...")
-        guardar_csv_incremental(OUTPUT_CSV, batch)
+    # Guardar links intermediários
+    if intermediate_links:
+        try:
+            guardar_csv_incremental(INTERMEDIATE_CSV, intermediate_links)
+            print(f"✅ Links intermediários salvos em {INTERMEDIATE_CSV}.")
+        except Exception as e:
+            print(f"❌ Erro ao salvar os links intermediários: {e}")
 
-    # Update DICOFREG column in the CSV file
-    json_file = "config/freguesias_com_codigos.json"
-    update_dicofreg_column(OUTPUT_CSV, json_file)
+    # Atualizar coluna DICOFREG
+    if os.path.exists(OUTPUT_CSV):
+        try:
+            json_file = "config/freguesias_com_codigos.json"
+            update_dicofreg_column(OUTPUT_CSV, json_file)
+            print(f"✅ Coluna DICOFREG atualizada em {OUTPUT_CSV}.")
+        except Exception as e:
+            print(f"❌ Erro ao atualizar a coluna DICOFREG: {e}")
+
+    print(f"📊 Total de artigos processados: {total_articles}")
+
 
 if __name__ == "__main__":
-    run_scraper()
+    print("🔧 Starting the Google News scraper...")
+    try:
+        run_scraper()
+        print("✅ Scraper finished successfully.")
+    except Exception as e:
+        print(f"❌ An error occurred while running the scraper: {e}")
+
+def extract_articles_from_rss(feed_url):
+    articles = []
+    feed = feedparser.parse(feed_url)
+    for entry in feed.entries:
+        article = {
+            "title": entry.title,
+            "link": entry.link,
+            "published": entry.published,
+            "summary": entry.summary,
+        }
+        articles.append(article)
+    return articles
+
+def resolve_final_url(url):
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.url
+    except requests.RequestException:
+        return url
+
+def extract_article_content(url):
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+        paragraphs = soup.find_all('p')
+        content = ' '.join([p.get_text() for p in paragraphs])
+        return content
+    except requests.RequestException:
+        return None

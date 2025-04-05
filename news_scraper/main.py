@@ -1,32 +1,31 @@
-from scrapers import arquivo_pt
-from processors.filtra_desastres import filtrar_e_transformar
-from processors.gera_db_ready import gerar_disaster_db_ready
+import argparse
+from scrapers.google_news import run_scraper as run_google_news
+from scrapers.alerta_scraper import run_alerta_scraper
 
-# 🔧 Definir os domínios dos jornais
-PUBLICO = "www.publico.pt"
-DN = "www.DN.pt"
-OUTPUT_CSV = "data/artigos_brutos.csv"
+def main():
+    parser = argparse.ArgumentParser(description="Scraper de notícias")
+    parser.add_argument(
+        "--fonte",
+        choices=["news", "alert"],
+        default="news",
+        help="Escolhe a fonte de scraping: 'news' (Google News) ou 'alert' (Google Alerts)",
+    )
+    parser.add_argument(
+        "--alert-url",
+        help="URL do feed RSS do Google Alerts (necessário se fonte='alert')",
+    )
 
+    args = parser.parse_args()
 
-def run_all():
-    print("\n🚀 Iniciando scraping de fontes de notícias (Arquivo.pt)...\n")
-    all_articles = []
-
-    for jornal in [PUBLICO]:
-        artigos = arquivo_pt.scrape(site=jornal)
-        all_articles.extend(artigos)
-
-    print(f"\n📎 A guardar {len(all_articles)} artigos em: {OUTPUT_CSV}")
-    arquivo_pt.exportar_csv(all_articles, OUTPUT_CSV)
-
-    print("\n🧼 A iniciar filtro e transformação...\n")
-    filtrar_e_transformar()
-
-    print("\n📊 A gerar ficheiro final com vítimas...\n")
-    gerar_disaster_db_ready()
-
-    print("\n✅ Pipeline completo.\n")
-
+    if args.fonte == "news":
+        print("📰 A correr scraper do Google News...")
+        run_google_news()
+    elif args.fonte == "alert":
+        if not args.alert_url:
+            print("❌ Erro: Precisas fornecer o --alert-url para usar o modo 'alert'.")
+        else:
+            print(f"🔔 A correr scraper do Google Alerts com feed:\n{args.alert_url}")
+            run_alerta_scraper(args.alert_url)
 
 if __name__ == "__main__":
-    run_all()
+    main()
