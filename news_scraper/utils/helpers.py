@@ -14,11 +14,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from urllib.parse import urlparse, parse_qs, urlencode
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from extracao.normalizador import (
+    normalize,
+)
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import hashlib
 
-
-# ----------------------------- Normalização -----------------------------
-def normalize(text):
-    return unicodedata.normalize('NFKD', text.lower()).encode('ASCII', 'ignore').decode('utf-8').strip()
 
 # --------------------------- Carregamento do mapa de localizações ---------------------------
 with open("config/municipios_por_distrito.json", "r", encoding="utf-8") as f:
@@ -114,262 +118,11 @@ def carregar_paroquias_com_municipios(caminho_json):
                 }
     return localidades
 
-def load_freguesias_codigos(filepath):
-    """Load the freguesias_com_codigos.json file and return a mapping of parish to codigo."""
-    with open(filepath, 'r', encoding='utf-8') as file:
-        data = json.load(file)
-    mapping = {}
-    for district, municipalities in data.items():
-        for municipality, parishes in municipalities.items():
-            for parish in parishes:
-                if isinstance(parish, dict):
-                    mapping[parish['name']] = parish['codigo']
-                else:
-                    mapping[parish] = None  # Handle cases where no codigo is provided
-    return mapping
-
-# --------------------------- Localização ---------------------------
-def verificar_localizacao(texto):
-    texto_norm = normalize(texto)
-    for item in MAPA_LOCALIZACOES:
-        mun = normalize(item["municipio"])
-        if mun in texto_norm:
-            return {
-                "municipali": item["municipio"].upper(),
-                "district": item["distrito"].upper(),
-                "parish": None,
-                "dicofreg": None,
-                "georef": "location based on text scraping"
-            }
-    return None
 
 # --------------------------- Verificação ---------------------------
 def is_in_portugal(title: str, article_text: str) -> bool:
     return False  # Moçambique only, desativa validação de Portugal
 
-# --------------------------- Extrações ---------------------------
-def extract_title_from_text(texto: str) -> str:
-    linhas = texto.splitlines()
-    candidatas = [linha.strip() for linha in linhas if 15 < len(linha.strip()) < 120]
-    return candidatas[0] if candidatas else ""
-
-
-def parse_event_date(date_str):
-    if not date_str:
-        return None, None, None, None
-    try:
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-        return date_obj, date_obj.year, date_obj.month, date_obj.day
-    except ValueError:
-        return None, None, None, None
-
-
-def extract_event_hour(text: str) -> str | None:
-    text = text.lower()
-    match = re.search(r'(\d{1,2})h(\d{1,2})?', text)
-    if match:
-        return match.group(0)
-    for periodo in ["madrugada", "manha", "tarde", "noite"]:
-        if periodo in text:
-            return periodo
-    return None
-
-# --------------------------- Tipo de desastre ---------------------------
-def detect_disaster_type(text: str) -> tuple[str, str]:
-    text = normalize(text)
-    categorias = {
-        "Flood": ["cheia", "inundacao", "alagamento", "transbordo"],
-        "Landslide": ["deslizamento", "desabamento", "desmoronamento", "queda de terra"]
-    }
-    for tipo, termos in categorias.items():
-        for termo in termos:
-            if termo in text:
-                return tipo, termo
-    return "Other", "Other"
-
-# --------------------------- Vítimas ---------------------------
-def extract_victim_counts(text: str) -> dict:
-    text = text.lower()
-    results = {"fatalities": 0, "injured": 0, "evacuated": 0, "displaced": 0, "missing": 0}
-    patterns = {
-        "fatalities": [r"(\d+)\s+(mort[oa]s?|faleceram|morreram)"],
-        "injured": [r"(\d+)\s+(ferid[oa]s?)"],
-        "evacuated": [r"(\d+)\s+(evacuad[oa]s?)"],
-        "displaced": [r"(\d+)\s+(desalojad[oa]s?)"],
-        "missing": [r"(\d+)\s+(desaparecid[oa]s?)"]
-    }
-    for key, regexes in patterns.items():
-        for pattern in regexes:
-            match = re.search(pattern, text)
-            if match:
-                results[key] = int(match.group(1))
-    return results
-
-# --------------------------- Relevância ---------------------------
-def is_potentially_disaster_related(text: str, keywords: list[str]) -> bool:
-    # Accept all texts as potentially disaster-related
-    return True
-
-# --------------------------- Limpeza de texto bruto ---------------------------
-def limpar_texto_lixo(texto: str) -> str:
-    if not texto:
-        return ""
-
-    # Remove repetitive beginning text using regex for variations
-    repetitive_patterns = [
-        r"we usecookiesand data to.*?if you choose to “accept all,”",  # Match variations of the repetitive text
-        r"we will also use cookies and data to.*?if you"  # Additional pattern for variations
-    ]
-    for pattern in repetitive_patterns:
-        texto = re.sub(pattern, "", texto, flags=re.IGNORECASE).strip()
-
-    # Debugging: Print the cleaned text for verification
-    print(f"🔍 Texto após limpeza inicial: {texto[:100]}...")
-
-    # Remove other predefined "lixo"
-    lixo = [
-        "Saltar para o conteudo", "Este site utiliza cookies", "Iniciar sessao",
-        "Politica de Privacidade", "Publicidade", "Registe-se", "Assine ja",
-        "Versao Normal", "Mais populares", "Ultimas Noticias", "Facebook",
-        "Google+", "RSS"
-    ]
-    linhas = texto.splitlines()
-    filtradas = [linha for linha in linhas if not any(lixo_item in normalize(linha) for lixo_item in lixo)]
-    return "\n".join(filtradas).strip()
-
-# --------------------------- Extração de artigo de HTML ---------------------------
-def extract_article_text(soup):
-    containers = [
-        soup.find('article'),
-        soup.find('main'),
-        soup.find('div', class_='article-body'),
-        soup.find('div', class_='story'),
-        soup.find('body')
-    ]
-    for container in containers:
-        if container:
-            paragraphs = container.find_all('p')
-            texto = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
-            if texto:
-                return " ".join(texto).strip()
-    # fallback
-    paragraphs = soup.find_all('p')
-    texto = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
-    return " ".join(texto).strip()
-
-def fetch_and_extract_article_text(url: str) -> str:
-    """
-    Fetches the content of a webpage and extracts the main article text.
-    """
-    import requests
-    try:
-        print(f"🌐 Fetching URL: {url}")
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()  # Raise an error for HTTP issues
-        print(f"✅ Successfully fetched URL: {url}")
-
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        # Attempt to extract the main article text
-        containers = [
-            soup.find('article'),
-            soup.find('main'),
-            soup.find('div', class_='article-body'),
-            soup.find('div', class_='story'),
-            soup.find('div', class_='content'),
-            soup.find('body')
-        ]
-        for container in containers:
-            if container:
-                paragraphs = container.find_all('p')
-                text = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
-                if text:
-                    print(f"🔍 Extracted text from container: {container.name}")
-                    return " ".join(text).strip()
-
-        # Fallback: Try extracting all <p> tags if no container is found
-        paragraphs = soup.find_all('p')
-        text = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
-        if text:
-            print(f"🔍 Extracted text from fallback <p> tags.")
-            return " ".join(text).strip()
-
-        # Final fallback: Extract text from all visible elements
-        visible_text = soup.stripped_strings
-        combined_text = " ".join(visible_text)
-        if combined_text:
-            print(f"🔍 Extracted text from all visible elements.")
-            return combined_text.strip()
-
-        print(f"⚠️ No article or content found for URL: {url}")
-        return ""
-
-    except requests.exceptions.RequestException as e:
-        print(f"⚠️ Error fetching URL {url}: {e}")
-        return ""
-    except Exception as e:
-        print(f"⚠️ Unexpected error for URL {url}: {e}")
-        return ""
-
-def fetch_and_extract_article_text_dynamic(url: str) -> str:
-    """
-    Fetches the content of a webpage using Selenium and extracts the main article text.
-    """
-    try:
-        print(f"🌐 Fetching URL dynamically: {url}")
-        options = Options()
-        options.add_argument("--headless")  # Run in headless mode
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        service = Service("/path/to/chromedriver")  # Update with the path to your ChromeDriver
-        driver = webdriver.Chrome(service=service, options=options)
-
-        driver.get(url)
-
-        # Remove pop-ups and overlays
-        driver.execute_script("""
-            let modals = document.querySelectorAll('[class*="popup"], [class*="modal"], [id*="popup"]');
-            modals.forEach(el => el.remove());
-        """)
-
-        # Wait for the main content to load
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "article, .article-body, .content"))
-        )
-
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        driver.quit()
-
-        # Attempt to extract the main article text
-        containers = [
-            soup.find('article'),
-            soup.find('main'),
-            soup.find('div', class_='article-body'),
-            soup.find('div', class_="story"),  # Fixed syntax error
-            soup.find('div', 'content'),
-            soup.find('body')
-        ]
-        for container in containers:
-            if container:
-                paragraphs = container.find_all('p')
-                text = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
-                if text:
-                    print(f"🔍 Extracted text from container: {container.name}")
-                    return " ".join(text).strip()
-
-        # Fallback: Try extracting all <p> tags if no container is found
-        paragraphs = soup.find_all('p')
-        text = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
-        if text:
-            print(f"🔍 Extracted text from fallback <p> tags.")
-            return " ".join(text).strip()
-
-        print(f"⚠️ No article or content found for URL: {url}")
-        return ""
-
-    except Exception as e:
-        print(f"⚠️ Error fetching URL dynamically {url}: {e}")
-        return ""
 
 # --------------------------- Exportar eventos com vítimas ---------------------------
 def guardar_disaster_db_ready(artigos: list[dict], ficheiro: str):
@@ -393,17 +146,31 @@ def guardar_disaster_db_ready(artigos: list[dict], ficheiro: str):
 
 # --------------------------- Guardar CSV genérico ---------------------------
 def guardar_csv(caminho, artigos: list[dict]):
+    """
+    Save articles to a CSV file with the correct structure.
+    """
     if not artigos:
         print("⚠️ Nenhum artigo para guardar.")
         return
+
+    # Define the correct column structure for the final CSV
+    colunas = [
+        "ID", "type", "subtype", "date", "year", "month", "day", "hour", "georef",
+        "district", "municipali", "parish", "DICOFREG", "source", "sourcedate",
+        "sourcetype", "page", "fatalities", "injured", "evacuated", "displaced", "missing"
+    ]
+
     with open(caminho, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=artigos[0].keys())
+        writer = csv.DictWriter(f, fieldnames=colunas)
         writer.writeheader()
         for artigo in artigos:
-            writer.writerow(artigo)
+            writer.writerow({col: artigo.get(col, "") for col in colunas})
     print(f"✅ Guardado com sucesso em {caminho}")
 
 # --------------------------- Guardar incremental ---------------------------
+def gerar_id(texto):
+    return hashlib.md5(texto.encode()).hexdigest()
+
 def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
     if not novos_artigos:
         print("⚠️ Nenhum novo artigo recebido.")
@@ -412,6 +179,10 @@ def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
     print(f"Novos artigos recebidos: {len(novos_artigos)}")
 
     # Ensure all articles have valid IDs
+    for artigo in novos_artigos:
+        if not artigo.get("ID"):
+            artigo["ID"] = hashlib.md5((artigo.get("title", "") + artigo.get("link", "")).encode()).hexdigest()
+
     novos_artigos = [a for a in novos_artigos if a.get("ID")]
     if not novos_artigos:
         print("⚠️ Nenhum artigo com ID válido encontrado.")
@@ -446,3 +217,56 @@ def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
             for artigo in batch:
                 writer.writerow(artigo)
             print(f"💾 Guardados {len(batch)} artigos no arquivo {caminho} (batch {i // batch_size + 1})")
+
+
+# --------------------------- Process URLs in parallel ---------------------------
+def process_urls_in_parallel(urls, process_function, max_workers=5):
+    """
+    Process a list of URLs in parallel using a given processing function.
+
+    Args:
+        urls (list): List of URLs to process.
+        process_function (callable): Function to process each URL.
+        max_workers (int): Maximum number of threads to use.
+
+    Returns:
+        list: Results of processing each URL.
+    """
+    # Validate URLs before processing
+    valid_urls = [url for url in urls if url.startswith("http")]
+    if not valid_urls:
+        print("⚠️ Nenhum URL válido encontrado para processar.")
+        return []
+
+    results = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(process_function, url): url for url in valid_urls}
+        for future in futures:
+            try:
+                results.append(future.result())
+            except Exception as e:
+                print(f"Error processing URL {futures[future]}: {e}")
+    return results
+
+
+def execute_in_parallel(items, process_function, max_threads=5):
+    """
+    Executes a function in parallel for a list of items.
+
+    Args:
+        items (list): List of items to process.
+        process_function (callable): Function to process each item.
+        max_threads (int): Maximum number of threads to use.
+
+    Returns:
+        list: Results of processing each item.
+    """
+    results = []
+    with ThreadPoolExecutor(max_threads) as executor:
+        futures = {executor.submit(process_function, item): item for item in items}
+        for future in as_completed(futures):
+            try:
+                results.append(future.result())
+            except Exception as e:
+                print(f"❌ Error processing item {futures[future]}: {e}")
+    return results
