@@ -58,7 +58,7 @@ with open("config/freguesias_com_codigos.json", "r", encoding="utf-8") as f:
     FREGUESIAS_COM_CODIGOS = json.load(f)
 
 OUTPUT_CSV = "data/artigos_google_municipios_pt.csv"
-HEADERS = {"User-Agent": "MunicipioNewsBot/1.0"}
+HEADERS = {"User-Agent": "Final_uni_project/1.0"}
 
 INTERMEDIATE_CSV = "data/intermediate_links.csv"  # File to store intermediate results
 

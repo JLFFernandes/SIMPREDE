@@ -24,16 +24,21 @@ def resolve_with_newspaper(url):
         return url
 
 #TEST:
-def resolve_google_news_url(url):
+def resolve_google_news_url(url, driver_path="/usr/bin/chromedriver"):
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
         }
         response = requests.get(url, headers=headers, allow_redirects=True, timeout=10)
-        return response.url
+        final_url = response.url
+        if "consent.google.com" in final_url or "news.google.com" in final_url:
+            print("⚠️ Redirecionamento para consentimento ou Google News, a usar Selenium...")
+            return get_real_url_with_newspaper(url, driver_path)
+        return final_url
     except Exception as e:
         print(f"❌ Erro ao resolver link do Google News: {e}")
-        return url  # fallback
+        return url
+
 
 
 def get_original_url_via_requests(google_rss_url):
@@ -220,55 +225,58 @@ def extract_article_text(soup):
     return " ".join(texto).strip()
 
 
-def get_real_url_with_newspaper(link, driver_path, max_wait_time=5):
+def get_real_url_with_newspaper(link, driver_path="/usr/bin/chromedriver", max_wait_time=10):
     options = Options()
-    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
 
     service = Service(driver_path)
     driver = webdriver.Chrome(service=service, options=options)
-
-    page_data = dict()
-
+#SEE NOTES:
     try:
-        print(f"🌐 Acessando o link: {link}")
+        print(f"🌐 A aceder ao link: {link}")
         driver.get(link)
         wait = WebDriverWait(driver, max_wait_time)
 
-        # Handle consent page
-        current_url = driver.current_url
-        if current_url.startswith("https://consent.google.com/"):
-            print("⚠️ Detetado consentimento explícito. A tentar aceitar...")
+        # Se for página de consentimento, tenta clicar no botão "Aceitar tudo"
+        if "consent.google.com" in driver.current_url:
+            print("⚠️ Página de consentimento detetada. A tentar aceitar...")
+
             try:
-                accept_all_button = wait.until(
-                    EC.element_to_be_clickable((By.XPATH, '//button[.//span[text()="Accept all"]]'))
+                # ⚠️ Tenta mudar para o iframe se existir
+                WebDriverWait(driver, 5).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "//iframe[contains(@src, 'consent')]")))
+                print("✅ Mudança para iframe de consentimento feita.")
+
+                # Espera e clica no botão "Aceitar tudo"
+                aceitar_btn = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, '//button//*[text()[contains(.,"Aceitar tudo") or contains(.,"Accept all")]]/..'))
                 )
-                if accept_all_button:
-                    accept_all_button.click()
-                    print("✅ Consentimento aceite!")
-            except Exception:
-                print("❌ Não foi possível localizar o botão de consentimento.")
+                aceitar_btn.click()
+                print("✅ Consentimento aceite!")
 
-        # Wait for redirection to the source website
-        print("🔄 Redirecionando para o site de origem...")
-        wait.until(lambda driver: not driver.current_url.startswith("https://news.google.com/")
-                                and not driver.current_url.startswith("https://consent.google.com/"))
+                # Voltar ao conteúdo principal
+                driver.switch_to.default_content()
 
-        # Wait for the article page to load
+            except Exception as e:
+                print("❌ Não consegui aceitar o consentimento:", e)
+
+
+
+        # Espera que o URL final mude e a página de destino carregue
+        wait.until(lambda d: not d.current_url.startswith("https://consent.google.com"))
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
 
-        # Get the final URL
-        page_data["source_url"] = driver.current_url
-        print(f"✅ URL final obtida: {page_data['source_url']}")
+        final_url = driver.current_url
+        print(f"✅ URL final resolvido: {final_url}")
+        return final_url
 
     except Exception as e:
-        print(f"❌ Erro ao obter URL de origem para {link}: {e}")
-        # Fallback to requests-based method
-        page_data["source_url"] = get_original_url_via_requests(link)
-
+        print(f"❌ Erro ao resolver URL com Selenium: {e}")
+        return None
     finally:
         driver.quit()
 
-    return page_data["source_url"]
 
 def extract_article_content(url):
     """Extract article content using newspaper3k."""
