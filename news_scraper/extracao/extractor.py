@@ -16,28 +16,58 @@ from newspaper import Article
  #TEST:
 def resolve_with_newspaper(url):
     try:
+        if "news.google.com" in url and "/articles/" not in url:
+            print(f"⚠️ URL inválido para newspaper: {url}")
+            return None
+
         article = Article(url)
         article.download()
         return article.source_url or article.canonical_link or article.url
     except Exception as e:
         print(f"⚠️ Erro a resolver com newspaper3k: {e}")
-        return url
+        return None
+
 
 #TEST:
-def resolve_google_news_url(url, driver_path="/usr/bin/chromedriver"):
+def resolve_google_news_url(url, driver_path="/usr/bin/chromedriver", max_wait_time=10):
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+
+    service = Service(driver_path)
+    driver = webdriver.Chrome(service=service, options=options)
+
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        }
-        response = requests.get(url, headers=headers, allow_redirects=True, timeout=10)
-        final_url = response.url
-        if "consent.google.com" in final_url or "news.google.com" in final_url:
-            print("⚠️ Redirecionamento para consentimento ou Google News, a usar Selenium...")
-            return get_real_url_with_newspaper(url, driver_path)
+        print(f"🌐 Acessando o link: {url}")
+        driver.get(url)
+        wait = WebDriverWait(driver, max_wait_time)
+
+        # Aceitar consentimento se necessário
+        if "consent.google.com" in driver.current_url:
+            print("⚠️ Página de consentimento detectada. Tentando aceitar...")
+            try:
+                accept_all_button = wait.until(
+                    EC.element_to_be_clickable((By.XPATH, '//button[.//span[text()="Accept all"]]'))
+                )
+                accept_all_button.click()
+                print("✅ Consentimento aceite!")
+            except Exception as e:
+                print(f"❌ Não foi possível aceitar o consentimento: {e}")
+
+        # Espera redireção
+        wait.until(lambda d: not d.current_url.startswith("https://news.google.com/")
+                            and not d.current_url.startswith("https://consent.google.com/"))
+
+        final_url = driver.current_url
+        print(f"✅ URL final resolvido: {final_url}")
         return final_url
+
     except Exception as e:
-        print(f"❌ Erro ao resolver link do Google News: {e}")
-        return url
+        print(f"❌ Erro ao resolver URL do Google News: {e}")
+        return None
+    finally:
+        driver.quit()
 
 
 
@@ -135,8 +165,6 @@ def fetch_and_extract_article_text(url: str) -> str:
     except Exception as e:
         print(f"⚠️ Unexpected error for URL {url}: {e}")
         return ""
-
-
 
 def fetch_and_extract_article_text_dynamic(url: str) -> str:
     """
@@ -347,3 +375,75 @@ def load_freguesias_codigos(filepath):
     except Exception as e:
         print(f"❌ Erro ao carregar os códigos de freguesias: {e}")
         return {}
+
+def get_real_url_and_content(link, driver_path="/usr/bin/chromedriver", max_wait_time=5):
+    """
+    Retrieves the original URL and the content of the news article.
+    """
+    options = Options()
+    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+
+    service = Service(driver_path)
+    driver = webdriver.Chrome(service=service, options=options)
+
+    page_data = {"source_url": None, "article_content": None}
+
+    try:
+        print(f"🌐 Acessando o link: {link}")
+        driver.get(link)
+        wait = WebDriverWait(driver, max_wait_time)
+
+        # Handle consent page
+        current_url = driver.current_url
+        if current_url.startswith("https://consent.google.com/"):
+            print("⚠️ Detetado consentimento explícito. A tentar aceitar...")
+            try:
+                accept_all_button = wait.until(
+                    EC.element_to_be_clickable((By.XPATH, '//button[.//span[text()="Accept all"]]'))
+                )
+                if accept_all_button:
+                    accept_all_button.click()
+                    print("✅ Consentimento aceite!")
+            except Exception:
+                print("❌ Não foi possível localizar o botão de consentimento.")
+
+        # Wait for redirection to the source website
+        print("🔄 Redirecionando para o site de origem...")
+        wait.until(lambda driver: not driver.current_url.startswith("https://news.google.com/")
+                                and not driver.current_url.startswith("https://consent.google.com/"))
+
+        # Wait for the article page to load
+        wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+
+        # Get the final URL
+        page_data["source_url"] = driver.current_url
+        print(f"✅ URL final obtida: {page_data['source_url']}")
+
+        # Extract article content using newspaper3k
+        page_data["article_content"] = extract_article_content(page_data["source_url"])
+
+    except Exception as e:
+        print(f"❌ Erro ao obter URL de origem ou conteúdo para {link}: {e}")
+        # Fallback to requests-based method
+        page_data["source_url"] = get_original_url_via_requests(link)
+        if page_data["source_url"]:
+            page_data["article_content"] = extract_article_content(page_data["source_url"])
+
+    finally:
+        driver.quit()
+
+    return page_data
+
+
+# Teste
+if __name__ == "__main__":
+    # Update the driver path for Linux
+    driver_path = "/usr/bin/chromedriver"  # Ensure this path is correct for your system
+    google_rss_url = "https://news.google.com/rss/articles/CBMirwFBVV95cUxNUzNzajlfa1poeTdVdEhnSXdlX042NDRueDl1blQ2LW9MT29zWWdvd18zR016T2FZMFdjNnhUUTBkdmlZVFVjV0V2UTMwZTh1NFIyc0xYYl9FX1EzaTdMV2JHT09qSUpIRnEtc3JPd1VrYnFvb2xzb2Rsa2ZRS1J6SUxqNUVnMW1VdVh4eHEyWlZ2QXhBczUxTHhSckhha21Vc0NCTDdmNkhPTDJIUGFr?oc=5"
+
+    # Get the real URL and content
+    result = get_real_url_and_content(google_rss_url, driver_path)
+    print("➡️ URL final:", result["source_url"])
+    print("📝 Conteúdo do artigo:", result["article_content"])

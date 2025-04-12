@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 import unicodedata
+import json
 
 def normalize(text):
     return unicodedata.normalize('NFKD', text.lower()).encode('ASCII', 'ignore').decode('utf-8').strip()
@@ -103,5 +104,21 @@ def verificar_localizacao(texto):
     return None
 
 def is_potentially_disaster_related(text: str, keywords: list[str]) -> bool:
-    # Accept all texts as potentially disaster-related
-    return True
+    text = normalize(text)
+    return any(keyword in text for keyword in keywords)
+
+def carregar_paroquias_com_municipios(path="config/municipios_por_distrito.json"):
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    localidades = {}
+    municipios_set = set()
+    distritos_set = set()
+
+    for distrito, municipios in data.items():
+        distritos_set.add(distrito)
+        for municipio in municipios:
+            municipios_set.add(municipio)
+            localidades[municipio.lower()] = {"district": distrito, "municipality": municipio}
+
+    return localidades, sorted(municipios_set), sorted(distritos_set)

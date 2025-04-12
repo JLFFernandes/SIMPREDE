@@ -100,23 +100,24 @@ def carregar_municipios_distritos(caminho_json):
     return localidades
 
 
-def carregar_paroquias_com_municipios(caminho_json):
-    """
-    Carrega as paróquias, municípios e distritos de um JSON estruturado e retorna um dicionário.
-    Cada paróquia é mapeada para o seu município e distrito correspondente.
-    """
-    with open(caminho_json, "r", encoding="utf-8") as f:
-        dados = json.load(f)
+def carregar_paroquias_com_municipios(path):
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
 
     localidades = {}
-    for distrito, municipios in dados.items():
-        for municipio, parishes in municipios.items():
-            for parish in parishes:
-                localidades[parish.lower()] = {
-                    "district": distrito,
-                    "municipality": municipio
-                }
-    return localidades
+    municipios = set()
+    distritos = list(data.keys())
+
+    for distrito, lista_municipios in data.items():
+        for municipio in lista_municipios:
+            municipios.add(municipio)
+            localidades[municipio.lower()] = {
+                "district": distrito,
+                "municipality": municipio
+            }
+
+    return localidades, list(municipios), distritos
+
 
 
 # --------------------------- Verificação ---------------------------
@@ -176,7 +177,7 @@ def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
         print("⚠️ Nenhum novo artigo recebido.")
         return
 
-    print(f"Novos artigos recebidos: {len(novos_artigos)}")
+    print(f"📥 Novos artigos recebidos: {len(novos_artigos)}")
 
     # Ensure all articles have valid IDs
     for artigo in novos_artigos:
@@ -195,11 +196,11 @@ def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
     else:
         existentes = set()
 
-    print(f"IDs existentes no arquivo: {existentes}")
+    print(f"📂 IDs existentes no arquivo: {len(existentes)}")
 
     # Filter out articles with duplicate IDs
     artigos_unicos = [a for a in novos_artigos if a["ID"] not in existentes]
-    print(f"Artigos únicos para salvar: {len(artigos_unicos)}")
+    print(f"🆕 Artigos únicos para salvar: {len(artigos_unicos)}")
 
     if not artigos_unicos:
         print("⚠️ Nenhum artigo único para salvar.")
