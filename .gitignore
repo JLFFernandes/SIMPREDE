@@ -2,6 +2,7 @@
 data 
 
 #virtual environment
+.venv
 venv
 
 #backups
