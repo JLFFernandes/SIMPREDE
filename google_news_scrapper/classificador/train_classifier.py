@@ -1,3 +1,4 @@
+#Treino do classificador de notícias
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -10,7 +11,7 @@ from nltk.corpus import stopwords
 import nltk
 
 # ========= CONFIG ========= #
-DATA_PATH = "data/intermediate_google_news_labeled.csv"
+DATA_PATH = "data/intermediate_google_news_labeled_refined.csv"
 MODEL_DIR = "models"
 MODEL_FILE = os.path.join(MODEL_DIR, "modelo_classificacao.pkl")
 VECTORIZER_FILE = os.path.join(MODEL_DIR, "tfidf_vectorizer.pkl")
@@ -20,6 +21,11 @@ LABEL_COLUMN = "label"
 # ========= LOAD DATA ========= #
 df = pd.read_csv(DATA_PATH)
 df.dropna(subset=[TEXT_COLUMN, LABEL_COLUMN], inplace=True)
+
+# Check if the dataset is empty
+if df.empty:
+    print(f"❌ Erro: O dataset '{DATA_PATH}' está vazio. Certifique-se de que há artigos relevantes para treinar o modelo.")
+    exit(1)
 
 # ========= TRAIN/TEST SPLIT ========= #
 X_train, X_test, y_train, y_test = train_test_split(

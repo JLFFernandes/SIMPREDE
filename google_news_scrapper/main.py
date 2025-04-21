@@ -1,31 +1,34 @@
 import argparse
-from scrapers.google_news import run_scraper as run_google_news
-from scrapers.alerta_scraper import run_alerta_scraper
+import os
+import subprocess
 
 def main():
-    parser = argparse.ArgumentParser(description="Scraper de notícias")
+    parser = argparse.ArgumentParser(description="Pipeline de scraping e processamento de notícias")
     parser.add_argument(
-        "--fonte",
-        choices=["news", "alert"],
-        default="news",
-        help="Escolhe a fonte de scraping: 'news' (Google News) ou 'alert' (Google Alerts)",
+        "--etapa",
+        choices=["run_scraper", "classificacao", "train_classifier", "classificar_artigos", "processar_relevantes", "all"],
+        default="all",
+        help="Escolhe a etapa do pipeline ou executa todas as etapas ('all').",
     )
-    parser.add_argument(
-        "--alert-url",
-        help="URL do feed RSS do Google Alerts (necessário se fonte='alert')",
-    )
-
     args = parser.parse_args()
 
-    if args.fonte == "news":
-        print("📰 A correr scraper do Google News...")
-        run_google_news()
-    elif args.fonte == "alert":
-        if not args.alert_url:
-            print("❌ Erro: Precisas fornecer o --alert-url para usar o modo 'alert'.")
-        else:
-            print(f"🔔 A correr scraper do Google Alerts com feed:\n{args.alert_url}")
-            run_alerta_scraper(args.alert_url)
+    scripts = {
+        "run_scraper": "scraping/run_scraper.py",
+        "classificacao": "classificador/classificacao.py",
+        "train_classifier": "classificador/train_classifier.py",
+        "classificar_artigos": "classificador/classificar_artigos_relevantes_ml.py",
+        "processar_relevantes": "processador/processar_relevantes.py",
+        "filtrar_artigos_vitimas": "processador/filtrar_artigos_vitimas.py",
+    }
+
+    if args.etapa == "all":
+        for etapa, script in scripts.items():
+            print(f"🚀 Executando etapa: {etapa}...")
+            subprocess.run(["python3", os.path.join(os.path.dirname(__file__), script)], check=True)
+    else:
+        script = scripts[args.etapa]
+        print(f"🚀 Executando etapa: {args.etapa}...")
+        subprocess.run(["python3", os.path.join(os.path.dirname(__file__), script)], check=True)
 
 if __name__ == "__main__":
     main()
