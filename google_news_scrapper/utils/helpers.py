@@ -21,11 +21,13 @@ from extracao.normalizador import (
     normalize,
 )
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import urlparse, urlunparse
 import hashlib
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # --------------------------- Carregamento do mapa de localizações ---------------------------
-with open("config/municipios_por_distrito.json", "r", encoding="utf-8") as f:
+with open(os.path.join(PROJECT_ROOT, "config/municipios_por_distrito.json"), "r", encoding="utf-8") as f:
     raw_data = json.load(f)
 
 MAPA_LOCALIZACOES = []
@@ -58,11 +60,13 @@ def detect_municipality(texto, localidades):
 
 
 def load_keywords(path, idioma="portuguese"):
-    with open(path, "r", encoding="utf-8") as f:
+    path_absoluto = os.path.join(PROJECT_ROOT, path)
+    with open(path_absoluto, "r", encoding="utf-8") as f:
         data = json.load(f)
     if isinstance(data.get("weather_terms"), dict):
         return data["weather_terms"].get(idioma, [])
     return data.get(idioma, [])
+
 
 
 def load_localidades(path):
@@ -77,6 +81,7 @@ def load_localidades(path):
     return localidades
 
 def carregar_dicofreg(filepath="config/freguesias_com_codigos.json"):
+    filepath = os.path.join(PROJECT_ROOT, filepath)  # <-- ADICIONA ISTO
     with open(filepath, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
@@ -101,6 +106,7 @@ def carregar_municipios_distritos(caminho_json):
 
 
 def carregar_paroquias_com_municipios(path):
+    path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")), path)
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
@@ -169,8 +175,14 @@ def guardar_csv(caminho, artigos: list[dict]):
     print(f"✅ Guardado com sucesso em {caminho}")
 
 # --------------------------- Guardar incremental ---------------------------
-def gerar_id(texto):
-    return hashlib.md5(texto.encode()).hexdigest()
+def normalize_url(url):
+    parsed = urlparse(url)
+    parsed = parsed._replace(query="", fragment="")
+    return urlunparse(parsed)
+
+def gerar_id(url):
+    url_normalizado = normalize_url(url)
+    return hashlib.md5(url_normalizado.encode("utf-8")).hexdigest()
 
 def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
     if not novos_artigos:

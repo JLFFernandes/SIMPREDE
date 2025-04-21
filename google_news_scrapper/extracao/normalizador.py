@@ -2,26 +2,82 @@ import re
 from datetime import datetime
 import unicodedata
 import json
+from urllib.parse import urlparse
+
+# Mapeamento de palavras para números
+NUM_PALAVRAS = {
+    "uma": 1, "um": 1, "duas": 2, "dois": 2, "tres": 3, "quatro": 4, "cinco": 5, "seis": 6,
+    "sete": 7, "oito": 8, "nove": 9, "dez": 10, "onze": 11, "doze": 12, "treze": 13, "catorze": 14,
+    "quatorze": 14, "quinze": 15, "dezasseis": 16, "dezesseis": 16, "dezanove": 19, "dezoito": 18,
+    "vinte": 20
+}
 
 def normalize(text):
-    return unicodedata.normalize('NFKD', text.lower()).encode('ASCII', 'ignore').decode('utf-8').strip()
+    return unicodedata.normalize('NFKD', str(text).lower()).encode('ASCII', 'ignore').decode('utf-8').strip()
+
+def palavras_para_numeros(text):
+    for palavra, numero in NUM_PALAVRAS.items():
+        text = re.sub(rf"\b{palavra}\b", str(numero), text)
+    return text
+
+def extract_victim_counts(text: str) -> dict:
+    text = palavras_para_numeros(normalize(text))
+    results = {"fatalities": 0, "injured": 0, "evacuated": 0, "displaced": 0, "missing": 0}
+    patterns = {
+        "fatalities": [r"(\d+)\s+(mort[oa]s?|faleceram|morreram|vitimas mortais?)"],
+        "injured": [r"(\d+)\s+(ferid[oa]s?)"],
+        "evacuated": [r"(\d+)\s+(evacuad[oa]s?)"],
+        "displaced": [r"(\d+)\s+(desalojad[oa]s?)"],
+        "missing": [r"(\d+)\s+(desaparecid[oa]s?)"]
+    }
+    for key, regexes in patterns.items():
+        for pattern in regexes:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                results[key] = int(match.group(1))
+                break
+    return results
+
+def inferir_titulo_do_url(url: str) -> str:
+    try:
+        path = urlparse(url).path
+        slug = path.split("/")[-1]
+        slug = re.sub(r"[-_]+", " ", slug)
+        slug = re.sub(r"\.(html|htm|php)$", "", slug)
+        slug = re.sub(r"[^\w\s]", "", slug)
+        return slug.strip()
+    except:
+        return ""
+
+def extrair_vitimas(titulo: str, corpo: str, url: str = None) -> dict:
+    titulo_norm = normalize(titulo) if titulo else ""
+    corpo_norm = normalize(corpo) if corpo else ""
+
+    vitimas_titulo = extract_victim_counts(titulo_norm)
+    if any(vitimas_titulo.values()):
+        return vitimas_titulo
+
+    if url:
+        titulo_url = inferir_titulo_do_url(url)
+        vitimas_url = extract_victim_counts(titulo_url)
+        if any(vitimas_url.values()):
+            return vitimas_url
+
+    return extract_victim_counts(corpo_norm)
+
+# (restante código inalterado)
 
 def limpar_texto_lixo(texto: str) -> str:
     if not texto:
         return ""
 
-    # Remove repetitive beginning text using regex for variations
     repetitive_patterns = [
-        r"we usecookiesand data to.*?if you choose to “accept all,”",  # Match variations of the repetitive text
-        r"we will also use cookies and data to.*?if you"  # Additional pattern for variations
+        r"we usecookiesand data to.*?if you choose to “accept all,”",
+        r"we will also use cookies and data to.*?if you"
     ]
     for pattern in repetitive_patterns:
         texto = re.sub(pattern, "", texto, flags=re.IGNORECASE).strip()
 
-    # Debugging: Print the cleaned text for verification
-    print(f"🔍 Texto após limpeza inicial: {texto[:100]}...")
-
-    # Remove other predefined "lixo"
     lixo = [
         "Saltar para o conteudo", "Este site utiliza cookies", "Iniciar sessao",
         "Politica de Privacidade", "Publicidade", "Registe-se", "Assine ja",
@@ -49,6 +105,7 @@ def extract_event_hour(text: str) -> str | None:
             return periodo
     return None
 
+
 def parse_event_date(date_str):
     if not date_str:
         return None, None, None, None
@@ -57,7 +114,6 @@ def parse_event_date(date_str):
         return date_obj, date_obj.year, date_obj.month, date_obj.day
     except ValueError:
         return None, None, None, None
-
 
 
 def detect_disaster_type(text: str) -> tuple[str, str]:
@@ -72,24 +128,8 @@ def detect_disaster_type(text: str) -> tuple[str, str]:
                 return tipo, termo
     return "Other", "Other"
 
-def extract_victim_counts(text: str) -> dict:
-    text = text.lower()
-    results = {"fatalities": 0, "injured": 0, "evacuated": 0, "displaced": 0, "missing": 0}
-    patterns = {
-        "fatalities": [r"(\d+)\s+(mort[oa]s?|faleceram|morreram)"],
-        "injured": [r"(\d+)\s+(ferid[oa]s?)"],
-        "evacuated": [r"(\d+)\s+(evacuad[oa]s?)"],
-        "displaced": [r"(\d+)\s+(desalojad[oa]s?)"],
-        "missing": [r"(\d+)\s+(desaparecid[oa]s?)"]
-    }
-    for key, regexes in patterns.items():
-        for pattern in regexes:
-            match = re.search(pattern, text)
-            if match:
-                results[key] = int(match.group(1))
-    return results
 
-def verificar_localizacao(texto):
+def verificar_localizacao(texto, MAPA_LOCALIZACOES):
     texto_norm = normalize(texto)
     for item in MAPA_LOCALIZACOES:
         mun = normalize(item["municipio"])
@@ -107,18 +147,7 @@ def is_potentially_disaster_related(text: str, keywords: list[str]) -> bool:
     text = normalize(text)
     return any(keyword in text for keyword in keywords)
 
-def carregar_paroquias_com_municipios(path="config/municipios_por_distrito.json"):
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
 
-    localidades = {}
-    municipios_set = set()
-    distritos_set = set()
-
-    for distrito, municipios in data.items():
-        distritos_set.add(distrito)
-        for municipio in municipios:
-            municipios_set.add(municipio)
-            localidades[municipio.lower()] = {"district": distrito, "municipality": municipio}
-
-    return localidades, sorted(municipios_set), sorted(distritos_set)
+def is_potentially_disaster_related(text: str, keywords: list[str]) -> bool:
+    text = normalize(text)
+    return any(keyword in text for keyword in keywords)
