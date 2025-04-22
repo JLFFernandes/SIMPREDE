@@ -29,7 +29,7 @@ def resolve_with_newspaper(url):
 
 
 #TEST:
-def resolve_google_news_url(url, driver_path="/usr/bin/chromedriver", max_wait_time=10):
+def resolve_google_news_url(url, driver_path="/opt/homebrew/bin/chromedriver", max_wait_time=10):
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")

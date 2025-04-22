@@ -12,7 +12,7 @@ from extracao.normalizador import detect_disaster_type, extract_victim_counts, p
 from datetime import datetime
 import hashlib
 
-INPUT_CSV = "data/intermediate_google_news_labeled_refined.csv"
+INPUT_CSV = "data/intermediate_google_news_relevantes.csv"
 OUTPUT_CSV = "data/artigos_google_municipios_pt.csv"
 LOCALIDADES, MUNICIPIOS, DISTRITOS = carregar_paroquias_com_municipios("config/municipios_por_distrito.json")
 FREGUESIAS_COM_CODIGOS = carregar_dicofreg()
