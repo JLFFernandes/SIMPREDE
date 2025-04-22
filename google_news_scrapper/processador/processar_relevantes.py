@@ -7,8 +7,8 @@ import os
 from urllib.parse import urlparse
 import re
 from extracao.extractor import resolve_google_news_url, fetch_and_extract_article_text
-from utils.helpers import carregar_paroquias_com_municipios, load_keywords, carregar_dicofreg, guardar_csv_incremental, detect_municipality, gerar_id
-from extracao.normalizador import detect_disaster_type, extract_victim_counts, parse_event_date, normalize, is_potentially_disaster_related
+from utils.helpers import carregar_paroquias_com_municipios, load_keywords, carregar_dicofreg, guardar_csv_incremental, detect_municipality 
+from extracao.normalizador import detect_disaster_type, extract_victim_counts, normalize, is_potentially_disaster_related
 from datetime import datetime
 import hashlib
 

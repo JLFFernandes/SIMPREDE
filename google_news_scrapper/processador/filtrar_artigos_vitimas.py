@@ -2,10 +2,12 @@ import pandas as pd
 import json  # Importar para carregar o JSON
 import re
 import joblib
+from datetime import datetime
+from joblib import load
 
 # Caminho do ficheiro de entrada
 input_path = "data/artigos_google_municipios_pt.csv"
-output_path = "artigos_com_vitimas.csv"
+output_path = "artigos_publico.csv"
 municipios_path = "config/municipios_por_distrito.json"  # Caminho para o JSON
 
 # Carregar distritos e paróquias válidas do JSON
@@ -48,19 +50,38 @@ df = pd.read_csv(input_path)
 
 # Aplicar filtro de vítimas
 df_vitimas = df[
-    (df['fatalities'] > 0) |
-    (df['injured'] > 0) |
-    (df['evacuated'] > 0) |
-    (df['displaced'] > 0) |
-    (df['missing'] > 0)
+    (df['fatalities'] >= 0) |
+    (df['injured'] >= 0) |
+    (df['evacuated'] >= 0) |
+    (df['displaced'] >= 0) |
+    (df['missing'] >= 0)
 ]
+
 
 
 # Aplicar filtro nacional
 df_vitimas = df_vitimas[df_vitimas.apply(filtra_artigo_nacional, axis=1)]
 
-# Carregar modelos treinados
-from joblib import load
+
+
+# Palavras e domínios que indicam possível irrelevância
+palavras_indesejadas = [
+    "brasil", "espanh", "venezuela", "cuba", "nepal", "china", "argentina", "eua", "angola",
+    "moçambique", "india", "internacional", "global", "historia", "histórico", "históricas",
+    "retrospectiva", "em.com.br", "correiobraziliense", "aviso-amarelo", "aviso-laranja", "previsao", "g1.globo.com", "alerta", "previsto", "emite aviso", "incendios", 
+    "desporto", "preve", "avisos", "alertas", "alerta", "aviso", "previsão", "previsões", "previsões meteorológicas", ".com.br", "moçambique", "futuro", "nationalgeographic", "colisao", "belgica"
+]
+
+# Ano atual
+ano_atual = datetime.now().year
+
+# Filtro baseado no conteúdo da URL
+df_vitimas = df_vitimas[~df_vitimas["page"].str.contains("|".join(palavras_indesejadas), case=False, na=False)]
+
+# Filtro de datas antigas e futuras irreais
+df_vitimas = df_vitimas[df_vitimas["year"].between(2017, ano_atual)]
+
+
 
 vectorizer = load("models/tfidf_vectorizer.pkl")
 model = load("models/modelo_classificacao.pkl")
@@ -79,7 +100,42 @@ df_vitimas.drop_duplicates(subset='page', inplace=True)
 # Remover linhas em branco
 df_vitimas.dropna(how='all', inplace=True)
 
-# Guardar novo ficheiro
-df_vitimas.to_csv(output_path, index=False)
+
+
+# Caminho para o ficheiro JSON de eventos climáticos
+eventos_path = "config/eventos_climaticos.json"
+
+# Carregar eventos climáticos a partir do ficheiro JSON
+with open(eventos_path, 'r', encoding='utf-8') as file:
+    eventos_climaticos = json.load(file)
+
+def identificar_evento(url):
+    if isinstance(url, str):
+        for e in eventos_climaticos:
+            if e in url.lower():
+                return e
+    return None
+
+df_vitimas["evento_nome"] = df_vitimas["page"].apply(identificar_evento)
+
+# Preencher eventos não identificados
+df_vitimas["evento_nome"].fillna("desconhecido", inplace=True)
+
+# Remover duplicados com base em evento climático, data e impacto
+df_vitimas = df_vitimas.drop_duplicates(
+    subset=["evento_nome", "date", "fatalities", "injured", "displaced"],
+    keep="first"
+)
+
+ # Guardar todos os artigos num CSV principal
+df_vitimas.to_csv("artigos_filtrados.csv", index=False)
+
+# Guardar artigos separados por fonte
+fontes = ["jn", "publico", "cnnportugal", "sicnoticias"]
+
+for fonte in fontes:
+    df_fonte = df_vitimas[df_vitimas["page"].str.contains(fonte, case=False, na=False)]
+    if not df_fonte.empty:
+        df_fonte.to_csv(f"artigos_{fonte}.csv", index=False)
 
 print(f"Ficheiro guardado em: {output_path}")
