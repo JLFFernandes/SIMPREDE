@@ -6,5 +6,5 @@ webdriver-manager==3.8.6
 scikit-learn
 joblib
 nltk
-lxml[html_clean]
+lxml_html_clean
 newspaper3k
