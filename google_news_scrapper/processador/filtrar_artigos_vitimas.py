@@ -7,7 +7,7 @@ from joblib import load
 
 # Caminho do ficheiro de entrada
 input_path = "data/artigos_google_municipios_pt.csv"
-output_path = "artigos_publico.csv"
+output_path = "data/artigos_publico.csv"
 municipios_path = "config/municipios_por_distrito.json"  # Caminho para o JSON
 
 # Carregar distritos e paróquias válidas do JSON

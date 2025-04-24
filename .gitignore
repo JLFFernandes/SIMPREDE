@@ -1,5 +1,4 @@
-#raw data
-data 
+.vscode/
 
 #virtual environment
 .venv
