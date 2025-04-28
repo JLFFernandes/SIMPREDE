@@ -1,0 +1,1 @@
+Este script foi desenvolvido para a recolha automatizada de notícias relacionadas com cheias e inundações, publicadas no "Jornal de Notícias" e arquivadas no serviço arquivo.pt. ![image](https://github.com/user-attachments/assets/e21367fc-8987-4ae9-98d1-3aa81e6b021d)
