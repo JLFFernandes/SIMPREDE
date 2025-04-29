@@ -1,0 +1,10 @@
+beautifulsoup4==4.13.3
+pandas==2.2.3
+Requests==2.32.3
+selenium==4.21.0
+webdriver-manager==3.8.6 
+scikit-learn
+joblib
+nltk
+lxml_html_clean
+newspaper3k
