@@ -56,10 +56,7 @@ df_irrelevantes = df[df["label"] == 0].copy()
 if df_relevantes.empty or df_irrelevantes.empty:
     raise ValueError("❌ Erro: O dataset filtrado contém apenas uma classe. Ajuste os critérios de filtragem.")
 
-# ✅ Balancear as classes (opcional: limitar o número de irrelevantes para balancear)
-df_irrelevantes = df_irrelevantes.sample(n=len(df_relevantes), random_state=42) if len(df_irrelevantes) > len(df_relevantes) else df_irrelevantes
-
-# ✅ Combinar as classes
+# ✅ Combinar todas as classes (sem balancear)
 df = pd.concat([df_relevantes, df_irrelevantes])
 
 # Guardar CSV anotado
@@ -69,7 +66,10 @@ df.to_csv(OUTPUT_CSV, index=False, encoding="utf-8")
 # Estatísticas
 num_relevantes = len(df_relevantes)
 num_irrelevantes = len(df_irrelevantes)
-total = len(pd.read_csv(INPUT_CSV))  # total original
+total = len(df)
+total_original = len(pd.read_csv(INPUT_CSV))
+
 print(f"✅ CSV com rótulos salvo em: {OUTPUT_CSV}")
 print(f"📊 Notícias relevantes: {num_relevantes}, irrelevantes: {num_irrelevantes}, total: {total}")
+print(f"📊 Total original: {total_original}")
 print(f"📊 Proporção de relevantes: {(num_relevantes/total)*100:.2f}%")
