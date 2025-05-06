@@ -2,6 +2,7 @@ import os
 import csv
 import hashlib
 import feedparser
+import requests
 import sys
 import time
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -25,7 +26,10 @@ def run_scraper():
                 query=keyword.replace(" ", "+"),
                 municipio=localidade.replace(" ", "+")
             )
-            feed = feedparser.parse(query_url)
+            print(f"🌐 URL gerada: {query_url}")  # Debugging statement
+
+            response = requests.get(query_url, headers={"User-Agent": "Mozilla/5.0"})
+            feed = feedparser.parse(response.content)
             print(f"🔎 {keyword} em {localidade} ({len(feed.entries)} notícias)")
 
             for item in feed.entries:

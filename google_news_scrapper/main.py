@@ -13,10 +13,10 @@ def main():
     args = parser.parse_args()
 
     scripts = {
-        #"run_scraper": "scraping/run_scraper.py",
-        #"classificacao": "classificador/classificacao.py",
-        #"train_classifier": "classificador/train_classifier.py",
-        #"classificar_artigos": "classificador/classificar_artigos_relevantes_ml.py",
+        "run_scraper": "scraping/run_scraper.py",
+        "classificacao": "classificador/classificacao.py",
+        "train_classifier": "classificador/train_classifier.py",
+        "classificar_artigos": "classificador/classificar_artigos_relevantes_ml.py",
         "processar_relevantes": "processador/processar_relevantes.py",
         "filtrar_artigos_vitimas": "processador/filtrar_artigos_vitimas.py",
     }
