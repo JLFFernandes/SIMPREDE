@@ -24,17 +24,19 @@ def extract_victim_counts(text: str) -> dict:
     text = palavras_para_numeros(normalize(text))
     results = {"fatalities": 0, "injured": 0, "evacuated": 0, "displaced": 0, "missing": 0}
     patterns = {
-        "fatalities": [r"(\d+)\s+(mort[oa]s?|faleceram|morreram|vitimas mortais?)"],
-        "injured": [r"(\d+)\s+(ferid[oa]s?)"],
-        "evacuated": [r"(\d+)\s+(evacuad[oa]s?)"],
-        "displaced": [r"(\d+)\s+(desalojad[oa]s?)"],
-        "missing": [r"(\d+)\s+(desaparecid[oa]s?)"]
+        "fatalities": [r"(\d+)\s+(pessoas?\s+mortas?|vitimas?\s+mortais?|falecid[oa]s?|morreram)"],
+        "injured": [r"(\d+)\s+(pessoas?\s+feridas?|ferid[oa]s?)"],
+        "evacuated": [r"(\d+)\s+(pessoas?\s+evacuadas?|evacuad[oa]s?)"],
+        "displaced": [r"(\d+)\s+(pessoas?\s+desalojadas?|desalojad[oa]s?|deslocad[oa]s?)"],
+        "missing": [r"(\d+)\s+(pessoas?\s+desaparecidas?|desaparecid[oa]s?)"]
     }
     for key, regexes in patterns.items():
         for pattern in regexes:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                results[key] = int(match.group(1))
+                num = int(match.group(1))
+                if num < 1000:  # realistic upper bound
+                    results[key] = num
                 break
     return results
 
