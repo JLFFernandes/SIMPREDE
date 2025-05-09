@@ -57,12 +57,8 @@ df_vitimas = df[
     (df['missing'] >= 0)
 ]
 
-
-
 # Aplicar filtro nacional
 df_vitimas = df_vitimas[df_vitimas.apply(filtra_artigo_nacional, axis=1)]
-
-
 
 # Palavras e domínios que indicam possível irrelevância
 palavras_indesejadas = [
@@ -81,8 +77,6 @@ df_vitimas = df_vitimas[~df_vitimas["page"].str.contains("|".join(palavras_indes
 # Filtro de datas antigas e futuras irreais
 df_vitimas = df_vitimas[df_vitimas["year"].between(2017, ano_atual)]
 
-
-
 vectorizer = load("models/tfidf_vectorizer.pkl")
 model = load("models/modelo_classificacao.pkl")
 
@@ -99,8 +93,6 @@ df_vitimas.drop_duplicates(subset='page', inplace=True)
 
 # Remover linhas em branco
 df_vitimas.dropna(how='all', inplace=True)
-
-
 
 # Caminho para o ficheiro JSON de eventos climáticos
 eventos_path = "config/eventos_climaticos.json"
@@ -119,7 +111,7 @@ def identificar_evento(url):
 df_vitimas["evento_nome"] = df_vitimas["page"].apply(identificar_evento)
 
 # Preencher eventos não identificados
-df_vitimas["evento_nome"].fillna("desconhecido", inplace=True)
+df_vitimas["evento_nome"] = df_vitimas["evento_nome"].fillna("desconhecido")
 
 # Remover duplicados com base em evento climático, data e impacto
 df_vitimas = df_vitimas.drop_duplicates(
@@ -127,7 +119,7 @@ df_vitimas = df_vitimas.drop_duplicates(
     keep="first"
 )
 
- # Guardar todos os artigos num CSV principal
+# Guardar todos os artigos num CSV principal
 df_vitimas.to_csv("artigos_filtrados.csv", index=False)
 
 # Guardar artigos separados por fonte

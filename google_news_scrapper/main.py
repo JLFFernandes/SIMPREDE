@@ -6,18 +6,30 @@ def main():
     parser = argparse.ArgumentParser(description="Pipeline de scraping e processamento de notícias")
     parser.add_argument(
         "--etapa",
-        choices=["run_scraper", "classificacao", "train_classifier", "classificar_artigos", "processar_relevantes", "all"],
+        choices=[
+            "run_scraper",
+            "classificacao",
+            "train_classifier",
+            "classificar_artigos",
+            "processar_relevantes",
+            "filtrar_artigos_vitimas",
+            "train_victim_ner",
+            "extract_victims_with_ner",
+            "all"
+        ],
         default="all",
         help="Escolhe a etapa do pipeline ou executa todas as etapas ('all').",
     )
     args = parser.parse_args()
 
     scripts = {
-        "run_scraper": "scraping/run_scraper.py",
-        "classificacao": "classificador/classificacao.py",
-        "train_classifier": "classificador/train_classifier.py",
-        "classificar_artigos": "classificador/classificar_artigos_relevantes_ml.py",
+        #"run_scraper": "scraping/run_scraper.py",
+        #"classificacao": "classificador/classificacao.py",
+        #"train_classifier": "classificador/train_classifier.py",
+        #"classificar_artigos": "classificador/classificar_artigos_relevantes_ml.py",
         "processar_relevantes": "processador/processar_relevantes.py",
+        "train_victim_ner": "nlp/train_victim_ner.py",  
+        "extract_victims_with_ner": "nlp/extract_victims_with_ner.py",
         "filtrar_artigos_vitimas": "processador/filtrar_artigos_vitimas.py",
     }
 
