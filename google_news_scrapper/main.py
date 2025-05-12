@@ -15,6 +15,8 @@ def main():
             "filtrar_artigos_vitimas",
             "train_victim_ner",
             "extract_victims_with_ner",
+            "exportar_bd_artigos_google",
+            "exportar_bd_artigos_filtrados",
             "all"
         ],
         default="all",
@@ -30,7 +32,7 @@ def main():
         "processar_relevantes": "processador/processar_relevantes.py",
         "train_victim_ner": "nlp/train_victim_ner.py",  
         "extract_victims_with_ner": "nlp/extract_victims_with_ner.py",
-        "filtrar_artigos_vitimas": "processador/filtrar_artigos_vitimas.py",
+        "filtrar_artigos_vitimas": "processador/filtrar_artigos_vitimas.py"
     }
 
     if args.etapa == "all":
