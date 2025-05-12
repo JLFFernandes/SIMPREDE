@@ -8,3 +8,7 @@ joblib
 nltk
 lxml_html_clean
 newspaper3k
+python-dotenv
+sqlalchemy
+psycopg2-binary
+spacy

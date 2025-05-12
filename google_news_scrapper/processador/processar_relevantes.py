@@ -238,10 +238,12 @@ def main():
             if len(artigos_final) % SAVE_EVERY == 0:
                 guardar_csv_incremental(OUTPUT_CSV, artigos_final)
                 print(f"💾 {len(artigos_final)} artigos salvos até agora...")
+                artigos_final.clear()  # Clear the list to free memory
         # Save any remaining articles not yet saved
-        if len(artigos_final) % SAVE_EVERY != 0:
+        if len(artigos_final) % SAVE_EVERY != 0 and len(artigos_final) > 0:
             guardar_csv_incremental(OUTPUT_CSV, artigos_final)
             print(f"💾 {len(artigos_final)} artigos salvos (final).")
+            artigos_final.clear()  # Clear after final save
 
     if artigos_final:
         print(f"✅ Base de dados final atualizada com {len(artigos_final)} artigos.")
