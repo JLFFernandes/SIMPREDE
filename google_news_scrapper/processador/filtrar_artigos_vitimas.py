@@ -6,8 +6,8 @@ from datetime import datetime
 from joblib import load
 
 # Caminho do ficheiro de entrada
-input_path = "data/artigos_google_municipios_pt.csv"
-output_path = "data/artigos_publico.csv"
+input_path = "data/structured/artigos_google_municipios_pt.csv"
+output_path = "data/structured/artigos_publico.csv"
 municipios_path = "config/municipios_por_distrito.json"  # Caminho para o JSON
 
 # Carregar distritos e paróquias válidas do JSON
@@ -120,7 +120,7 @@ df_vitimas = df_vitimas.drop_duplicates(
 )
 
 # Guardar todos os artigos num CSV principal
-df_vitimas.to_csv("artigos_filtrados.csv", index=False)
+df_vitimas.to_csv("data/structured/artigos_filtrados.csv", index=False)
 
 # Guardar artigos separados por fonte
 fontes = ["jn", "publico", "cnnportugal", "sicnoticias"]
@@ -128,6 +128,6 @@ fontes = ["jn", "publico", "cnnportugal", "sicnoticias"]
 for fonte in fontes:
     df_fonte = df_vitimas[df_vitimas["page"].str.contains(fonte, case=False, na=False)]
     if not df_fonte.empty:
-        df_fonte.to_csv(f"artigos_{fonte}.csv", index=False)
+        df_fonte.to_csv(f"data/structured/artigos_{fonte}.csv", index=False)
 
 print(f"Ficheiro guardado em: {output_path}")
