@@ -11,7 +11,7 @@ from nltk.corpus import stopwords
 import nltk
 
 # ========= CONFIG ========= #
-DATA_PATH = "data/intermediate_google_news_labeled_refined.csv"
+DATA_PATH = "data/raw/intermediate_google_news_labeled_refined.csv"
 MODEL_DIR = "models"
 MODEL_FILE = os.path.join(MODEL_DIR, "modelo_classificacao.pkl")
 VECTORIZER_FILE = os.path.join(MODEL_DIR, "tfidf_vectorizer.pkl")

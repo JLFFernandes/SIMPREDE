@@ -5,10 +5,10 @@ import joblib
 import os
 
 # Caminhos dos ficheiros
-INPUT_CSV = "data/intermediate_google_news.csv"
+INPUT_CSV = "data/raw/intermediate_google_news.csv"
 VECTORIZER_PATH = "models/tfidf_vectorizer.pkl"
 MODEL_PATH = "models/modelo_classificacao.pkl"
-OUTPUT_CSV = "data/intermediate_google_news_relevantes.csv"
+OUTPUT_CSV = "data/raw/intermediate_google_news_relevantes.csv"
 
 # 1️⃣ Carregar o CSV com os artigos intermédios
 df = pd.read_csv(INPUT_CSV)

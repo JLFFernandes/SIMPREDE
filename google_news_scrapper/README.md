@@ -22,6 +22,12 @@ O pipeline é composto por várias etapas:
    ```bash
    python3 main.py --etapa all
    ```
+
+   Para coletar notícias de uma data específica:
+   ```bash
+   python3 scraping/run_scraper.py --date 2024-03-20
+   ```
+
    Ou para correr apenas uma etapa específica (exemplo: processar artigos relevantes):
    ```bash
    python3 main.py --etapa processar_relevantes

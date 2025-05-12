@@ -3,6 +3,7 @@ from spacy.training import Example
 import spacy
 import sys
 import os
+import random
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pandas as pd
 import time
@@ -15,9 +16,71 @@ from extracao.normalizador import detect_disaster_type, normalize, is_potentiall
 from datetime import datetime
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
+from fake_useragent import UserAgent
+from time import sleep
+from functools import wraps
 
-INPUT_CSV = "data/intermediate_google_news_relevantes.csv"
-OUTPUT_CSV = "data/artigos_google_municipios_pt.csv"
+# Rate limiting configuration
+MIN_DELAY = 10
+MAX_DELAY = 30
+MAX_RETRIES = 3
+BACKOFF_FACTOR = 2
+
+def random_delay_decorator(min_delay=MIN_DELAY, max_delay=MAX_DELAY):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            sleep(random.uniform(min_delay, max_delay))
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+def get_random_user_agent():
+    try:
+        ua = UserAgent()
+        return ua.random
+    except:
+        # Fallback user agents if fake-useragent fails
+        fallback_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0'
+        ]
+        return random.choice(fallback_agents)
+
+@random_delay_decorator()
+def fetch_with_retry(url, session=None):
+    headers = {'User-Agent': get_random_user_agent()}
+    retry_count = 0
+    while retry_count < MAX_RETRIES:
+        try:
+            # If using proxies (optional):
+            # proxies = {'http': 'http://your-proxy', 'https': 'https://your-proxy'}
+            if session:
+                response = session.get(url, headers=headers, timeout=30)  # Add proxies=proxies if using
+            else:
+                response = requests.get(url, headers=headers, timeout=30)  # Add proxies=proxies if using
+            response.raise_for_status()
+            return response
+        except Exception as e:
+            retry_count += 1
+            if retry_count == MAX_RETRIES:
+                print(f"❌ Failed after {MAX_RETRIES} retries: {url}")
+                raise e
+            sleep_time = (BACKOFF_FACTOR ** retry_count) + random.uniform(1, 3)
+            print(f"⚠️ Retry {retry_count}/{MAX_RETRIES} after {sleep_time:.1f}s: {url}")
+            sleep(sleep_time)
+    return None
+
+def resolve_google_news_url(url):
+    # Google News article URLs are not reliably resolvable programmatically due to bot protection
+    # For now, we return the original URL or None if invalid
+    if url.startswith("http"):
+        return url
+    return None
+
+INPUT_CSV = "data/raw/intermediate_google_news_relevantes.csv"
+OUTPUT_CSV = "data/structured/artigos_google_municipios_pt.csv"
 LOCALIDADES, MUNICIPIOS, DISTRITOS = carregar_paroquias_com_municipios("config/municipios_por_distrito.json")
 FREGUESIAS_COM_CODIGOS = carregar_dicofreg()
 KEYWORDS = load_keywords("config/keywords.json", idioma="portuguese")
@@ -141,57 +204,64 @@ def processar_artigo(row):
     if not resolved_url or not resolved_url.startswith("http"):
         print(f"⚠️ Link não resolvido: {original_url}")
         return None
+    try:
+        texto = fetch_with_retry(resolved_url)
+        if texto is None:
+            print(f"⚠️ Não foi possível obter o texto do artigo: {resolved_url}")
+            return None
+        texto = texto.text
+        if not texto or not is_potentially_disaster_related(texto, KEYWORDS):
+            print(f"⚠️ Artigo ignorado após extração: {titulo}")
+            return None
 
-    texto = fetch_and_extract_article_text(resolved_url)
-    if not texto or not is_potentially_disaster_related(texto, KEYWORDS):
-        print(f"⚠️ Artigo ignorado após extração: {titulo}")
+        # Only use the main body for NER extraction
+        main_body = extract_main_body(texto, titulo)
+
+        tipo, subtipo = detect_disaster_type(texto)
+        # Primeiro tenta extrair vítimas do título; se não encontrar nenhuma, tenta no corpo principal
+        vitimas = extract_victims_ner(titulo)
+        if all(v == 0 for v in vitimas.values()):
+            vitimas = extract_victims_ner(main_body)
+        loc = detect_municipality(texto, LOCALIDADES) or localidade
+        district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
+        concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
+        parish_normalized = normalize(loc.lower())
+        dicofreg = FREGUESIAS_COM_CODIGOS.get(parish_normalized, "")
+
+        data_evt_formatada, ano, mes, dia, hora_evt = formatar_data_para_ddmmyyyy(publicado)
+        fonte = extrair_nome_fonte(resolved_url)
+
+        article_id = row["ID"]
+        if not article_id:
+            return None
+
+        return {
+            "ID": article_id,
+            "type": tipo,
+            "subtype": subtipo,
+            "date": data_evt_formatada,
+            "year": ano,
+            "month": mes,
+            "day": dia,
+            "hour": hora_evt,
+            "georef": loc,
+            "district": district,
+            "municipali": concelho,
+            "parish": loc,
+            "DICOFREG": dicofreg,
+            "source": fonte,
+            "sourcedate": datetime.today().date().isoformat(),
+            "sourcetype": "web",
+            "page": resolved_url,
+            "fatalities": vitimas["fatalities"],
+            "injured": vitimas["injured"],
+            "evacuated": vitimas["evacuated"],
+            "displaced": vitimas["displaced"],
+            "missing": vitimas["missing"],
+        }
+    except Exception as e:
+        print(f"❌ Erro ao processar artigo {resolved_url}: {str(e)}")
         return None
-
-    # Only use the main body for NER extraction
-    main_body = extract_main_body(texto, titulo)
-
-    tipo, subtipo = detect_disaster_type(texto)
-    # Primeiro tenta extrair vítimas do título; se não encontrar nenhuma, tenta no corpo principal
-    vitimas = extract_victims_ner(titulo)
-    if all(v == 0 for v in vitimas.values()):
-        vitimas = extract_victims_ner(main_body)
-    loc = detect_municipality(texto, LOCALIDADES) or localidade
-    district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
-    concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
-    parish_normalized = normalize(loc.lower())
-    dicofreg = FREGUESIAS_COM_CODIGOS.get(parish_normalized, "")
-
-    data_evt_formatada, ano, mes, dia, hora_evt = formatar_data_para_ddmmyyyy(publicado)
-    fonte = extrair_nome_fonte(resolved_url)
-
-    article_id = row["ID"]
-    if not article_id:
-        return None
-
-    return {
-        "ID": article_id,
-        "type": tipo,
-        "subtype": subtipo,
-        "date": data_evt_formatada,
-        "year": ano,
-        "month": mes,
-        "day": dia,
-        "hour": hora_evt,
-        "georef": loc,
-        "district": district,
-        "municipali": concelho,
-        "parish": loc,
-        "DICOFREG": dicofreg,
-        "source": fonte,
-        "sourcedate": datetime.today().date().isoformat(),
-        "sourcetype": "web",
-        "page": resolved_url,
-        "fatalities": vitimas["fatalities"],
-        "injured": vitimas["injured"],
-        "evacuated": vitimas["evacuated"],
-        "displaced": vitimas["displaced"],
-        "missing": vitimas["missing"],
-    }
 
 def carregar_links_existentes(output_csv):
     if not os.path.exists(output_csv):
@@ -202,7 +272,7 @@ def carregar_links_existentes(output_csv):
     except Exception:
         return set()
 
-SAVE_EVERY = 10  # Save every 10 articles (change as needed)
+SAVE_EVERY = 5  # Save every 5 articles (change as needed)
 
 def main():
     if not os.path.exists(INPUT_CSV):
@@ -229,21 +299,21 @@ def main():
             print("⚠️ Último ID não encontrado em relevantes. Começando do início.")
 
     artigos_final = []
-    artigos_a_processar = relevantes.iloc[start_index:].to_dict('records')
+    artigos_a_processar = relevantes.iloc[start_index:].to_dict('records')[:10]
     total = len(artigos_a_processar)
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        for idx, artigo in enumerate(executor.map(processar_artigo, artigos_a_processar), 1):
-            if artigo:
-                artigos_final.append(artigo)
-            if len(artigos_final) % SAVE_EVERY == 0:
-                guardar_csv_incremental(OUTPUT_CSV, artigos_final)
-                print(f"💾 {len(artigos_final)} artigos salvos até agora...")
-                artigos_final.clear()  # Clear the list to free memory
-        # Save any remaining articles not yet saved
-        if len(artigos_final) % SAVE_EVERY != 0 and len(artigos_final) > 0:
+    with ThreadPoolExecutor(max_workers=4) as executor:  # Reduced max_workers to 1 for better rate limiting
+        results = list(executor.map(processar_artigo, artigos_a_processar))
+    for idx, artigo in enumerate(results, 1):
+        if artigo:
+            artigos_final.append(artigo)
+        if len(artigos_final) >= SAVE_EVERY:
             guardar_csv_incremental(OUTPUT_CSV, artigos_final)
-            print(f"💾 {len(artigos_final)} artigos salvos (final).")
-            artigos_final.clear()  # Clear after final save
+            print(f"💾 {len(artigos_final)} artigos salvos até agora...")
+            artigos_final.clear()
+            time.sleep(random.uniform(15, 30))  # Descanso entre blocos para evitar bloqueio
+    if artigos_final:
+        guardar_csv_incremental(OUTPUT_CSV, artigos_final)
+        print(f"💾 {len(artigos_final)} artigos salvos (final).")
 
     if artigos_final:
         print(f"✅ Base de dados final atualizada com {len(artigos_final)} artigos.")

@@ -5,11 +5,13 @@ import re
 import sys
 import requests
 from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor
+import time
 
 MODEL_PATH = os.environ.get("VICTIM_NER_MODEL_PATH", "../models/victims_nlp")
 MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), MODEL_PATH))
-INPUT_CSV = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/artigos_google_municipios_pt.csv"))
-OUTPUT_CSV = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/ner_victims_list.csv"))
+INPUT_CSV = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/structured/artigos_google_municipios_pt.csv"))
+OUTPUT_CSV = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/raw/ner_victims_list.csv"))
 
 PT_NUMBER_WORDS = {
     "um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "quatro": 4, "cinco": 5, "seis": 6, "sete": 7,
@@ -86,16 +88,24 @@ def main():
     print(f"📄 Total de artigos a processar: {total}")
 
     all_mentions = []
-    for idx, row in df.iterrows():
+
+    def process_row(idx_row):
+        idx, row = idx_row
         article_id = row.get("ID", "")
         url = row.get("page", "")
         print(f"➡️ [{idx+1}/{total}] Processando artigo ID={article_id} URL={url}")
         try:
             mentions = extract_mentions(row, ner)
             print(f"   ↳ {len(mentions)} menções extraídas.")
-            all_mentions.extend(mentions)
+            return mentions
         except Exception as e:
             print(f"   ⚠️ Erro ao processar artigo ID={article_id}: {e}")
+            return []
+
+    with ThreadPoolExecutor(max_workers=64) as executor:
+        results = list(executor.map(process_row, [(i, row) for i, row in df.iterrows()]))
+    for m in results:
+        all_mentions.extend(m)
 
     if not all_mentions:
         print("⚠️ Nenhuma menção de vítima extraída.")

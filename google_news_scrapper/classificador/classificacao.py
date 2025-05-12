@@ -5,8 +5,8 @@ import re
 import os
 
 # === Caminhos ===
-INPUT_CSV = "data/intermediate_google_news.csv"
-OUTPUT_CSV = "data/intermediate_google_news_labeled_refined.csv"
+INPUT_CSV = "data/raw/intermediate_google_news.csv"
+OUTPUT_CSV = "data/raw/intermediate_google_news_labeled_refined.csv"
 
 # Check if the input file exists
 if not os.path.exists(INPUT_CSV):
