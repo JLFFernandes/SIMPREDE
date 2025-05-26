@@ -1,5 +1,0 @@
-ID,type,subtype,date,year,month,day,hour,georef,district,municipali,parish,DICOFREG,source,sourcedate,sourcetype,page,fatalities,injured,evacuated,displaced,missing,evento_nome
-44e1e92c8b593daa5d41cedf274290bd,Other,Other,06/03/2025,2025,3,6,08:00,aveiro,Aveiro,Aveiro,aveiro,,jn,2025-05-09,web,https://www.jn.pt/2848798145/frio-chuva-vento-e-neve-a-partir-de-sexta-feira-mau-tempo-agrava-se/,0,0,0,0,0,desconhecido
-bd188ff25f899e290d264a4d96d22904,Other,Other,12/04/2025,2025,4,12,07:00,beja,Beja,Beja,beja,,jn,2025-05-09,web,https://www.jn.pt/8501795390/chuva-forte-causou-inundacoes-em-lisboa-e-beja-e-deixou-pessoas-isoladas-em-loures/,0,0,0,0,0,desconhecido
-83576f952743893832e0314211427682,Other,Other,28/06/2024,2024,6,28,07:00,serpa,Beja,Serpa,serpa,,jn,2025-05-09,web,https://www.jn.pt/7328629472/chuva-provoca-inundacoes-na-via-publica-em-serpa/,0,0,0,0,0,desconhecido
-3b2b48fa9340ed573fce04504814ab09,Flood,cheia,22/02/2025,2025,2,22,08:00,braga,Braga,Braga,braga,,jn,2025-05-09,web,https://www.jn.pt/7398643080/braga-constroi-barreira-no-rio-cavado-para-impedir-inundacoes/,0,0,0,0,0,desconhecido

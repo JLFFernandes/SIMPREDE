@@ -1,6 +1,4 @@
-from spacy.tokens import DocBin
-from spacy.training import Example
-import spacy
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import sys
 import os
 import random
@@ -12,98 +10,46 @@ from urllib.parse import urlparse
 import re
 from extracao.extractor import resolve_google_news_url, fetch_and_extract_article_text
 from utils.helpers import carregar_paroquias_com_municipios, load_keywords, carregar_dicofreg, guardar_csv_incremental, detect_municipality 
-from extracao.normalizador import detect_disaster_type, normalize, is_potentially_disaster_related
+from extracao.normalizador import detect_disaster_type, extract_victim_counts, normalize, is_potentially_disaster_related
 from datetime import datetime
 import hashlib
-from concurrent.futures import ThreadPoolExecutor
-from fake_useragent import UserAgent
-from time import sleep
-from functools import wraps
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+import requests
+from collections import defaultdict
 
-# Rate limiting configuration
-MIN_DELAY = 10
-MAX_DELAY = 30
-MAX_RETRIES = 3
-BACKOFF_FACTOR = 2
-
-def random_delay_decorator(min_delay=MIN_DELAY, max_delay=MAX_DELAY):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            sleep(random.uniform(min_delay, max_delay))
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
-
-def get_random_user_agent():
-    try:
-        ua = UserAgent()
-        return ua.random
-    except:
-        # Fallback user agents if fake-useragent fails
-        fallback_agents = [
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0'
-        ]
-        return random.choice(fallback_agents)
-
-@random_delay_decorator()
-def fetch_with_retry(url, session=None):
-    headers = {'User-Agent': get_random_user_agent()}
-    retry_count = 0
-    while retry_count < MAX_RETRIES:
-        try:
-            # If using proxies (optional):
-            # proxies = {'http': 'http://your-proxy', 'https': 'https://your-proxy'}
-            if session:
-                response = session.get(url, headers=headers, timeout=30)  # Add proxies=proxies if using
-            else:
-                response = requests.get(url, headers=headers, timeout=30)  # Add proxies=proxies if using
-            response.raise_for_status()
-            return response
-        except Exception as e:
-            retry_count += 1
-            if retry_count == MAX_RETRIES:
-                print(f"❌ Failed after {MAX_RETRIES} retries: {url}")
-                raise e
-            sleep_time = (BACKOFF_FACTOR ** retry_count) + random.uniform(1, 3)
-            print(f"⚠️ Retry {retry_count}/{MAX_RETRIES} after {sleep_time:.1f}s: {url}")
-            sleep(sleep_time)
-    return None
-
-def resolve_google_news_url(url):
-    # Google News article URLs are not reliably resolvable programmatically due to bot protection
-    # For now, we return the original URL or None if invalid
-    if url.startswith("http"):
-        return url
-    return None
-
-INPUT_CSV = "data/raw/intermediate_google_news_relevantes.csv"
+INPUT_CSV = "data/raw/intermediate_google_news.csv"
 OUTPUT_CSV = "data/structured/artigos_google_municipios_pt.csv"
 LOCALIDADES, MUNICIPIOS, DISTRITOS = carregar_paroquias_com_municipios("config/municipios_por_distrito.json")
 FREGUESIAS_COM_CODIGOS = carregar_dicofreg()
 KEYWORDS = load_keywords("config/keywords.json", idioma="portuguese")
 
-# Load your fine-tuned NER model if available
-NER_MODEL_PATH = os.environ.get("VICTIM_NER_MODEL_PATH", "").strip()
-if not NER_MODEL_PATH:
-    # Always resolve relative to this script's directory
-    NER_MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "victims_nlp")
-    NER_MODEL_PATH = os.path.abspath(NER_MODEL_PATH)
-print(f"🔎 Tentando carregar modelo NER de vítimas de: {NER_MODEL_PATH}")
-ner = None
-if NER_MODEL_PATH:
-    try:
-        ner = spacy.load(NER_MODEL_PATH)
-        # Ensure sentence boundaries are set
-        if not ner.has_pipe("senter") and not ner.has_pipe("parser") and not ner.has_pipe("sentencizer"):
-            ner.add_pipe("sentencizer")
-    except Exception as e:
-        print(f"⚠️ Não foi possível carregar o modelo NER de vítimas: {e}")
-        ner = None
-else:
-    print("⚠️ Caminho do modelo NER de vítimas não definido. Extração de vítimas será ignorada.")
+
+class DynamicRateLimiter:
+    def __init__(self):
+        self.last_access = defaultdict(float)
+        self.domain_delays = defaultdict(lambda: 2.0)  # Default 2 second delay
+    
+    def wait_if_needed(self, url):
+        domain = urlparse(url).netloc
+        elapsed = time.time() - self.last_access[domain]
+        delay = self.domain_delays[domain]
+        
+        if elapsed < delay:
+            wait_time = delay - elapsed
+            time.sleep(wait_time)
+        
+        self.last_access[domain] = time.time()
+    
+    def adjust_delay(self, url, success):
+        domain = urlparse(url).netloc
+        if success:
+            # Gradually reduce delay for successful requests (but keep minimum)
+            self.domain_delays[domain] = max(1.0, self.domain_delays[domain] * 0.9)
+        else:
+            # Increase delay for failed requests
+            self.domain_delays[domain] = min(60.0, self.domain_delays[domain] * 2)
+
 
 def extrair_nome_fonte(url):
     """
@@ -135,133 +81,198 @@ def formatar_data_para_ddmmyyyy(published_raw):
     except Exception:
         return "", None, None, None, ""
 
-
-# Helper to convert Portuguese number words to digits
-PT_NUMBER_WORDS = {
-    "um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "quatro": 4, "cinco": 5, "seis": 6, "sete": 7,
-    "oito": 8, "nove": 9, "dez": 10, "onze": 11, "doze": 12, "treze": 13, "catorze": 14, "quatorze": 14,
-    "quinze": 15, "dezasseis": 16, "dezesseis": 16, "dezessete": 17, "dezanove": 19, "dezoito": 18, "dezanove": 19,
-    "vinte": 20, "trinta": 30, "quarenta": 40, "cinquenta": 50, "sessenta": 60, "setenta": 70, "oitenta": 80, "noventa": 90,
-    "cem": 100, "cento": 100, "duzentos": 200, "trezentos": 300, "quatrocentos": 400, "quinhentos": 500,
-    "seiscentos": 600, "setecentos": 700, "oitocentos": 800, "novecentos": 900, "mil": 1000
-}
-
-def extract_number_from_text(text):
-    # Try to find a digit first
-    match = re.search(r"\d+", text)
-    if match:
-        return int(match.group())
-    # Try to find a number word
-    words = re.findall(r"\w+", text.lower())
-    for word in words:
-        if word in PT_NUMBER_WORDS:
-            return PT_NUMBER_WORDS[word]
-    return 1  # fallback
-
-def extract_victims_ner(text):
-    if ner is None:
-        return {"fatalities": 0, "injured": 0, "evacuated": 0, "displaced": 0, "missing": 0}
-    
-    result = {"fatalities": 0, "injured": 0, "evacuated": 0, "displaced": 0, "missing": 0}
-    sentences = [sent.text for sent in ner(text).sents if re.search(r"(mort[oa]s?|ferid[oa]s?|evacuad[oa]s?|desalojad[oa]s?|desaparecid[oa]s?)", sent.text, re.IGNORECASE)]
-    
-    for sentence in sentences:
-        doc = ner(sentence)
-        for ent in doc.ents:
-            label = ent.label_
-            value = extract_number_from_text(ent.text)
-            if value >= 1000:  # unrealistic number, skip
-                continue
-            if label == "FATALITIES":
-                result["fatalities"] += value
-            elif label == "INJURED":
-                result["injured"] += value
-            elif label == "EVACUATED":
-                result["evacuated"] += value
-            elif label == "DISPLACED":
-                result["displaced"] += value
-            elif label == "MISSING":
-                result["missing"] += value
-    return result
-
-def extract_main_body(text, title=None):
+def extract_victims_from_title(title):
     """
-    Extracts the main body of the article, removing the title if it appears at the start.
+    Extrai contagens de vítimas do título da notícia
+    Retorna um dicionário com as contagens encontradas
     """
-    if title and text.startswith(title):
-        # Remove the title from the beginning if present
-        return text[len(title):].lstrip(" :\n\r-")
-    return text
+    vitimas = {
+        "fatalities": 0,
+        "injured": 0,
+        "evacuated": 0,
+        "displaced": 0,
+        "missing": 0
+    }
+    
+    # Padrões para mortos/vítimas mortais
+    fatalities_patterns = [
+        r'(\d+)\s*mort[eo]s?',
+        r'(\d+)\s*vítimas?\s*mortais?',
+        r'(\d+)\s*óbitos?'
+    ]
+    
+    # Padrões para feridos
+    injured_patterns = [
+        r'(\d+)\s*feridos?',
+        r'(\d+)\s*pessoas?\s*feridas?'
+    ]
+    
+    # Padrões para evacuados
+    evacuated_patterns = [
+        r'(\d+)\s*evacuad[oa]s?',
+        r'(\d+)\s*pessoas?\s*evacuadas?'
+    ]
+    
+    # Padrões para desalojados
+    displaced_patterns = [
+        r'(\d+)\s*desalojad[oa]s?',
+        r'(\d+)\s*pessoas?\s*desalojadas?'
+    ]
+    
+    # Padrões para desaparecidos
+    missing_patterns = [
+        r'(\d+)\s*desaparecid[oa]s?',
+        r'(\d+)\s*pessoas?\s*desaparecidas?'
+    ]
 
-def processar_artigo(row):
+    # Procurar por cada tipo de vítima
+    for pattern in fatalities_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            vitimas["fatalities"] = int(match.group(1))
+            break
+
+    for pattern in injured_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            vitimas["injured"] = int(match.group(1))
+            break
+
+    for pattern in evacuated_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            vitimas["evacuated"] = int(match.group(1))
+            break
+
+    for pattern in displaced_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            vitimas["displaced"] = int(match.group(1))
+            break
+
+    for pattern in missing_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            vitimas["missing"] = int(match.group(1))
+            break
+
+    return vitimas
+
+def processar_artigo(row, rate_limiter):
     original_url = row["link"]
     titulo = row["title"]
     localidade = row["localidade"]
     keyword = row.get("keyword", "desconhecido")
     publicado = row.get("published", "")
 
-    resolved_url = resolve_google_news_url(original_url)
-    if not resolved_url or not resolved_url.startswith("http"):
-        print(f"⚠️ Link não resolvido: {original_url}")
-        return None
+    # Initialize the variables before using them
+    potential_tipo_from_title = None
+    subtipo_from_title = None
+
+    # Check for victims in the title first
+    vitimas_do_titulo = extract_victims_from_title(titulo)
+    has_victims_in_title = any(vitimas_do_titulo.values())
+    if has_victims_in_title:
+        print(f"✅ Vítimas encontradas no título: {titulo}")
+        # Try to detect disaster type from title
+        potential_tipo_from_title, subtipo_from_title = detect_disaster_type(titulo)
+        if potential_tipo_from_title != "unknown" and potential_tipo_from_title:
+            print(f"🔍 Tipo de desastre identificado do título: {potential_tipo_from_title}")
+    
     try:
-        texto = fetch_with_retry(resolved_url)
-        if texto is None:
-            print(f"⚠️ Não foi possível obter o texto do artigo: {resolved_url}")
+        resolved_url = resolve_google_news_url(original_url)
+        if not resolved_url or not resolved_url.startswith("http"):
+            print(f"⚠️ Link não resolvido: {original_url}")
+            # If we have victims and disaster type from title, we could still create a partial record
+            if has_victims_in_title and potential_tipo_from_title and potential_tipo_from_title != "unknown":
+                print(f"💡 Criando registro parcial baseado apenas no título")
+                # Create partial record with title information
+                # (implement this if you want this feature)
+                pass
             return None
-        texto = texto.text
-        if not texto or not is_potentially_disaster_related(texto, KEYWORDS):
-            print(f"⚠️ Artigo ignorado após extração: {titulo}")
-            return None
-
-        # Only use the main body for NER extraction
-        main_body = extract_main_body(texto, titulo)
-
-        tipo, subtipo = detect_disaster_type(texto)
-        # Primeiro tenta extrair vítimas do título; se não encontrar nenhuma, tenta no corpo principal
-        vitimas = extract_victims_ner(titulo)
-        if all(v == 0 for v in vitimas.values()):
-            vitimas = extract_victims_ner(main_body)
-        loc = detect_municipality(texto, LOCALIDADES) or localidade
-        district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
-        concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
-        parish_normalized = normalize(loc.lower())
-        dicofreg = FREGUESIAS_COM_CODIGOS.get(parish_normalized, "")
-
-        data_evt_formatada, ano, mes, dia, hora_evt = formatar_data_para_ddmmyyyy(publicado)
-        fonte = extrair_nome_fonte(resolved_url)
-
-        article_id = row["ID"]
-        if not article_id:
-            return None
-
-        return {
-            "ID": article_id,
-            "type": tipo,
-            "subtype": subtipo,
-            "date": data_evt_formatada,
-            "year": ano,
-            "month": mes,
-            "day": dia,
-            "hour": hora_evt,
-            "georef": loc,
-            "district": district,
-            "municipali": concelho,
-            "parish": loc,
-            "DICOFREG": dicofreg,
-            "source": fonte,
-            "sourcedate": datetime.today().date().isoformat(),
-            "sourcetype": "web",
-            "page": resolved_url,
-            "fatalities": vitimas["fatalities"],
-            "injured": vitimas["injured"],
-            "evacuated": vitimas["evacuated"],
-            "displaced": vitimas["displaced"],
-            "missing": vitimas["missing"],
-        }
-    except Exception as e:
-        print(f"❌ Erro ao processar artigo {resolved_url}: {str(e)}")
+    except (requests.RequestException, ConnectionError, TimeoutError) as e:
+        print(f"❌ Erro de conexão ao resolver URL {original_url}: {str(e)}")
+        # Wait a bit before continuing
+        time.sleep(5)
         return None
+
+    # Only fetch full text if needed
+    texto = ""
+    if not has_victims_in_title or not potential_tipo_from_title or potential_tipo_from_title == "unknown":
+        try:
+            rate_limiter.wait_if_needed(resolved_url)  # Wait before the request
+            texto = fetch_and_extract_article_text(resolved_url)
+            if not texto or not is_potentially_disaster_related(texto, KEYWORDS):
+                print(f"⚠️ Artigo ignorado após extração: {titulo}")
+                return None
+        except (requests.RequestException, ConnectionError, TimeoutError) as e:
+            print(f"❌ Erro de conexão ao extrair texto de {resolved_url}: {str(e)}")
+            # Wait a bit before continuing
+            time.sleep(5)
+            return None
+    
+    # Use title-based disaster type if available, otherwise extract from text
+    if potential_tipo_from_title and potential_tipo_from_title != "unknown":
+        tipo, subtipo = potential_tipo_from_title, subtipo_from_title
+    else:
+        if not texto:  # Fetch text if we haven't already
+            try:
+                rate_limiter.wait_if_needed(resolved_url)  # Wait before the request
+                texto = fetch_and_extract_article_text(resolved_url)
+            except (requests.RequestException, ConnectionError, TimeoutError) as e:
+                print(f"❌ Erro de conexão ao extrair texto de {resolved_url}: {str(e)}")
+                # Wait a bit before continuing
+                time.sleep(5)
+                return None
+        tipo, subtipo = detect_disaster_type(texto)
+    
+    # Use title victims if they exist, otherwise extract from text
+    if has_victims_in_title:
+        vitimas = vitimas_do_titulo
+    else:
+        vitimas = extract_victim_counts(texto)
+        # If no victims found in text, try again with title as backup
+        if not any(vitimas.values()):
+            print(f"🔍 Nenhuma vítima detectada no texto, tentando extrair do título: {titulo}")
+            vitimas = vitimas_do_titulo
+
+    loc = detect_municipality(texto, LOCALIDADES) or localidade
+    district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
+    concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
+    parish_normalized = normalize(loc.lower())
+    dicofreg = FREGUESIAS_COM_CODIGOS.get(parish_normalized, "")
+
+    data_evt_formatada, ano, mes, dia, hora_evt = formatar_data_para_ddmmyyyy(publicado)
+    fonte = extrair_nome_fonte(resolved_url)
+
+    article_id = row["ID"]
+    if not article_id:
+        return None
+
+    return {
+        "ID": article_id,
+        "type": tipo,
+        "subtype": subtipo,
+        "date": data_evt_formatada,
+        "year": ano,
+        "month": mes,
+        "day": dia,
+        "hour": hora_evt,
+        "georef": loc,
+        "district": district,
+        "municipali": concelho,
+        "parish": loc,
+        "DICOFREG": dicofreg,
+        "source": fonte,
+        "sourcedate": datetime.today().date().isoformat(),
+        "sourcetype": "web",
+        "page": resolved_url,
+        "fatalities": vitimas["fatalities"],
+        "injured": vitimas["injured"],
+        "evacuated": vitimas["evacuated"],
+        "displaced": vitimas["displaced"],
+        "missing": vitimas["missing"]
+    }
 
 def carregar_links_existentes(output_csv):
     if not os.path.exists(output_csv):
@@ -272,9 +283,63 @@ def carregar_links_existentes(output_csv):
     except Exception:
         return set()
 
-SAVE_EVERY = 5  # Save every 5 articles (change as needed)
+def is_duplicate_content(title, url, existing_titles, existing_urls):
+    """Check if content is likely duplicate based on title similarity or URL patterns"""
+    title_hash = hashlib.md5(title.lower().encode()).hexdigest()
+    
+    # Check for exact title match
+    if title_hash in existing_titles:
+        return True
+    
+    # Check for URL pattern match (removing query parameters)
+    base_url = url.split('?')[0]
+    if base_url in existing_urls:
+        return True
+    
+    # Update caches
+    existing_titles.add(title_hash)
+    existing_urls.add(base_url)
+    return False
+
+def check_internet_connection():
+    """Check if internet connection is available"""
+    try:
+        # Try to connect to a reliable server
+        requests.get("https://www.google.com", timeout=5)
+        return True
+    except requests.RequestException:
+        return False
+
+def create_optimized_session():
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=5,  # Increased from 3
+        backoff_factor=2,  # Increased from 1
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "HEAD"]
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy, 
+                          pool_connections=10, 
+                          pool_maxsize=10)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0'
+    })
+    # Add timeouts to prevent hanging
+    session.timeout = (10, 30)  # (connect, read) timeouts
+    return session
 
 def main():
+    # Create a shared session for all requests
+    session = create_optimized_session()
+    rate_limiter = DynamicRateLimiter()
+
     if not os.path.exists(INPUT_CSV):
         print(f"❌ Erro: O arquivo de entrada '{INPUT_CSV}' não foi encontrado.")
         return
@@ -282,102 +347,129 @@ def main():
     # Carregar links já importados
     links_existentes = carregar_links_existentes(OUTPUT_CSV)
 
-    df = pd.read_csv(INPUT_CSV)
-    relevantes = df[df["label"] == 1]
-    print(f"📊 Total de artigos relevantes a processar: {len(relevantes)}")
-    # Tentar identificar o último ID processado
-    df_existente = pd.read_csv(OUTPUT_CSV) if os.path.exists(OUTPUT_CSV) else pd.DataFrame()
-    ultimo_id = df_existente["ID"].dropna().iloc[-1] if not df_existente.empty else None
- 
-    # Obter a posição do último ID no DataFrame de relevantes
-    start_index = 0
-    if ultimo_id:
-        try:
-            start_index = relevantes[relevantes["ID"] == ultimo_id].index[-1] + 1
-            print(f"⏩ A retomar do índice {start_index} após o ID: {ultimo_id}")
-        except IndexError:
-            print("⚠️ Último ID não encontrado em relevantes. Começando do início.")
+    try:
+        df = pd.read_csv(INPUT_CSV)
+        relevantes = df.copy()
+        print(f"📊 Total de artigos relevantes a processar: {len(relevantes)}")
+        # Tentar identificar o último ID processado
+        df_existente = pd.read_csv(OUTPUT_CSV) if os.path.exists(OUTPUT_CSV) else pd.DataFrame()
+        ultimo_id = df_existente["ID"].dropna().iloc[-1] if not df_existente.empty else None
+     
+        # Obter a posição do último ID no DataFrame de relevantes
+        start_index = 0
+        if ultimo_id:
+            try:
+                start_index = relevantes[relevantes["ID"] == ultimo_id].index[-1] + 1
+                print(f"⏩ A retomar do índice {start_index} após o ID: {ultimo_id}")
+            except IndexError:
+                print("⚠️ Último ID não encontrado em relevantes. Começando do início.")
+     
+        rows = list(relevantes.iloc[start_index:].iterrows())
+        artigos_final = []
+        max_workers = min(8, os.cpu_count() * 2)  # Dynamic worker count based on CPU cores
+        chunk_size = 20  # Process in larger chunks
+        
+        # Create caches for duplicate detection
+        existing_titles = set()
+        existing_urls = set()
+        
+        # Load existing titles from output file to avoid duplicates
+        if os.path.exists(OUTPUT_CSV):
+            try:
+                df_existing = pd.read_csv(OUTPUT_CSV)
+                # Populate caches from existing data
+                for title in df_existing.get("title", []):
+                    if isinstance(title, str):
+                        existing_titles.add(hashlib.md5(title.lower().encode()).hexdigest())
+                for url in df_existing.get("page", []):
+                    if isinstance(url, str):
+                        existing_urls.add(url.split('?')[0])
+            except Exception as e:
+                print(f"⚠️ Erro ao carregar títulos existentes: {e}")
+        
+        # Process articles in batches to avoid overloading
+        for chunk_start in range(start_index, len(rows), chunk_size):
+            chunk_end = min(chunk_start + chunk_size, len(rows))
+            chunk_rows = rows[chunk_start:chunk_end]
+            
+            # Random delay between chunks to appear more human-like
+            if chunk_start > start_index:
+                delay = random.uniform(5, 15)
+                print(f"🕒 Pausa entre batches: {delay:.1f} segundos...")
+                time.sleep(delay)
+            
+            # Check internet connection before processing batch
+            if not check_internet_connection():
+                print("⚠️ Conexão com a internet perdida. Aguardando reconexão...")
+                while not check_internet_connection():
+                    time.sleep(30)  # Wait 30 seconds before checking again
+                print("✅ Conexão com a internet restaurada. Continuando processamento...")
+            
+            batch_articles = []
+            try:
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    future_to_row = {executor.submit(processar_artigo, row[1], rate_limiter): row for row in chunk_rows}
+                    for future in as_completed(future_to_row):
+                        try:
+                            artigo = future.result()
+                            if artigo and artigo["page"] not in links_existentes:
+                                batch_articles.append(artigo)
+                                links_existentes.add(artigo["page"])
+                        except Exception as e:
+                            print(f"❌ Erro ao processar artigo: {str(e)}")
+                            continue
+            except Exception as e:
+                print(f"❌ Erro durante o processamento do lote: {str(e)}")
+                # Save what we have so far
+                if batch_articles:
+                    try:
+                        guardar_csv_incremental(OUTPUT_CSV, batch_articles)
+                        artigos_final.extend(batch_articles)
+                        print(f"✅ Salvamento de emergência: {len(batch_articles)} artigos após erro.")
+                    except Exception as save_err:
+                        print(f"❌ Erro ao salvar após falha: {str(save_err)}")
+                time.sleep(60)  # Wait a minute before continuing
+                continue
+            
+            # Save after each batch
+            if batch_articles:
+                try:
+                    guardar_csv_incremental(OUTPUT_CSV, batch_articles)
+                    artigos_final.extend(batch_articles)
+                    print(f"✅ Batch concluído: {len(batch_articles)} artigos (total: {len(artigos_final)})")
+                    time.sleep(random.uniform(3, 5))  # Short break after each batch
+                except Exception as e:
+                    print(f"❌ Erro ao salvar batch: {str(e)}")
+                    time.sleep(10)  # Wait a bit and try again
+                    try:
+                        guardar_csv_incremental(OUTPUT_CSV, batch_articles)
+                        print("✅ Segundo tentativa de salvamento bem-sucedida.")
+                    except:
+                        print("❌ Falha na segunda tentativa de salvamento.")
 
-    artigos_final = []
-    artigos_a_processar = relevantes.iloc[start_index:].to_dict('records')[:10]
-    total = len(artigos_a_processar)
-    with ThreadPoolExecutor(max_workers=4) as executor:  # Reduced max_workers to 1 for better rate limiting
-        results = list(executor.map(processar_artigo, artigos_a_processar))
-    for idx, artigo in enumerate(results, 1):
-        if artigo:
-            artigos_final.append(artigo)
-        if len(artigos_final) >= SAVE_EVERY:
+        if artigos_final:
             guardar_csv_incremental(OUTPUT_CSV, artigos_final)
-            print(f"💾 {len(artigos_final)} artigos salvos até agora...")
-            artigos_final.clear()
-            time.sleep(random.uniform(15, 30))  # Descanso entre blocos para evitar bloqueio
-    if artigos_final:
-        guardar_csv_incremental(OUTPUT_CSV, artigos_final)
-        print(f"💾 {len(artigos_final)} artigos salvos (final).")
-
-    if artigos_final:
-        print(f"✅ Base de dados final atualizada com {len(artigos_final)} artigos.")
-    else:
-        print("⚠️ Nenhum artigo foi processado com sucesso.")
-
-
-def criar_docbin_exemplo():
-    nlp = spacy.blank("pt")
-    db = DocBin()
-
-    exemplos = [
-        ("Duas pessoas morreram na enchente.", "Duas pessoas morreram", "FATALITIES"),
-        ("Três pessoas morreram.", "Três pessoas", "FATALITIES"),
-        ("Uma vítima mortal foi registada.", "Uma vítima mortal", "FATALITIES"),
-        ("Morreram cinco pessoas.", "Morreram cinco pessoas", "FATALITIES"),
-        ("O desastre causou quatro mortes.", "quatro mortes", "FATALITIES"),
-        ("Foram confirmadas dez mortes.", "dez mortes", "FATALITIES"),
-        ("Houve uma vítima mortal.", "uma vítima mortal", "FATALITIES"),
-        ("Sete pessoas perderam a vida.", "Sete pessoas", "FATALITIES"),
-        ("O acidente resultou em duas mortes.", "duas mortes", "FATALITIES"),
-        ("Cinco ficaram feridas após o desabamento.", "Cinco ficaram feridas", "INJURED"),
-        ("Sete pessoas ficaram feridas.", "Sete pessoas ficaram feridas", "INJURED"),
-        ("Houve três feridos.", "três feridos", "INJURED"),
-        ("O acidente deixou dez feridos.", "dez feridos", "INJURED"),
-        ("Quatro pessoas ficaram feridas.", "Quatro pessoas ficaram feridas", "INJURED"),
-        ("Foram registados dois feridos.", "dois feridos", "INJURED"),
-        ("Vinte pessoas sofreram ferimentos.", "Vinte pessoas sofreram ferimentos", "INJURED"),
-        ("O deslizamento provocou oito feridos.", "oito feridos", "INJURED"),
-        ("Vinte pessoas foram evacuadas devido à inundação.", "Vinte pessoas foram evacuadas", "EVACUATED"),
-        ("Foram evacuadas dez famílias.", "dez famílias", "EVACUATED"),
-        ("Cerca de 100 pessoas evacuadas.", "100 pessoas evacuadas", "EVACUATED"),
-        ("Mais de cinquenta pessoas evacuadas.", "cinquenta pessoas evacuadas", "EVACUATED"),
-        ("Sessenta pessoas foram retiradas das casas.", "Sessenta pessoas foram retiradas", "EVACUATED"),
-        ("Cerca de 30 pessoas ficaram sem casa.", "30 pessoas ficaram sem casa", "DISPLACED"),
-        ("O temporal deixou vinte desalojados.", "vinte desalojados", "DISPLACED"),
-        ("Mais de cem pessoas ficaram desalojadas.", "cem pessoas ficaram desalojadas", "DISPLACED"),
-        ("Uma pessoa está desaparecida.", "Uma pessoa está desaparecida", "MISSING"),
-        ("Três pessoas estão desaparecidas.", "Três pessoas estão desaparecidas", "MISSING"),
-        ("Há relatos de cinco desaparecidos.", "cinco desaparecidos", "MISSING"),
-        ("Ainda falta localizar uma pessoa.", "uma pessoa", "MISSING"),
-        ("Quatro moradores estão em paradeiro desconhecido.", "Quatro moradores estão em paradeiro desconhecido", "MISSING"),
-    ]
-
-    for text, span_text, label in exemplos:
-        doc = nlp.make_doc(text)
-        start = text.find(span_text)
-        end = start + len(span_text)
-        span = doc.char_span(start, end, label=label, alignment_mode="contract")
-        if span is None:
-            print(f"⚠️ Erro de alinhamento em: {text} [{start}:{end}] → '{span_text}'")
-            continue
-        doc.ents = [span]
-        db.add(doc)
-
-    db.to_disk(os.path.join(os.path.dirname(__file__), "..", "models", "train_data.spacy"))
-    print("✅ Dados de treino salvos em 'train_data.spacy'")
-
+            print(f"✅ Base de dados final atualizada com {len(artigos_final)} artigos.")
+        else:
+            print("⚠️ Nenhum artigo foi processado com sucesso.")
+    
+    except KeyboardInterrupt:
+        print("\n⚠️ Interrompido pelo usuário. Salvando artigos processados até agora...")
+        if 'artigos_final' in locals() and artigos_final:
+            try:
+                guardar_csv_incremental(OUTPUT_CSV, artigos_final)
+                print(f"✅ Salvamento de emergência: {len(artigos_final)} artigos salvos.")
+            except Exception as e:
+                print(f"❌ Erro ao salvar durante interrupção: {str(e)}")
+    
+    except Exception as e:
+        print(f"❌ Erro inesperado: {str(e)}")
+        if 'artigos_final' in locals() and artigos_final:
+            try:
+                guardar_csv_incremental(OUTPUT_CSV, artigos_final)
+                print(f"✅ Salvamento de emergência: {len(artigos_final)} artigos salvos.")
+            except Exception as save_err:
+                print(f"❌ Erro ao salvar durante erro: {str(save_err)}")
 
 if __name__ == "__main__":
     main()
-
-# Note: To create the training data, run criar_docbin_exemplo() once to generate 'train_data.spacy'.
-# Then train your model using spaCy's CLI, e.g.:
-# python -m spacy train config.cfg --paths.train train_data.spacy --paths.dev dev_data.spacy
-
-

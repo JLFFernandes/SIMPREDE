@@ -12,7 +12,7 @@ DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
 DB_SCHEMA = os.getenv("DB_SCHEMA", "public")
-CSV_FILE = "data/structure/artigos_filtrados.csv"
+CSV_FILE = "data/structured/artigos_filtrados.csv"
 TABLE_NAME = "artigos_filtrados_staging"
 
 # Criar engine de ligação
