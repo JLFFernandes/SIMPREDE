@@ -1,7 +1,8 @@
 import pandas as pd
-from sqlalchemy import create_engine
 from dotenv import load_dotenv
 import os
+import psycopg2
+import io
 
 # 🔐 Carregar variáveis do .env
 load_dotenv()
@@ -34,26 +35,54 @@ CSV_CONFIGS = [
 ]
 
 def main():
-    # Criar engine de ligação
-    engine = create_engine(f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
-    
+
+
     # Processar cada arquivo CSV
     for config in CSV_CONFIGS:
         try:
             # Ler CSV
             df = pd.read_csv(config["file"])
-            
-            # Exportar para a tabela
-            df.to_sql(
-                config["table"], 
-                engine, 
-                if_exists="replace", 
-                index=False, 
-                schema=DB_SCHEMA
+
+            print(f"⏳ A exportar {config['file']} com psycopg2 e COPY...")
+
+            conn = psycopg2.connect(
+                dbname=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD,
+                host=DB_HOST,
+                port=DB_PORT,
+                sslmode='require'
             )
-            
-            print(f"✅ CSV {config['file']} importado com sucesso para a tabela '{config['table']}'!")
-            
+            cur = conn.cursor()
+
+            # Converter DataFrame para CSV em memória
+            buffer = io.StringIO()
+            df.to_csv(buffer, index=False, header=False)
+            buffer.seek(0)
+
+            # Obter colunas e preparar CREATE TABLE
+            columns = ', '.join([f'"{col}"' for col in df.columns])
+            col_defs = ', '.join([f'"{col}" TEXT' for col in df.columns])
+
+            # Criar tabela
+            cur.execute(f'DROP TABLE IF EXISTS {DB_SCHEMA}.{config["table"]}')
+            cur.execute(f'CREATE TABLE {DB_SCHEMA}.{config["table"]} ({col_defs})')
+
+            # Verificar colunas
+            cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{config['table']}' AND table_schema = '{DB_SCHEMA}'")
+            created_columns = [r[0] for r in cur.fetchall()]
+            print("📋 Colunas criadas:", created_columns)
+
+            # Executar COPY
+            copy_sql = f'COPY {DB_SCHEMA}.{config["table"]} ({columns}) FROM STDIN WITH (FORMAT CSV)'
+            cur.copy_expert(copy_sql, buffer)
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            print(f"✅ CSV {config['file']} importado com sucesso para '{config['table']}' via COPY.")
+
         except Exception as e:
             print(f"❌ Erro ao processar {config['file']}: {str(e)}")
 
