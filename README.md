@@ -1,2 +1,0 @@
-# SIMPREDE
-Projeto de Engenharia
