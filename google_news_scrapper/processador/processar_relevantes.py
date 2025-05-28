@@ -11,15 +11,49 @@ import re
 from extracao.extractor import resolve_google_news_url, fetch_and_extract_article_text
 from utils.helpers import carregar_paroquias_com_municipios, load_keywords, carregar_dicofreg, guardar_csv_incremental, detect_municipality 
 from extracao.normalizador import detect_disaster_type, extract_victim_counts, normalize, is_potentially_disaster_related
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import requests
 from collections import defaultdict
+import argparse
 
-INPUT_CSV = "data/raw/intermediate_google_news.csv"
-OUTPUT_CSV = "data/structured/artigos_google_municipios_pt.csv"
+# Use date-specific filenames
+current_date = datetime.now().strftime("%Y%m%d")
+current_year = datetime.now().strftime("%Y")
+current_month = datetime.now().strftime("%m")
+current_day = datetime.now().strftime("%d")
+
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Get the project root directory (one level up)
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
+# Create directory structure for raw data by year/month/day
+RAW_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw", current_year, current_month, current_day)
+os.makedirs(RAW_DATA_DIR, exist_ok=True)
+
+# Define structured directory
+STRUCTURED_DIR = os.path.join(PROJECT_ROOT, "data", "structured")
+os.makedirs(STRUCTURED_DIR, exist_ok=True)
+
+# Define input file path
+INPUT_CSV = os.path.join(PROJECT_ROOT, "data", "raw", f"intermediate_google_news_{current_date}.csv")
+
+# Define output file paths
+OUTPUT_CSV = os.path.join(RAW_DATA_DIR, f"artigos_google_municipios_pt_{current_date}.csv")
+
+# Fallback to default files if date-specific ones don't exist
+if not os.path.exists(INPUT_CSV):
+    INPUT_CSV = os.path.join(PROJECT_ROOT, "data", "raw", "intermediate_google_news.csv")
+    print(f"⚠️ Date-specific input not found, using default: {INPUT_CSV}")
+else:
+    print(f"✅ Using date-specific input: {INPUT_CSV}")
+
+# Standard output filename for backward compatibility
+DEFAULT_OUTPUT_CSV = os.path.join(PROJECT_ROOT, "data", "structured", "artigos_google_municipios_pt.csv")
+
 LOCALIDADES, MUNICIPIOS, DISTRITOS = carregar_paroquias_com_municipios("config/municipios_por_distrito.json")
 FREGUESIAS_COM_CODIGOS = carregar_dicofreg()
 KEYWORDS = load_keywords("config/keywords.json", idioma="portuguese")
@@ -81,6 +115,34 @@ def formatar_data_para_ddmmyyyy(published_raw):
     except Exception:
         return "", None, None, None, ""
 
+def is_international_news(title, url):
+    """
+    Verifica se a notícia é sobre um evento internacional
+    """
+    # Lista de países e regiões estrangeiras para detectar
+    foreign_countries = [
+        "frança", "franca", "espanha", "australia", "austrália",  "paquistão", "paquistao",
+        "itália", "italia", "nepal", "índia", "india", "china", 
+        "estados unidos", "eua", "brasil", "rússia", "russia",
+        "japão", "japao", "alemanha", "reino unido", "bélgica", "belgica"
+    ]
+    
+    title_lower = title.lower()
+    url_lower = url.lower()
+    
+    # Verifica se o título ou URL menciona um país estrangeiro
+    for country in foreign_countries:
+        if country in title_lower or country in url_lower:
+            return True
+    
+    # Verifica por indicadores de notícias internacionais
+    international_indicators = ["internacional", "mundo", "global"]
+    for indicator in international_indicators:
+        if indicator in url_lower:
+            return True
+    
+    return False
+
 def extract_victims_from_title(title):
     """
     Extrai contagens de vítimas do título da notícia
@@ -98,13 +160,18 @@ def extract_victims_from_title(title):
     fatalities_patterns = [
         r'(\d+)\s*mort[eo]s?',
         r'(\d+)\s*vítimas?\s*mortais?',
-        r'(\d+)\s*óbitos?'
+        r'(\d+)\s*óbitos?',
+        r'faz\s+(\d+)\s+mortos?',  # "faz três mortos"
+        r'deixa\s+(\d+)\s+mortos?',  # "deixa quatro mortos"
+        r'matou\s+(\d+)',  # "matou cinco"
+        r'morrem\s+(\d+)'   # "morrem seis"
     ]
     
     # Padrões para feridos
     injured_patterns = [
         r'(\d+)\s*feridos?',
-        r'(\d+)\s*pessoas?\s*feridas?'
+        r'(\d+)\s*pessoas?\s*feridas?',
+        r'deixa\s+(\d+)\s+feridos?'
     ]
     
     # Padrões para evacuados
@@ -122,40 +189,78 @@ def extract_victims_from_title(title):
     # Padrões para desaparecidos
     missing_patterns = [
         r'(\d+)\s*desaparecid[oa]s?',
-        r'(\d+)\s*pessoas?\s*desaparecidas?'
+        r'(\d+)\s*pessoas?\s*desaparecidas?',
+        r'deixa\s+(\d+)\s+desaparecid[oa]s?',
+        r'e\s+(\d+)\s+desaparecid[oa]'  # "e um desaparecido"
     ]
 
     # Procurar por cada tipo de vítima
     for pattern in fatalities_patterns:
         match = re.search(pattern, title.lower())
         if match:
-            vitimas["fatalities"] = int(match.group(1))
+            try:
+                vitimas["fatalities"] = int(match.group(1))
+            except ValueError:
+                # Converter palavras para números, se necessário
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["fatalities"] = num_map[num_str]
             break
 
     for pattern in injured_patterns:
         match = re.search(pattern, title.lower())
         if match:
-            vitimas["injured"] = int(match.group(1))
+            try:
+                vitimas["injured"] = int(match.group(1))
+            except ValueError:
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["injured"] = num_map[num_str]
             break
 
     for pattern in evacuated_patterns:
         match = re.search(pattern, title.lower())
         if match:
-            vitimas["evacuated"] = int(match.group(1))
+            try:
+                vitimas["evacuated"] = int(match.group(1))
+            except ValueError:
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["evacuated"] = num_map[num_str]
             break
 
     for pattern in displaced_patterns:
         match = re.search(pattern, title.lower())
         if match:
-            vitimas["displaced"] = int(match.group(1))
+            try:
+                vitimas["displaced"] = int(match.group(1))
+            except ValueError:
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["displaced"] = num_map[num_str]
             break
 
     for pattern in missing_patterns:
         match = re.search(pattern, title.lower())
         if match:
-            vitimas["missing"] = int(match.group(1))
+            try:
+                vitimas["missing"] = int(match.group(1))
+            except ValueError:
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["missing"] = num_map[num_str]
             break
-
+    
     return vitimas
 
 def processar_artigo(row, rate_limiter):
@@ -335,7 +440,26 @@ def create_optimized_session():
     session.timeout = (10, 30)  # (connect, read) timeouts
     return session
 
+def guardar_csv_incremental_with_date(output_csv, artigos):
+    """
+    Save to date-specific file in the raw data directory with year/month/day structure
+    and also maintain backward compatibility with structured directory
+    """
+    # Using our improved guardar_csv_incremental function which already handles year/month/day organization
+    # Save to raw data directory (this will be organized by year/month/day)
+    guardar_csv_incremental(output_csv, artigos)
+    
+    # Also save to standard file for backward compatibility
+    guardar_csv_incremental(DEFAULT_OUTPUT_CSV, artigos)
+    
+    print(f"✅ Files saved with year/month/day organization")
+
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Process Google News articles")
+    parser.add_argument("--dias", type=int, default=1, help="Number of days to process")
+    args = parser.parse_args()
+    
     # Create a shared session for all requests
     session = create_optimized_session()
     rate_limiter = DynamicRateLimiter()
@@ -349,6 +473,12 @@ def main():
 
     try:
         df = pd.read_csv(INPUT_CSV)
+        # Filter by days if the collection_date column exists
+        if 'collection_date' in df.columns and args.dias > 0:
+            cutoff_date = (datetime.now() - timedelta(days=args.dias)).strftime("%Y-%m-%d")
+            df = df[df['collection_date'] >= cutoff_date]
+            print(f"📅 Filtered to articles from the last {args.dias} days: {len(df)} articles")
+        
         relevantes = df.copy()
         print(f"📊 Total de artigos relevantes a processar: {len(relevantes)}")
         # Tentar identificar o último ID processado
@@ -434,7 +564,7 @@ def main():
             # Save after each batch
             if batch_articles:
                 try:
-                    guardar_csv_incremental(OUTPUT_CSV, batch_articles)
+                    guardar_csv_incremental_with_date(OUTPUT_CSV, batch_articles)
                     artigos_final.extend(batch_articles)
                     print(f"✅ Batch concluído: {len(batch_articles)} artigos (total: {len(artigos_final)})")
                     time.sleep(random.uniform(3, 5))  # Short break after each batch
@@ -442,14 +572,15 @@ def main():
                     print(f"❌ Erro ao salvar batch: {str(e)}")
                     time.sleep(10)  # Wait a bit and try again
                     try:
-                        guardar_csv_incremental(OUTPUT_CSV, batch_articles)
+                        guardar_csv_incremental_with_date(OUTPUT_CSV, batch_articles)
                         print("✅ Segundo tentativa de salvamento bem-sucedida.")
                     except:
                         print("❌ Falha na segunda tentativa de salvamento.")
 
         if artigos_final:
-            guardar_csv_incremental(OUTPUT_CSV, artigos_final)
+            guardar_csv_incremental_with_date(OUTPUT_CSV, artigos_final)
             print(f"✅ Base de dados final atualizada com {len(artigos_final)} artigos.")
+            print(f"✅ Arquivos salvos em: {OUTPUT_CSV} e {DEFAULT_OUTPUT_CSV}")
         else:
             print("⚠️ Nenhum artigo foi processado com sucesso.")
     

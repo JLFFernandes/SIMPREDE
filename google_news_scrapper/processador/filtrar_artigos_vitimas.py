@@ -7,11 +7,54 @@ from joblib import load
 import requests
 from bs4 import BeautifulSoup
 from typing import Dict, Optional, Tuple
+import os
 
-# Caminho do ficheiro de entrada
-input_path = "data/structured/artigos_google_municipios_pt.csv"
-output_path = "data/structured/artigos_publico.csv"
-municipios_path = "config/municipios_por_distrito.json"  # Caminho para o JSON
+# Get current date for filename
+current_date = datetime.now().strftime("%Y%m%d")
+current_year = datetime.now().strftime("%Y")
+current_month = datetime.now().strftime("%m")
+current_day = datetime.now().strftime("%d")
+
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Get the project root directory (one level up)
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
+# Create path for raw data by year/month/day
+raw_data_dir = os.path.join(PROJECT_ROOT, "data", "raw", current_year, current_month, current_day)
+structured_dir = os.path.join(PROJECT_ROOT, "data", "structured")
+
+# Ensure directories exist
+os.makedirs(raw_data_dir, exist_ok=True)
+os.makedirs(structured_dir, exist_ok=True)
+
+# Check if there's a date-specific file in year/month/day structure
+raw_year_month_day_path = os.path.join(
+    raw_data_dir, f"artigos_google_municipios_pt_{current_date}.csv"
+)
+structured_date_path = os.path.join(
+    structured_dir, f"artigos_google_municipios_pt_{current_date}.csv"
+)
+default_path = os.path.join(
+    structured_dir, "artigos_google_municipios_pt.csv"
+)
+
+# Choose input path based on file existence
+if os.path.exists(raw_year_month_day_path):
+    input_path = raw_year_month_day_path
+    print(f"Using raw year/month/day file: {input_path}")
+elif os.path.exists(structured_date_path):
+    input_path = structured_date_path
+    print(f"Using structured date file: {input_path}")
+else:
+    input_path = default_path
+    print(f"Using default file: {input_path}")
+
+# Define output paths
+output_path = os.path.join(raw_data_dir, f"artigos_publico_{current_date}.csv")
+filtered_csv = os.path.join(raw_data_dir, f"artigos_filtrados_{current_date}.csv")
+base_output_path = os.path.join(structured_dir, "artigos_filtrados_{}.csv")
+municipios_path = os.path.join(PROJECT_ROOT, "config", "municipios_por_distrito.json")
 
 # Carregar distritos e paróquias válidas do JSON
 with open(municipios_path, 'r', encoding='utf-8') as file:
@@ -26,7 +69,7 @@ paroquias_validas = {par for municipios in municipios_data.values() for par in m
 # Indicadores de artigos internacionais
 palavras_excluidas = [
     "espanha", "franca", "nepal", "cuba", "eua", "brasil", "japao", "valencia",
-    "internacional", "mundo", "europa", "america", "africa", "global", "china"
+    "internacional", "mundo", "europa", "america", "africa", "global", "china", "paquistao"
 ]
 
 def filtra_artigo_nacional(row):
@@ -179,7 +222,7 @@ df_vitimas.drop_duplicates(subset='page', inplace=True)
 df_vitimas.dropna(how='all', inplace=True)
 
 # Caminho para o ficheiro JSON de eventos climáticos
-eventos_path = "config/eventos_climaticos.json"
+eventos_path = os.path.join(PROJECT_ROOT, "config", "eventos_climaticos.json")
 
 # Carregar eventos climáticos a partir do ficheiro JSON
 with open(eventos_path, 'r', encoding='utf-8') as file:
@@ -211,8 +254,26 @@ print("Skipping content validation and victim count updates at this stage...")
 # Create a copy of the filtered dataframe as our final result
 df_filtered = df_vitimas.copy()
 
+# Convert DataFrame to list of dictionaries for guardar_csv_incremental
+def df_to_dict_list(df):
+    return df.to_dict(orient='records')
+
+# Import our organize_path_by_date function
+from utils.helpers import guardar_csv_incremental, organize_path_by_date
+
 # Guardar todos os artigos num CSV principal
-df_filtered.to_csv("data/structured/artigos_filtrados.csv", index=False)
+raw_filtered_path = os.path.join(raw_data_dir, f"artigos_filtrados_{current_date}.csv")
+structured_filtered_path = os.path.join(structured_dir, f"artigos_filtrados_{current_date}.csv")
+structured_default_path = os.path.join(structured_dir, "artigos_filtrados.csv")
+
+# Save to both locations using our helper function
+print(f"Saving to raw data directory: {raw_filtered_path}")
+df_filtered.to_csv(raw_filtered_path, index=False)
+
+# Save to structured directory with year/month/day organization
+articles_dict_list = df_to_dict_list(df_filtered)
+guardar_csv_incremental(structured_filtered_path, articles_dict_list)
+guardar_csv_incremental(structured_default_path, articles_dict_list)
 
 # Guardar artigos separados por fonte
 fontes = ["jn", "publico", "cnnportugal", "sicnoticias"]
@@ -220,7 +281,19 @@ fontes = ["jn", "publico", "cnnportugal", "sicnoticias"]
 for fonte in fontes:
     df_fonte = df_filtered[df_filtered["page"].str.contains(fonte, case=False, na=False)]
     if not df_fonte.empty:
-        df_fonte.to_csv(f"data/structured/artigos_{fonte}.csv", index=False)
+        # Save with date in filename in both raw and structured directories
+        raw_fonte_path = os.path.join(raw_data_dir, f"artigos_{fonte}_{current_date}.csv")
+        structured_fonte_path = os.path.join(structured_dir, f"artigos_{fonte}_{current_date}.csv")
+        structured_fonte_default = os.path.join(structured_dir, f"artigos_{fonte}.csv")
+        
+        # Save to raw data directory
+        df_fonte.to_csv(raw_fonte_path, index=False)
+        
+        # Save to structured directory with year/month/day organization using helpers
+        fonte_dict_list = df_to_dict_list(df_fonte)
+        guardar_csv_incremental(structured_fonte_path, fonte_dict_list)
+        guardar_csv_incremental(structured_fonte_default, fonte_dict_list)
 
-print(f"Ficheiro guardado em: {output_path}")
-print(f"Articles divided by source: {[f'artigos_{fonte}.csv' for fonte in fontes]}")
+print(f"✅ Files saved in raw data directory: {raw_data_dir}")
+print(f"✅ Files saved in structured directory: {structured_dir}")
+print(f"Articles divided by source: {[f'artigos_{fonte}_{current_date}.csv' for fonte in fontes]}")
