@@ -31,6 +31,16 @@ def export_csv_to_table(csv_file, table_name, schema=DB_SCHEMA):
         df = pd.read_csv(csv_file)
         print(f"✅ CSV lido com sucesso: {len(df)} linhas, {len(df.columns)} colunas")
         
+        # Check if the DataFrame is empty (has no rows)
+        if df.empty:
+            print(f"⚠️ O arquivo CSV {csv_file} está vazio. Exportação para {table_name} cancelada.")
+            return False
+        
+        # Check if the DataFrame has meaningful data (at least 1 row with non-null values)
+        if df.dropna(how='all').empty:
+            print(f"⚠️ O arquivo CSV {csv_file} não contém dados válidos. Exportação para {table_name} cancelada.")
+            return False
+        
         # Construir connection string para Supabase
         connection_string = (
             f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
@@ -97,7 +107,7 @@ def main():
     parser = argparse.ArgumentParser(description="Exporta dados CSV para Supabase/PostgreSQL")
     parser.add_argument(
         "--tipo", 
-        choices=["artigos_filtrados", "artigos_municipios", "all"],
+        choices=["artigos_filtrados", "all"],
         default="all",
         help="Tipo de dados a exportar"
     )
@@ -119,100 +129,63 @@ def main():
     
     # Get current date for file naming
     current_date = datetime.now().strftime("%Y%m%d")
+    current_year = datetime.now().strftime("%Y")
+    current_month = datetime.now().strftime("%m")
+    current_day = datetime.now().strftime("%d")
     
     # Configuração dos arquivos CSV e suas tabelas correspondentes
     csv_configs = []
     
     if args.tipo in ["artigos_filtrados", "all"]:
-        # First try the new year/month/day structure
-        current_year = datetime.now().strftime("%Y")
-        current_month = datetime.now().strftime("%m")
-        current_day = datetime.now().strftime("%d")
-        
+        # Look for the file in the year/month/day structure
         year_month_day_path = os.path.join(
-            PROJECT_ROOT, "data", "raw", current_year, current_month, current_day, 
+            PROJECT_ROOT, "data", "structured", current_year, current_month, current_day, 
             f"artigos_filtrados_{current_date}.csv"
         )
         
-        # Traditional structured directory as fallback
-        structured_path = os.path.join(
-            PROJECT_ROOT, "data", "structured", f"artigos_filtrados_{current_date}.csv"
-        )
-        
-        # Default path as final fallback
-        default_path = os.path.join(
-            PROJECT_ROOT, "data", "structured", "artigos_filtrados.csv"
-        )
-        
         csv_configs.append({
             "file": year_month_day_path,
-            "structured_fallback": structured_path,
-            "fallback": default_path,
             "table": f"artigos_filtrados_{current_date}_staging"
-        })
-        
-    if args.tipo in ["artigos_municipios", "all"]:
-        # First try the new year/month/day structure
-        current_year = datetime.now().strftime("%Y")
-        current_month = datetime.now().strftime("%m")
-        current_day = datetime.now().strftime("%d")
-        
-        year_month_day_path = os.path.join(
-            PROJECT_ROOT, "data", "raw", current_year, current_month, current_day, 
-            f"artigos_google_municipios_pt_{current_date}.csv"
-        )
-        
-        # Traditional structured directory as fallback
-        structured_path = os.path.join(
-            PROJECT_ROOT, "data", "structured", f"artigos_google_municipios_pt_{current_date}.csv"
-        )
-        
-        # Default path as final fallback
-        default_path = os.path.join(
-            PROJECT_ROOT, "data", "structured", "artigos_google_municipios_pt.csv"
-        )
-        
-        csv_configs.append({
-            "file": year_month_day_path,
-            "structured_fallback": structured_path,
-            "fallback": default_path,
-            "table": f"artigos_municipios_pt_{current_date}_staging"
         })
     
     # Processar cada arquivo CSV
     for config in csv_configs:
-        # Try to use date-specific file in year/month/day structure first
+        # Check if file exists
         file_to_use = config.get("file")
         
         print(f"🔍 Verificando arquivo: {file_to_use}")
         if not os.path.exists(file_to_use):
             print(f"  ❌ Arquivo não encontrado: {file_to_use}")
-            # Try structured directory next
-            if "structured_fallback" in config and os.path.exists(config["structured_fallback"]):
-                file_to_use = config["structured_fallback"]
-                print(f"⚠️ Year/Month/Day file not found. Using structured directory: {file_to_use}")
-            else:
-                # Fall back to default file
-                file_to_use = config["fallback"]
-                print(f"⚠️ Date-specific files not found. Using default file: {file_to_use}")
-        else:
-            print(f"  ✅ Arquivo encontrado: {file_to_use}")
-            # Check file size
-            file_size = os.path.getsize(file_to_use)
-            print(f"  📊 Tamanho do arquivo: {file_size} bytes")
-            
-            # Check if file is readable
-            try:
-                with open(file_to_use, 'r', encoding='utf-8') as f:
-                    first_line = f.readline()
-                    print(f"  ✅ Arquivo pode ser lido. Primeira linha: {first_line[:50]}...")
-            except Exception as e:
-                print(f"  ⚠️ Aviso: Não foi possível ler o arquivo: {e}")
+            continue
         
-        if os.path.exists(file_to_use):
-            export_csv_to_table(file_to_use, config["table"])
-        else:
-            print(f"❌ No valid file found for this configuration: {config['table']}")
+        print(f"  ✅ Arquivo encontrado: {file_to_use}")
+        # Check file size
+        file_size = os.path.getsize(file_to_use)
+        print(f"  📊 Tamanho do arquivo: {file_size} bytes")
+        
+        # Skip empty files
+        if file_size <= 10:  # Just a header or empty file
+            print(f"  ⚠️ Arquivo vazio ou apenas com cabeçalho. Ignorando.")
+            continue
+            
+        # Check if file is readable
+        try:
+            with open(file_to_use, 'r', encoding='utf-8') as f:
+                first_line = f.readline()
+                second_line = f.readline()
+                print(f"  ✅ Arquivo pode ser lido. Primeira linha: {first_line[:50]}...")
+                
+                # Check if there's data beyond the header
+                if not second_line or second_line.strip() == "":
+                    print(f"  ⚠️ Arquivo contém apenas cabeçalho sem dados. Ignorando.")
+                    continue
+                    
+        except Exception as e:
+            print(f"  ⚠️ Aviso: Não foi possível ler o arquivo: {e}")
+            continue
+        
+        # Export the file to Supabase
+        export_csv_to_table(file_to_use, config["table"])
 
 if __name__ == "__main__":
     main()

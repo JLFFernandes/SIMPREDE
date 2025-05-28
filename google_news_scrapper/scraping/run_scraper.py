@@ -496,7 +496,7 @@ async def run_scraper_async(specific_date=None, dias=1):
     # This balances speed and detection risk more effectively
     if total_combinations > 5000:
         # For very large workloads, use moderate batch sizes to avoid detection
-        adjusted_batch_size = min(BATCH_SIZE, max(30, BATCH_SIZE // 1.5))
+        adjusted_batch_size = min(BATCH_SIZE, max(30, int(BATCH_SIZE // 1.5)))
     elif total_combinations > 2000:
         # For large workloads, use slightly larger batches for better efficiency
         adjusted_batch_size = min(BATCH_SIZE, max(40, int(BATCH_SIZE * 0.8)))
