@@ -240,14 +240,17 @@ def organize_path_by_date(caminho):
     current_month = datetime.now().strftime("%m")
     current_day = datetime.now().strftime("%d")
     
-    # Check if this is a file in the structured directory
-    if '/structured/' in caminho and not any(part in caminho for part in [f'/{current_year}/', f'/{current_month}/', f'/{current_day}/']):
-        # Extract the structured directory path and filename
-        structured_dir = caminho.split('/structured/')[0] + '/structured'
+    # Always organize files into year/month/day structure
+    if '/structured/' in caminho or '/raw/' in caminho:
+        # Extract the base directory path and filename
+        if '/structured/' in caminho:
+            base_dir = caminho.split('/structured/')[0] + '/structured'
+        else:
+            base_dir = caminho.split('/raw/')[0] + '/raw'
         filename = os.path.basename(caminho)
         
         # Create new path with year/month/day structure
-        new_path = os.path.join(structured_dir, current_year, current_month, current_day, filename)
+        new_path = os.path.join(base_dir, current_year, current_month, current_day, filename)
         
         # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(new_path), exist_ok=True)
@@ -259,6 +262,11 @@ def organize_path_by_date(caminho):
 def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
     if not novos_artigos:
         print("⚠️ Nenhum novo artigo recebido.")
+        return
+
+    # Check if the data is empty (only has headers but no actual rows)
+    if len(novos_artigos) == 0:
+        print("⚠️ Lista de artigos está vazia. Nenhum arquivo será salvo.")
         return
 
     print(f"📥 Novos artigos recebidos: {len(novos_artigos)}")
@@ -273,36 +281,18 @@ def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
         print("⚠️ Nenhum artigo com ID válido encontrado.")
         return
     
-    # Organize path by year/month/day if it's in the structured directory
+    # Organize path by year/month/day
     organized_path = organize_path_by_date(caminho)
     
-    # If path was organized differently, create directories if needed
-    if organized_path != caminho:
-        os.makedirs(os.path.dirname(organized_path), exist_ok=True)
-        print(f"📂 Organizing output by year/month/day: {organized_path}")
-    
-    # For backward compatibility, also save to the original path
-    original_exists = False
-    organized_exists = False
-    
-    # Check for existing articles in the original file
-    if os.path.exists(caminho):
-        original_exists = True
-        with open(caminho, "r", encoding="utf-8") as f:
-            original_existentes = {row["ID"] for row in csv.DictReader(f)}
-    else:
-        original_existentes = set()
+    # Create directories if needed
+    os.makedirs(os.path.dirname(organized_path), exist_ok=True)
+    print(f"📂 Organizing output by year/month/day: {organized_path}")
     
     # Check for existing articles in the organized file
-    if organized_path != caminho and os.path.exists(organized_path):
-        organized_exists = True
+    existentes = set()
+    if os.path.exists(organized_path):
         with open(organized_path, "r", encoding="utf-8") as f:
-            organized_existentes = {row["ID"] for row in csv.DictReader(f)}
-    else:
-        organized_existentes = set()
-    
-    # Combine both sets of existing IDs
-    existentes = original_existentes.union(organized_existentes)
+            existentes = {row["ID"] for row in csv.DictReader(f)}
     
     print(f"📂 IDs existentes no arquivo: {len(existentes)}")
 
@@ -314,10 +304,10 @@ def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
         print("⚠️ Nenhum artigo único para salvar.")
         return
 
-    # Always save to the organized path
+    # Save to the organized path only
     with open(organized_path, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=artigos_unicos[0].keys())
-        if not organized_exists or os.stat(organized_path).st_size == 0:  # Write header if file is empty
+        if os.stat(organized_path).st_size == 0:  # Write header if file is empty
             writer.writeheader()
 
         batch_size = 10
@@ -327,19 +317,7 @@ def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
                 writer.writerow(artigo)
             print(f"💾 Guardados {len(batch)} artigos no arquivo {organized_path} (batch {i // batch_size + 1})")
     
-    # For backward compatibility, also save to the original path if different
-    if organized_path != caminho:
-        with open(caminho, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=artigos_unicos[0].keys())
-            if not original_exists or os.stat(caminho).st_size == 0:  # Write header if file is empty
-                writer.writeheader()
-                
-            batch_size = 10
-            for i in range(0, len(artigos_unicos), batch_size):
-                batch = artigos_unicos[i:i + batch_size]
-                for artigo in batch:
-                    writer.writerow(artigo)
-                print(f"💾 [Compatibilidade] Guardados {len(batch)} artigos no arquivo {caminho} (batch {i // batch_size + 1})")
+    print(f"✅ Arquivo salvo com sucesso em: {organized_path}")
 
 
 # --------------------------- Process URLs in parallel ---------------------------
