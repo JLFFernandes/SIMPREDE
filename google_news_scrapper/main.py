@@ -20,9 +20,8 @@ def main():
         choices=[
             "run_scraper",
             "processar_relevantes",
-            "exportar_bd_artigos_google",
-            "exportar_bd_artigos_municipios",
-            "supabase_export_script",
+            "filtrar_artigos_vitimas",
+            "export_to_supabase",
             "all"
         ],
         default="all",
@@ -47,43 +46,42 @@ def main():
         else:
             args.dias = 1
 
-    # O processamento será sempre das últimas 24 horas — data não é mais necessária
-    args.date = None
-    print(f"📅 A processar artigos dos últimos {args.dias} dia(s)...")
+    # Get current date for file naming
+    current_date = datetime.now().strftime("%Y%m%d")
+    print(f"📅 A processar artigos dos últimos {args.dias} dia(s) com data {current_date}...")
 
     scripts = {
-        #"run_scraper": "scraping/run_scraper.py",
-        #"processar_relevantes": "processador/processar_relevantes.py",
+        "run_scraper": "scraping/run_scraper.py",
+        "processar_relevantes": "processador/processar_relevantes.py",
         "filtrar_artigos_vitimas": "processador/filtrar_artigos_vitimas.py",
-        "exportar_bd_artigos_municipios": "exportador_bd/supabase_export_script_artigos_municipios_pt.py",
-        "supabase_export_script.py": "exportador_bd/supabase_export_script.py",
+        "export_to_supabase": "exportador_bd/export_to_supabase.py",
     }
 
-    # Define which scripts should receive the date parameter
-    date_dependent_scripts = [
-        "run_scraper"
+    # All scripts should receive dias parameter
+    dias_dependent_scripts = [
+        "run_scraper",
+        "processar_relevantes",
+        "filtrar_artigos_vitimas"
     ]
 
     if args.etapa == "all":
         for etapa, script in scripts.items():
             print(f"🚀 Executando etapa: {etapa}...")
             cmd = ["python3", os.path.join(os.path.dirname(__file__), script)]
-            if etapa == "run_scraper":
+            if etapa in dias_dependent_scripts:
                 cmd.extend(["--dias", str(args.dias)])
-            elif etapa in date_dependent_scripts and args.date:
-                cmd.extend(["--date", args.date])
             print(f"📦 Comando: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
     else:
         script = scripts[args.etapa]
         cmd = ["python3", os.path.join(os.path.dirname(__file__), script)]
-        if args.etapa == "run_scraper":
+        if args.etapa in dias_dependent_scripts:
             cmd.extend(["--dias", str(args.dias)])
-        elif args.etapa in date_dependent_scripts and args.date:
-            cmd.extend(["--date", args.date])
         print(f"🚀 Executando etapa: {args.etapa}...")
         print(f"📦 Comando: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
+
+    print(f"✅ Processamento completo! Arquivos gerados com a data {current_date}")
 
 if __name__ == "__main__":
     main()

@@ -10,7 +10,39 @@ import time
 
 MODEL_PATH = os.environ.get("VICTIM_NER_MODEL_PATH", "../models/victims_nlp")
 MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), MODEL_PATH))
-INPUT_CSV = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/structured/artigos_google_municipios_pt.csv"))
+
+# Check if there's a date-specific file in year/month/day structure
+from datetime import datetime
+current_date = datetime.now().strftime("%Y%m%d")
+current_year = datetime.now().strftime("%Y")
+current_month = datetime.now().strftime("%m")
+current_day = datetime.now().strftime("%d")
+
+# Define possible file paths
+raw_year_month_day_path = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), 
+    f"../data/raw/{current_year}/{current_month}/{current_day}/artigos_google_municipios_pt_{current_date}.csv"
+))
+structured_date_path = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), 
+    f"../data/structured/artigos_google_municipios_pt_{current_date}.csv"
+))
+default_path = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), 
+    "../data/structured/artigos_google_municipios_pt.csv"
+))
+
+# Check which file exists
+if os.path.exists(raw_year_month_day_path):
+    INPUT_CSV = raw_year_month_day_path
+    print(f"Using raw year/month/day file: {INPUT_CSV}")
+elif os.path.exists(structured_date_path):
+    INPUT_CSV = structured_date_path
+    print(f"Using structured date file: {INPUT_CSV}")
+else:
+    INPUT_CSV = default_path
+    print(f"Using default file: {INPUT_CSV}")
+
 OUTPUT_CSV = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/raw/ner_victims_list.csv"))
 
 PT_NUMBER_WORDS = {
