@@ -17,3 +17,7 @@
 [2025-06-02T20:14:39.657+0000] {logging_mixin.py:188} INFO - ✅ Dependências instaladas com sucesso
 [2025-06-02T20:14:39.657+0000] {logging_mixin.py:188} INFO - 📦 A executar comando: python3 /opt/***/dags/google_scraper/scraping/run_scraper.py --dias 1
 [2025-06-02T20:14:39.745+0000] {process_utils.py:79} INFO - Process psutil.Process(pid=4370, status='terminated', started='20:13:23') (4370) terminated with exit code None
+[2025-06-02T20:15:39.268+0000] {process_utils.py:149} WARNING - process psutil.Process(pid=4352, name='airflow task ru', status='sleeping', started='20:13:23') did not respond to SIGTERM. Trying SIGKILL
+[2025-06-02T20:15:39.279+0000] {process_utils.py:86} INFO - Sending the signal 9 to group 4352
+[2025-06-02T20:15:39.297+0000] {process_utils.py:79} INFO - Process psutil.Process(pid=4352, name='airflow task ru', status='terminated', exitcode=<Negsignal.SIGKILL: -9>, started='20:13:23') (4352) terminated with exit code -9
+[2025-06-02T20:15:39.299+0000] {standard_task_runner.py:175} ERROR - Job 32 was killed before it finished (likely due to running out of memory)

@@ -1191,3 +1191,17 @@ NameError: name 'test_selenium_env' is not defined
 [2025-06-02T20:14:36.233+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:14:36.232+0000] {dag.py:3036} INFO - Sync 1 DAGs
 [2025-06-02T20:14:36.243+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:14:36.243+0000] {dag.py:3823} INFO - Setting next_dagrun for google_scraper_pipeline to 2025-06-02 00:00:00+00:00, run_after=2025-06-03 00:00:00+00:00
 [2025-06-02T20:14:36.251+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper_dag.py took 0.077 seconds
+[2025-06-02T20:15:36.297+0000] {processor.py:161} INFO - Started process (PID=4542) to work on /opt/airflow/dags/google_scraper_dag.py
+[2025-06-02T20:15:36.302+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/google_scraper_dag.py for tasks to queue
+[2025-06-02T20:15:36.304+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:15:36.303+0000] {dagbag.py:538} INFO - Filling up the DagBag from /opt/airflow/dags/google_scraper_dag.py
+[2025-06-02T20:15:36.321+0000] {processor.py:840} INFO - DAG(s) 'google_scraper_pipeline' retrieved from /opt/airflow/dags/google_scraper_dag.py
+[2025-06-02T20:15:36.345+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:15:36.345+0000] {dag.py:3036} INFO - Sync 1 DAGs
+[2025-06-02T20:15:36.357+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:15:36.357+0000] {dag.py:3823} INFO - Setting next_dagrun for google_scraper_pipeline to 2025-06-02 00:00:00+00:00, run_after=2025-06-03 00:00:00+00:00
+[2025-06-02T20:15:36.364+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper_dag.py took 0.072 seconds
+[2025-06-02T20:16:36.435+0000] {processor.py:161} INFO - Started process (PID=4609) to work on /opt/airflow/dags/google_scraper_dag.py
+[2025-06-02T20:16:36.447+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/google_scraper_dag.py for tasks to queue
+[2025-06-02T20:16:36.448+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:16:36.448+0000] {dagbag.py:538} INFO - Filling up the DagBag from /opt/airflow/dags/google_scraper_dag.py
+[2025-06-02T20:16:36.468+0000] {processor.py:840} INFO - DAG(s) 'google_scraper_pipeline' retrieved from /opt/airflow/dags/google_scraper_dag.py
+[2025-06-02T20:16:36.499+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:16:36.499+0000] {dag.py:3036} INFO - Sync 1 DAGs
+[2025-06-02T20:16:36.511+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:16:36.511+0000] {dag.py:3823} INFO - Setting next_dagrun for google_scraper_pipeline to 2025-06-02 00:00:00+00:00, run_after=2025-06-03 00:00:00+00:00
+[2025-06-02T20:16:36.519+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper_dag.py took 0.089 seconds

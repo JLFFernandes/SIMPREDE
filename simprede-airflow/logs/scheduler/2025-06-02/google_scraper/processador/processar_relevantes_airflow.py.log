@@ -628,3 +628,18 @@ TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
 [2025-06-02T20:14:02.246+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:14:02.246+0000] {dagbag.py:538} INFO - Filling up the DagBag from /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
 [2025-06-02T20:14:02.876+0000] {processor.py:842} WARNING - No viable dags retrieved from /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
 [2025-06-02T20:14:02.883+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py took 0.641 seconds
+[2025-06-02T20:15:03.355+0000] {processor.py:161} INFO - Started process (PID=4515) to work on /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
+[2025-06-02T20:15:03.356+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py for tasks to queue
+[2025-06-02T20:15:03.357+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:15:03.357+0000] {dagbag.py:538} INFO - Filling up the DagBag from /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
+[2025-06-02T20:15:03.999+0000] {processor.py:842} WARNING - No viable dags retrieved from /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
+[2025-06-02T20:15:04.006+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py took 0.655 seconds
+[2025-06-02T20:16:04.484+0000] {processor.py:161} INFO - Started process (PID=4583) to work on /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
+[2025-06-02T20:16:04.487+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py for tasks to queue
+[2025-06-02T20:16:04.488+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:16:04.488+0000] {dagbag.py:538} INFO - Filling up the DagBag from /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
+[2025-06-02T20:16:05.134+0000] {processor.py:842} WARNING - No viable dags retrieved from /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
+[2025-06-02T20:16:05.141+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py took 0.660 seconds
+[2025-06-02T20:17:05.686+0000] {processor.py:161} INFO - Started process (PID=4650) to work on /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
+[2025-06-02T20:17:05.688+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py for tasks to queue
+[2025-06-02T20:17:05.689+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:17:05.688+0000] {dagbag.py:538} INFO - Filling up the DagBag from /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
+[2025-06-02T20:17:06.317+0000] {processor.py:842} WARNING - No viable dags retrieved from /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py
+[2025-06-02T20:17:06.323+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper/processador/processar_relevantes_airflow.py took 0.640 seconds
