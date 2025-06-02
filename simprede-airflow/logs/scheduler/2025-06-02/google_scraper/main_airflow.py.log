@@ -453,3 +453,13 @@
 [2025-06-02T20:14:36.184+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:14:36.184+0000] {dagbag.py:538} INFO - Filling up the DagBag from /opt/airflow/dags/google_scraper/main_airflow.py
 [2025-06-02T20:14:36.188+0000] {processor.py:842} WARNING - No viable dags retrieved from /opt/airflow/dags/google_scraper/main_airflow.py
 [2025-06-02T20:14:36.209+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper/main_airflow.py took 0.032 seconds
+[2025-06-02T20:15:36.300+0000] {processor.py:161} INFO - Started process (PID=4545) to work on /opt/airflow/dags/google_scraper/main_airflow.py
+[2025-06-02T20:15:36.302+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/google_scraper/main_airflow.py for tasks to queue
+[2025-06-02T20:15:36.303+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:15:36.302+0000] {dagbag.py:538} INFO - Filling up the DagBag from /opt/airflow/dags/google_scraper/main_airflow.py
+[2025-06-02T20:15:36.307+0000] {processor.py:842} WARNING - No viable dags retrieved from /opt/airflow/dags/google_scraper/main_airflow.py
+[2025-06-02T20:15:36.320+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper/main_airflow.py took 0.024 seconds
+[2025-06-02T20:16:36.435+0000] {processor.py:161} INFO - Started process (PID=4612) to work on /opt/airflow/dags/google_scraper/main_airflow.py
+[2025-06-02T20:16:36.447+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/google_scraper/main_airflow.py for tasks to queue
+[2025-06-02T20:16:36.449+0000] {logging_mixin.py:188} INFO - [2025-06-02T20:16:36.449+0000] {dagbag.py:538} INFO - Filling up the DagBag from /opt/airflow/dags/google_scraper/main_airflow.py
+[2025-06-02T20:16:36.453+0000] {processor.py:842} WARNING - No viable dags retrieved from /opt/airflow/dags/google_scraper/main_airflow.py
+[2025-06-02T20:16:36.475+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/google_scraper/main_airflow.py took 0.044 seconds
