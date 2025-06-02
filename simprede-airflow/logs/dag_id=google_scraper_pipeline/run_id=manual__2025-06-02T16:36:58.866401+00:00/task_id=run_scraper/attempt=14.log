@@ -1,0 +1,23 @@
+[2025-06-02T19:59:22.366+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T16:36:58.866401+00:00 [queued]>
+[2025-06-02T19:59:22.370+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T16:36:58.866401+00:00 [queued]>
+[2025-06-02T19:59:22.371+0000] {taskinstance.py:2170} INFO - Starting attempt 14 of 15
+[2025-06-02T19:59:22.378+0000] {taskinstance.py:2191} INFO - Executing <Task(PythonOperator): run_scraper> on 2025-06-02 16:36:58.866401+00:00
+[2025-06-02T19:59:22.381+0000] {standard_task_runner.py:60} INFO - Started process 3220 to run task
+[2025-06-02T19:59:22.383+0000] {standard_task_runner.py:87} INFO - Running: ['***', 'tasks', 'run', 'google_scraper_pipeline', 'run_scraper', 'manual__2025-06-02T16:36:58.866401+00:00', '--job-id', '29', '--raw', '--subdir', 'DAGS_FOLDER/google_scraper_dag.py', '--cfg-path', '/tmp/tmp2l5r2t2w']
+[2025-06-02T19:59:22.385+0000] {standard_task_runner.py:88} INFO - Job 29: Subtask run_scraper
+[2025-06-02T19:59:22.417+0000] {task_command.py:423} INFO - Running <TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T16:36:58.866401+00:00 [running]> on host 4a3ff0e975f7
+[2025-06-02T19:59:22.471+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='google_scraper_pipeline' AIRFLOW_CTX_TASK_ID='run_scraper' AIRFLOW_CTX_EXECUTION_DATE='2025-06-02T16:36:58.866401+00:00' AIRFLOW_CTX_TRY_NUMBER='14' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-06-02T16:36:58.866401+00:00'
+[2025-06-02T19:59:23.232+0000] {logging_mixin.py:188} INFO - ✅ Dependências instaladas com sucesso
+[2025-06-02T19:59:23.232+0000] {logging_mixin.py:188} INFO - 📦 A executar comando: python3 /opt/***/dags/google_scraper/scraping/run_scraper_***.py --dias 1
+[2025-06-02T20:05:10.478+0000] {local_task_job_runner.py:302} WARNING - State of this instance has been externally set to restarting. Terminating instance.
+[2025-06-02T20:05:10.482+0000] {process_utils.py:131} INFO - Sending 15 to group 3220. PIDs of all processes in the group: [3238, 3220]
+[2025-06-02T20:05:10.483+0000] {process_utils.py:86} INFO - Sending the signal 15 to group 3220
+[2025-06-02T20:05:10.485+0000] {taskinstance.py:2450} ERROR - Received SIGTERM. Terminating subprocesses.
+[2025-06-02T20:05:10.488+0000] {logging_mixin.py:188} INFO - ⚠️ Erro em run_scraper: Task received SIGTERM signal
+[2025-06-02T20:05:10.488+0000] {process_utils.py:79} INFO - Process psutil.Process(pid=3238, status='terminated', started='19:59:22') (3238) terminated with exit code None
+[2025-06-02T20:05:10.951+0000] {logging_mixin.py:188} INFO - ✅ Dependências instaladas com sucesso
+[2025-06-02T20:05:10.951+0000] {logging_mixin.py:188} INFO - 📦 A executar comando: python3 /opt/***/dags/google_scraper/scraping/run_scraper.py --dias 1
+[2025-06-02T20:06:10.487+0000] {process_utils.py:149} WARNING - process psutil.Process(pid=3220, name='airflow task ru', status='sleeping', started='19:59:21') did not respond to SIGTERM. Trying SIGKILL
+[2025-06-02T20:06:10.497+0000] {process_utils.py:86} INFO - Sending the signal 9 to group 3220
+[2025-06-02T20:06:10.508+0000] {process_utils.py:79} INFO - Process psutil.Process(pid=3220, name='airflow task ru', status='terminated', exitcode=<Negsignal.SIGKILL: -9>, started='19:59:21') (3220) terminated with exit code -9
+[2025-06-02T20:06:10.509+0000] {standard_task_runner.py:175} ERROR - Job 29 was killed before it finished (likely due to running out of memory)

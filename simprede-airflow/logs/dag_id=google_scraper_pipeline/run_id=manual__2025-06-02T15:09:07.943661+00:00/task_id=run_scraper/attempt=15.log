@@ -1,0 +1,81 @@
+[2025-06-02T15:49:41.965+0000] {taskinstance.py:1157} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T15:09:07.943661+00:00 [queued]>
+[2025-06-02T15:49:41.970+0000] {taskinstance.py:1157} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T15:09:07.943661+00:00 [queued]>
+[2025-06-02T15:49:41.971+0000] {taskinstance.py:1359} INFO - Starting attempt 15 of 16
+[2025-06-02T15:49:41.979+0000] {taskinstance.py:1380} INFO - Executing <Task(PythonOperator): run_scraper> on 2025-06-02 15:09:07.943661+00:00
+[2025-06-02T15:49:41.982+0000] {standard_task_runner.py:57} INFO - Started process 3689 to run task
+[2025-06-02T15:49:41.985+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'google_scraper_pipeline', 'run_scraper', 'manual__2025-06-02T15:09:07.943661+00:00', '--job-id', '20', '--raw', '--subdir', 'DAGS_FOLDER/google_scraper_dag.py', '--cfg-path', '/tmp/tmpu9ics2ji']
+[2025-06-02T15:49:41.987+0000] {standard_task_runner.py:85} INFO - Job 20: Subtask run_scraper
+[2025-06-02T15:49:42.015+0000] {task_command.py:415} INFO - Running <TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T15:09:07.943661+00:00 [running]> on host 1457ea4f74d2
+[2025-06-02T15:49:42.051+0000] {taskinstance.py:1660} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='google_scraper_pipeline' AIRFLOW_CTX_TASK_ID='run_scraper' AIRFLOW_CTX_EXECUTION_DATE='2025-06-02T15:09:07.943661+00:00' AIRFLOW_CTX_TRY_NUMBER='15' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-06-02T15:09:07.943661+00:00'
+[2025-06-02T15:49:44.918+0000] {logging_mixin.py:151} INFO - ✅ Dependências instaladas com sucesso
+[2025-06-02T15:49:44.918+0000] {logging_mixin.py:151} INFO - 📦 A executar comando: python3 /opt/***/dags/google_scraper/scraping/run_scraper_***.py --dias 1
+[2025-06-02T15:49:45.466+0000] {logging_mixin.py:151} INFO - Código de retorno: 1
+[2025-06-02T15:49:45.466+0000] {logging_mixin.py:151} INFO - Resultado: 
+[2025-06-02T15:49:45.466+0000] {logging_mixin.py:151} INFO - Erros: Traceback (most recent call last):
+  File "/opt/***/dags/google_scraper/scraping/run_scraper_***.py", line 28, in <module>
+    from utils.helpers import load_keywords, carregar_paroquias_com_municipios, gerar_id
+  File "/opt/***/dags/google_scraper/utils/helpers.py", line 20, in <module>
+    from extracao.normalizador import (
+  File "/opt/***/dags/google_scraper/extracao/normalizador.py", line 100, in <module>
+    def extract_event_hour(text: str) -> str | None:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+[2025-06-02T15:49:45.466+0000] {logging_mixin.py:151} INFO - ⚠️ Comando falhou com código de retorno 1
+[2025-06-02T15:49:45.467+0000] {logging_mixin.py:151} INFO - ⚠️ Erro ao executar comando: Command '['python3', '/opt/***/dags/google_scraper/scraping/run_scraper_***.py', '--dias', '1']' returned non-zero exit status 1.
+[2025-06-02T15:49:45.467+0000] {logging_mixin.py:151} INFO - Resultado: 
+[2025-06-02T15:49:45.467+0000] {logging_mixin.py:151} INFO - Erro: Traceback (most recent call last):
+  File "/opt/***/dags/google_scraper/scraping/run_scraper_***.py", line 28, in <module>
+    from utils.helpers import load_keywords, carregar_paroquias_com_municipios, gerar_id
+  File "/opt/***/dags/google_scraper/utils/helpers.py", line 20, in <module>
+    from extracao.normalizador import (
+  File "/opt/***/dags/google_scraper/extracao/normalizador.py", line 100, in <module>
+    def extract_event_hour(text: str) -> str | None:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+[2025-06-02T15:49:45.467+0000] {logging_mixin.py:151} INFO - ⚠️ Erro em run_scraper: Command '['python3', '/opt/***/dags/google_scraper/scraping/run_scraper_***.py', '--dias', '1']' returned non-zero exit status 1.
+[2025-06-02T15:49:48.794+0000] {logging_mixin.py:151} INFO - ✅ Dependências instaladas com sucesso
+[2025-06-02T15:49:48.795+0000] {logging_mixin.py:151} INFO - 📦 A executar comando: python3 /opt/***/dags/google_scraper/scraping/run_scraper.py --dias 1
+[2025-06-02T15:49:49.410+0000] {logging_mixin.py:151} INFO - Código de retorno: 1
+[2025-06-02T15:49:49.410+0000] {logging_mixin.py:151} INFO - Resultado: 
+[2025-06-02T15:49:49.410+0000] {logging_mixin.py:151} INFO - Erros: Traceback (most recent call last):
+  File "/opt/***/dags/google_scraper/scraping/run_scraper.py", line 16, in <module>
+    from utils.helpers import load_keywords, carregar_paroquias_com_municipios, gerar_id
+  File "/opt/***/dags/google_scraper/utils/helpers.py", line 20, in <module>
+    from extracao.normalizador import (
+  File "/opt/***/dags/google_scraper/extracao/normalizador.py", line 100, in <module>
+    def extract_event_hour(text: str) -> str | None:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+[2025-06-02T15:49:49.411+0000] {logging_mixin.py:151} INFO - ⚠️ Comando falhou com código de retorno 1
+[2025-06-02T15:49:49.411+0000] {logging_mixin.py:151} INFO - ⚠️ Erro ao executar comando: Command '['python3', '/opt/***/dags/google_scraper/scraping/run_scraper.py', '--dias', '1']' returned non-zero exit status 1.
+[2025-06-02T15:49:49.411+0000] {logging_mixin.py:151} INFO - Resultado: 
+[2025-06-02T15:49:49.411+0000] {logging_mixin.py:151} INFO - Erro: Traceback (most recent call last):
+  File "/opt/***/dags/google_scraper/scraping/run_scraper.py", line 16, in <module>
+    from utils.helpers import load_keywords, carregar_paroquias_com_municipios, gerar_id
+  File "/opt/***/dags/google_scraper/utils/helpers.py", line 20, in <module>
+    from extracao.normalizador import (
+  File "/opt/***/dags/google_scraper/extracao/normalizador.py", line 100, in <module>
+    def extract_event_hour(text: str) -> str | None:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+[2025-06-02T15:49:49.411+0000] {logging_mixin.py:151} INFO - ⚠️ Erro no fallback run_scraper: Command '['python3', '/opt/***/dags/google_scraper/scraping/run_scraper.py', '--dias', '1']' returned non-zero exit status 1.
+[2025-06-02T15:49:49.411+0000] {taskinstance.py:1935} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/opt/airflow/dags/google_scraper_dag.py", line 107, in run_scraper
+    return run_script("scraping/run_scraper_airflow.py", dias, date)
+  File "/opt/airflow/dags/google_scraper_dag.py", line 88, in run_script
+    raise subprocess.CalledProcessError(
+subprocess.CalledProcessError: Command '['python3', '/opt/airflow/dags/google_scraper/scraping/run_scraper_airflow.py', '--dias', '1']' returned non-zero exit status 1.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/operators/python.py", line 192, in execute
+    return_value = self.execute_callable()
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/operators/python.py", line 209, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+  File "/opt/airflow/dags/google_scraper_dag.py", line 112, in run_scraper
+    return run_script("scraping/run_scraper.py", dias, date)
+  File "/opt/airflow/dags/google_scraper_dag.py", line 88, in run_script
+    raise subprocess.CalledProcessError(
+subprocess.CalledProcessError: Command '['python3', '/opt/airflow/dags/google_scraper/scraping/run_scraper.py', '--dias', '1']' returned non-zero exit status 1.
+[2025-06-02T15:49:49.422+0000] {taskinstance.py:1398} INFO - Marking task as UP_FOR_RETRY. dag_id=google_scraper_pipeline, task_id=run_scraper, execution_date=20250602T150907, start_date=20250602T154941, end_date=20250602T154949
+[2025-06-02T15:49:49.428+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 20 for task run_scraper (Command '['python3', '/opt/airflow/dags/google_scraper/scraping/run_scraper.py', '--dias', '1']' returned non-zero exit status 1.; 3689)
+[2025-06-02T15:49:49.465+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2025-06-02T15:49:49.477+0000] {taskinstance.py:2776} INFO - 0 downstream tasks scheduled from follow-on schedule check
