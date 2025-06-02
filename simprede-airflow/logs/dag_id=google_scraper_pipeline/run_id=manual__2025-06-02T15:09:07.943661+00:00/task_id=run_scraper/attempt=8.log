@@ -1,0 +1,27 @@
+[2025-06-02T15:18:57.680+0000] {taskinstance.py:1157} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T15:09:07.943661+00:00 [queued]>
+[2025-06-02T15:18:57.683+0000] {taskinstance.py:1157} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T15:09:07.943661+00:00 [queued]>
+[2025-06-02T15:18:57.683+0000] {taskinstance.py:1359} INFO - Starting attempt 8 of 9
+[2025-06-02T15:18:57.688+0000] {taskinstance.py:1380} INFO - Executing <Task(PythonOperator): run_scraper> on 2025-06-02 15:09:07.943661+00:00
+[2025-06-02T15:18:57.690+0000] {standard_task_runner.py:57} INFO - Started process 1103 to run task
+[2025-06-02T15:18:57.691+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'google_scraper_pipeline', 'run_scraper', 'manual__2025-06-02T15:09:07.943661+00:00', '--job-id', '10', '--raw', '--subdir', 'DAGS_FOLDER/google_scraper_dag.py', '--cfg-path', '/tmp/tmpu9igkuzy']
+[2025-06-02T15:18:57.693+0000] {standard_task_runner.py:85} INFO - Job 10: Subtask run_scraper
+[2025-06-02T15:18:57.720+0000] {task_command.py:415} INFO - Running <TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T15:09:07.943661+00:00 [running]> on host 1457ea4f74d2
+[2025-06-02T15:18:57.751+0000] {taskinstance.py:1660} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='google_scraper_pipeline' AIRFLOW_CTX_TASK_ID='run_scraper' AIRFLOW_CTX_EXECUTION_DATE='2025-06-02T15:09:07.943661+00:00' AIRFLOW_CTX_TRY_NUMBER='8' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-06-02T15:09:07.943661+00:00'
+[2025-06-02T15:18:57.752+0000] {logging_mixin.py:151} INFO - 📦 Executing command: python3 /opt/***/dags/google_scraper/scraping/run_scraper.py --dias 1
+[2025-06-02T15:18:57.816+0000] {taskinstance.py:1935} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/operators/python.py", line 192, in execute
+    return_value = self.execute_callable()
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/operators/python.py", line 209, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+  File "/opt/airflow/dags/google_scraper_dag.py", line 51, in run_scraper
+    return run_script("scraping/run_scraper.py", dias, date)
+  File "/opt/airflow/dags/google_scraper_dag.py", line 41, in run_script
+    result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+  File "/usr/local/lib/python3.8/subprocess.py", line 516, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['python3', '/opt/airflow/dags/google_scraper/scraping/run_scraper.py', '--dias', '1']' returned non-zero exit status 1.
+[2025-06-02T15:18:57.822+0000] {taskinstance.py:1398} INFO - Marking task as UP_FOR_RETRY. dag_id=google_scraper_pipeline, task_id=run_scraper, execution_date=20250602T150907, start_date=20250602T151857, end_date=20250602T151857
+[2025-06-02T15:18:57.827+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 10 for task run_scraper (Command '['python3', '/opt/airflow/dags/google_scraper/scraping/run_scraper.py', '--dias', '1']' returned non-zero exit status 1.; 1103)
+[2025-06-02T15:18:57.831+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2025-06-02T15:18:57.843+0000] {taskinstance.py:2776} INFO - 0 downstream tasks scheduled from follow-on schedule check

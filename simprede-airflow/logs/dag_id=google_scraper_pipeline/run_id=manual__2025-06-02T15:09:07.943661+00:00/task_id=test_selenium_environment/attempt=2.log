@@ -1,0 +1,43 @@
+[2025-06-02T15:49:38.066+0000] {taskinstance.py:1157} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: google_scraper_pipeline.test_selenium_environment manual__2025-06-02T15:09:07.943661+00:00 [queued]>
+[2025-06-02T15:49:38.070+0000] {taskinstance.py:1157} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: google_scraper_pipeline.test_selenium_environment manual__2025-06-02T15:09:07.943661+00:00 [queued]>
+[2025-06-02T15:49:38.070+0000] {taskinstance.py:1359} INFO - Starting attempt 2 of 3
+[2025-06-02T15:49:38.074+0000] {taskinstance.py:1380} INFO - Executing <Task(PythonOperator): test_selenium_environment> on 2025-06-02 15:09:07.943661+00:00
+[2025-06-02T15:49:38.077+0000] {standard_task_runner.py:57} INFO - Started process 3673 to run task
+[2025-06-02T15:49:38.078+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'google_scraper_pipeline', 'test_selenium_environment', 'manual__2025-06-02T15:09:07.943661+00:00', '--job-id', '19', '--raw', '--subdir', 'DAGS_FOLDER/google_scraper_dag.py', '--cfg-path', '/tmp/tmpdqpx5hvr']
+[2025-06-02T15:49:38.080+0000] {standard_task_runner.py:85} INFO - Job 19: Subtask test_selenium_environment
+[2025-06-02T15:49:38.104+0000] {task_command.py:415} INFO - Running <TaskInstance: google_scraper_pipeline.test_selenium_environment manual__2025-06-02T15:09:07.943661+00:00 [running]> on host 1457ea4f74d2
+[2025-06-02T15:49:38.136+0000] {taskinstance.py:1660} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='google_scraper_pipeline' AIRFLOW_CTX_TASK_ID='test_selenium_environment' AIRFLOW_CTX_EXECUTION_DATE='2025-06-02T15:09:07.943661+00:00' AIRFLOW_CTX_TRY_NUMBER='2' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-06-02T15:09:07.943661+00:00'
+[2025-06-02T15:49:38.137+0000] {logging_mixin.py:151} INFO - 📋 A testar ambiente Selenium/Chrome
+[2025-06-02T15:49:41.069+0000] {logging_mixin.py:151} INFO - ✅ Dependências instaladas com sucesso
+[2025-06-02T15:49:41.069+0000] {logging_mixin.py:151} INFO - 📦 A executar comando: python3 /opt/***/dags/google_scraper/tests/test_selenium_environment.py
+[2025-06-02T15:49:41.353+0000] {logging_mixin.py:151} INFO - Código de retorno: 1
+[2025-06-02T15:49:41.353+0000] {logging_mixin.py:151} INFO - Resultado: 
+[2025-06-02T15:49:41.354+0000] {logging_mixin.py:151} INFO - Erros: 2025-06-02 15:49:41,143 - INFO - Starting Selenium environment tests...
+2025-06-02 15:49:41,341 - INFO - ✅ Selenium and WebDriver Manager imports successful
+2025-06-02 15:49:41,341 - ERROR - ❌ Chrome/Chromium not found at: /usr/bin/chromium
+2025-06-02 15:49:41,341 - WARNING - Skipping browser test due to failed prerequisite checks
+2025-06-02 15:49:41,341 - INFO - 
+Test Summary:
+2025-06-02 15:49:41,341 - INFO - Selenium Installation: ✅ PASS
+2025-06-02 15:49:41,341 - INFO - Chrome Environment: ❌ FAIL
+2025-06-02 15:49:41,341 - INFO - Headless Browser: ❌ FAIL
+2025-06-02 15:49:41,341 - ERROR - ❌ Some tests failed
+[2025-06-02T15:49:41.354+0000] {logging_mixin.py:151} INFO - ⚠️ Comando falhou com código de retorno 1
+[2025-06-02T15:49:41.354+0000] {logging_mixin.py:151} INFO - ⚠️ Erro ao executar comando: Command '['python3', '/opt/***/dags/google_scraper/tests/test_selenium_environment.py']' returned non-zero exit status 1.
+[2025-06-02T15:49:41.354+0000] {logging_mixin.py:151} INFO - Resultado: 
+[2025-06-02T15:49:41.354+0000] {logging_mixin.py:151} INFO - Erro: 2025-06-02 15:49:41,143 - INFO - Starting Selenium environment tests...
+2025-06-02 15:49:41,341 - INFO - ✅ Selenium and WebDriver Manager imports successful
+2025-06-02 15:49:41,341 - ERROR - ❌ Chrome/Chromium not found at: /usr/bin/chromium
+2025-06-02 15:49:41,341 - WARNING - Skipping browser test due to failed prerequisite checks
+2025-06-02 15:49:41,341 - INFO - 
+Test Summary:
+2025-06-02 15:49:41,341 - INFO - Selenium Installation: ✅ PASS
+2025-06-02 15:49:41,341 - INFO - Chrome Environment: ❌ FAIL
+2025-06-02 15:49:41,341 - INFO - Headless Browser: ❌ FAIL
+2025-06-02 15:49:41,341 - ERROR - ❌ Some tests failed
+[2025-06-02T15:49:41.354+0000] {logging_mixin.py:151} INFO - ⚠️ Erro ao testar ambiente Selenium: Command '['python3', '/opt/***/dags/google_scraper/tests/test_selenium_environment.py']' returned non-zero exit status 1.
+[2025-06-02T15:49:41.354+0000] {logging_mixin.py:151} INFO - ⚠️ O ambiente Selenium pode não estar corretamente configurado!
+[2025-06-02T15:49:41.354+0000] {python.py:194} INFO - Done. Returned value was: None
+[2025-06-02T15:49:41.361+0000] {taskinstance.py:1398} INFO - Marking task as SUCCESS. dag_id=google_scraper_pipeline, task_id=test_selenium_environment, execution_date=20250602T150907, start_date=20250602T154938, end_date=20250602T154941
+[2025-06-02T15:49:41.376+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 0
+[2025-06-02T15:49:41.391+0000] {taskinstance.py:2776} INFO - 1 downstream tasks scheduled from follow-on schedule check

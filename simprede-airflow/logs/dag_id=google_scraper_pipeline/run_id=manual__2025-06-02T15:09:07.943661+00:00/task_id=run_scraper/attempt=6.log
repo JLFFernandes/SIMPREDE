@@ -1,0 +1,26 @@
+[2025-06-02T15:13:54.311+0000] {taskinstance.py:1157} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T15:09:07.943661+00:00 [queued]>
+[2025-06-02T15:13:54.315+0000] {taskinstance.py:1157} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T15:09:07.943661+00:00 [queued]>
+[2025-06-02T15:13:54.316+0000] {taskinstance.py:1359} INFO - Starting attempt 6 of 7
+[2025-06-02T15:13:54.321+0000] {taskinstance.py:1380} INFO - Executing <Task(PythonOperator): run_scraper> on 2025-06-02 15:09:07.943661+00:00
+[2025-06-02T15:13:54.324+0000] {standard_task_runner.py:57} INFO - Started process 822 to run task
+[2025-06-02T15:13:54.326+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'google_scraper_pipeline', 'run_scraper', 'manual__2025-06-02T15:09:07.943661+00:00', '--job-id', '8', '--raw', '--subdir', 'DAGS_FOLDER/google_scraper_dag.py', '--cfg-path', '/tmp/tmplw096gaq']
+[2025-06-02T15:13:54.330+0000] {standard_task_runner.py:85} INFO - Job 8: Subtask run_scraper
+[2025-06-02T15:13:54.376+0000] {task_command.py:415} INFO - Running <TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T15:09:07.943661+00:00 [running]> on host 1457ea4f74d2
+[2025-06-02T15:13:54.430+0000] {taskinstance.py:1660} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='google_scraper_pipeline' AIRFLOW_CTX_TASK_ID='run_scraper' AIRFLOW_CTX_EXECUTION_DATE='2025-06-02T15:09:07.943661+00:00' AIRFLOW_CTX_TRY_NUMBER='6' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-06-02T15:09:07.943661+00:00'
+[2025-06-02T15:13:54.431+0000] {logging_mixin.py:151} INFO - ⚠️ Script not found at: /opt/***/dags/google_scraper/google_scraper/scraping/run_scraper.py
+[2025-06-02T15:13:54.431+0000] {logging_mixin.py:151} INFO - ⚠️ Error in run_scraper: Script not found at: /opt/***/dags/google_scraper/google_scraper/scraping/run_scraper.py
+[2025-06-02T15:13:54.431+0000] {taskinstance.py:1935} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/operators/python.py", line 192, in execute
+    return_value = self.execute_callable()
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/operators/python.py", line 209, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+  File "/opt/airflow/dags/google_scraper_dag.py", line 73, in run_scraper
+    return run_script("google_scraper/scraping/run_scraper.py", dias, date)
+  File "/opt/airflow/dags/google_scraper_dag.py", line 25, in run_script
+    raise FileNotFoundError(f"Script not found at: {full_script_path}")
+FileNotFoundError: Script not found at: /opt/***/dags/google_scraper/google_scraper/scraping/run_scraper.py
+[2025-06-02T15:13:54.436+0000] {taskinstance.py:1398} INFO - Marking task as UP_FOR_RETRY. dag_id=google_scraper_pipeline, task_id=run_scraper, execution_date=20250602T150907, start_date=20250602T151354, end_date=20250602T151354
+[2025-06-02T15:13:54.442+0000] {standard_task_runner.py:104} ERROR - Failed to execute job 8 for task run_scraper (Script not found at: /opt/***/dags/google_scraper/google_scraper/scraping/run_scraper.py; 822)
+[2025-06-02T15:13:54.466+0000] {local_task_job_runner.py:228} INFO - Task exited with return code 1
+[2025-06-02T15:13:54.479+0000] {taskinstance.py:2776} INFO - 0 downstream tasks scheduled from follow-on schedule check

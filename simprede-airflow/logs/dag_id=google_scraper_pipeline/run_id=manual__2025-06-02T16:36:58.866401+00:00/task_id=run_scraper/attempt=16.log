@@ -1,0 +1,19 @@
+[2025-06-02T20:13:23.571+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T16:36:58.866401+00:00 [queued]>
+[2025-06-02T20:13:23.574+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T16:36:58.866401+00:00 [queued]>
+[2025-06-02T20:13:23.574+0000] {taskinstance.py:2170} INFO - Starting attempt 16 of 17
+[2025-06-02T20:13:23.579+0000] {taskinstance.py:2191} INFO - Executing <Task(PythonOperator): run_scraper> on 2025-06-02 16:36:58.866401+00:00
+[2025-06-02T20:13:23.581+0000] {standard_task_runner.py:60} INFO - Started process 4352 to run task
+[2025-06-02T20:13:23.583+0000] {standard_task_runner.py:87} INFO - Running: ['***', 'tasks', 'run', 'google_scraper_pipeline', 'run_scraper', 'manual__2025-06-02T16:36:58.866401+00:00', '--job-id', '32', '--raw', '--subdir', 'DAGS_FOLDER/google_scraper_dag.py', '--cfg-path', '/tmp/tmprmqzmvnw']
+[2025-06-02T20:13:23.584+0000] {standard_task_runner.py:88} INFO - Job 32: Subtask run_scraper
+[2025-06-02T20:13:23.609+0000] {task_command.py:423} INFO - Running <TaskInstance: google_scraper_pipeline.run_scraper manual__2025-06-02T16:36:58.866401+00:00 [running]> on host 4a3ff0e975f7
+[2025-06-02T20:13:23.651+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='google_scraper_pipeline' AIRFLOW_CTX_TASK_ID='run_scraper' AIRFLOW_CTX_EXECUTION_DATE='2025-06-02T16:36:58.866401+00:00' AIRFLOW_CTX_TRY_NUMBER='16' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-06-02T16:36:58.866401+00:00'
+[2025-06-02T20:13:24.086+0000] {logging_mixin.py:188} INFO - ✅ Dependências instaladas com sucesso
+[2025-06-02T20:13:24.086+0000] {logging_mixin.py:188} INFO - 📦 A executar comando: python3 /opt/***/dags/google_scraper/scraping/run_scraper_***.py --dias 1
+[2025-06-02T20:14:39.222+0000] {local_task_job_runner.py:302} WARNING - State of this instance has been externally set to failed. Terminating instance.
+[2025-06-02T20:14:39.226+0000] {process_utils.py:131} INFO - Sending 15 to group 4352. PIDs of all processes in the group: [4370, 4352]
+[2025-06-02T20:14:39.227+0000] {process_utils.py:86} INFO - Sending the signal 15 to group 4352
+[2025-06-02T20:14:39.228+0000] {taskinstance.py:2450} ERROR - Received SIGTERM. Terminating subprocesses.
+[2025-06-02T20:14:39.240+0000] {logging_mixin.py:188} INFO - ⚠️ Erro em run_scraper: Task received SIGTERM signal
+[2025-06-02T20:14:39.657+0000] {logging_mixin.py:188} INFO - ✅ Dependências instaladas com sucesso
+[2025-06-02T20:14:39.657+0000] {logging_mixin.py:188} INFO - 📦 A executar comando: python3 /opt/***/dags/google_scraper/scraping/run_scraper.py --dias 1
+[2025-06-02T20:14:39.745+0000] {process_utils.py:79} INFO - Process psutil.Process(pid=4370, status='terminated', started='20:13:23') (4370) terminated with exit code None
