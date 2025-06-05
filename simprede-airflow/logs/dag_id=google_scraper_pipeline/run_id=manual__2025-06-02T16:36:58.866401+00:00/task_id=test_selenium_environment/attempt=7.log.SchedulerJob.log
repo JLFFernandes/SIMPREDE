@@ -1,1 +1,0 @@
-[2025-06-02T16:54:13.532+0000] {scheduler_job_runner.py:781} ERROR - Executor reports task instance <TaskInstance: google_scraper_pipeline.test_selenium_environment manual__2025-06-02T16:36:58.866401+00:00 [queued]> finished (failed) although the task says it's queued. (Info: None) Was the task killed externally?

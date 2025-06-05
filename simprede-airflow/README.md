@@ -9,12 +9,40 @@ This directory contains the necessary files to run Apache Airflow in a container
 - At least 2 CPU cores allocated to Docker
 - At least 10GB of free disk space
 
+## Quick Start
+
+### 🚀 First Time Setup
+```bash
+./start_airflow.sh
+```
+This script will:
+- Check Docker prerequisites
+- Build the Docker images
+- Start all containers
+- Display admin credentials
+- Show useful commands
+
+### ⚡ Quick Operations
+```bash
+# Restart containers (no rebuild)
+./restart_airflow.sh
+
+# Stop all containers
+./stop_airflow.sh
+```
+
+### 🔑 Default Credentials
+- **Username**: `admin`
+- **Password**: `simprede`
+- **Web UI**: http://localhost:8080
+
 ## Directory Structure
 
 - `dags/`: Contains all the Airflow DAGs, including the Google scraper
 - `logs/`: Directory for Airflow logs
 - `plugins/`: Directory for Airflow plugins
 - `data/`: Directory for storing raw and structured data
+- `scripts/`: Contains the Google scraper scripts (mounted as volume)
 
 ## Configuration
 

@@ -1,0 +1,63 @@
+{"timestamp":"2025-06-05T14:26:54.219722","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-05T14:26:54.220392","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/google_scraper_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-05T14:26:54.261768Z","level":"info","event":"🚀 Starting Airflow-Optimized Google News Scraper","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.261969Z","level":"info","event":"📅 Scraper Parameters:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.262067Z","level":"info","event":"  - Days back: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.262154Z","level":"info","event":"  - Specific date: None (use days_back)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.262246Z","level":"info","event":"  - Max execution time: 3600 seconds (60.0 minutes)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.262480Z","level":"info","event":"🚀 Running Airflow scraper command: /home/airflow/.local/bin/python /opt/airflow/scripts/google_scraper/scraping/run_scraper_airflow.py --dias 1 --max_time 3600 --debug","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.262920Z","level":"info","event":"⏰ Process timeout will be: 3900 seconds (65.0 minutes)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.263101Z","level":"info","event":"⏰ Waiting for process completion with timeout: 3900 seconds","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.758099Z","level":"info","event":"📋 Starting Google News scraper (Airflow version)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.758777Z","level":"info","event":"📋 Parameters: days=1, date=None, max_time=3600, quiet=False","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.759782Z","level":"info","event":"📋 📁 Output file: /opt/airflow/scripts/google_scraper/data/raw/2025/06/04/intermediate_google_news_20250604.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.760752Z","level":"info","event":"📋 ⏱️ Max execution time: 3600 seconds","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.760893Z","level":"info","event":"📋 🚀 Starting Airflow-optimized scraper function","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.760955Z","level":"info","event":"📋 ⚙️  Parameters: days_back=1, search_date=None, max_time=3600s","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.761007Z","level":"info","event":"📋 🚀 Starting Google News scraper...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.761056Z","level":"info","event":"📋 📅 Date: current, Days back: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.910899Z","level":"info","event":"📋 📁 Script directory: /opt/airflow/scripts/google_scraper/scraping","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.911093Z","level":"info","event":"📋 📁 Project root: /opt/airflow/scripts/google_scraper","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:54.911185Z","level":"info","event":"📋 🔧 Loading configuration files...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.942164Z","level":"info","event":"📋 🔍 Searching for config files in: ['/opt/airflow/scripts/google_scraper/config', '/opt/airflow/scripts/google_scraper/scraping/config', 'config']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.942455Z","level":"info","event":"📋 📁 Loading keywords from: /opt/airflow/scripts/google_scraper/config/keywords.json","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.943108Z","level":"info","event":"📋 ✅ Loaded 6 keywords","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.943387Z","level":"info","event":"📋 📁 Loading locations from: /opt/airflow/scripts/google_scraper/config/municipios_por_distrito.json","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.945979Z","level":"info","event":"📋 ✅ Loaded 306 parishes, 306 municipalities, 29 districts","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.946854Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.949173Z","level":"info","event":"📋 Configuration Loaded","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.951153Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.952668Z","level":"info","event":"📋   Keywords: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.953016Z","level":"info","event":"📋   Total Locations: 641","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.953300Z","level":"info","event":"📋   Parishes: 306","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.953644Z","level":"info","event":"📋   Municipalities: 306","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.953948Z","level":"info","event":"📋   Districts: 29","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.954143Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.975725Z","level":"info","event":"📋 🧹 Cache cleared","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.975899Z","level":"info","event":"📋 📅 Using calculated date: 2025-06-04 (1 days back)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.975967Z","level":"info","event":"📋 📁 Output directory: /opt/airflow/scripts/google_scraper/data/raw/2025/06/04","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.976052Z","level":"info","event":"📋 🔄 Generating keyword-location combinations...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978136Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978214Z","level":"info","event":"📋 Combinations Generated","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978277Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978334Z","level":"info","event":"📋   Total Combinations: 3846","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978385Z","level":"info","event":"📋   Keywords: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978437Z","level":"info","event":"📋   Locations: 641","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978489Z","level":"info","event":"📋   Priority Keywords: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978542Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978594Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978664Z","level":"info","event":"📋 Processing Configuration","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978710Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978780Z","level":"info","event":"📋   Total Combinations: 3846","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978825Z","level":"info","event":"📋   Batch Size: 300","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978877Z","level":"info","event":"📋   Estimated Batches: 13","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.978926Z","level":"info","event":"📋   Max Concurrent Requests: 180","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.979023Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.979072Z","level":"info","event":"📋 🔗 Setting up balanced HTTP session...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:26:55.979136Z","level":"info","event":"📋 🔍 Checking access to Google News RSS feed...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:27:02.626691Z","level":"info","event":"📋 2025-06-05 15:27:02,620 - run_scraper_airflow - ERROR - ❌ Cannot access Google News: HTTP status 503","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:27:02.641774Z","level":"info","event":"📋 2025-06-05 15:27:02,621 - run_scraper_airflow - ERROR - 🛑 Cannot proceed with scraping as Google News is not accessible","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:27:02.642154Z","level":"info","event":"📋 🎉 Airflow execution completed successfully! Articles: 0","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:27:02.642344Z","level":"info","event":"📋 ✅ Scraping completed. Saved 0 articles","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:27:02.872508Z","level":"info","event":"✅ Airflow scraper completed successfully!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T14:27:02.878396","level":"info","event":"Done. Returned value was: Starting Google News scraper (Airflow version)\nParameters: days=1, date=None, max_time=3600, quiet=False\n📁 Output file: /opt/airflow/scripts/google_scraper/data/raw/2025/06/04/intermediate_google_news_20250604.csv\n⏱️ Max execution time: 3600 seconds\n🚀 Starting Airflow-optimized scraper function\n⚙️  Parameters: days_back=1, search_date=None, max_time=3600s\n🚀 Starting Google News scraper...\n📅 Date: current, Days back: 1\n📁 Script directory: /opt/airflow/scripts/google_scraper/scraping\n📁 Project root: /opt/airflow/scripts/google_scraper\n🔧 Loading configuration files...\n🔍 Searching for config files in: ['/opt/airflow/scripts/google_scraper/config', '/opt/airflow/scripts/google_scraper/scraping/config', 'config']\n📁 Loading keywords from: /opt/airflow/scripts/google_scraper/config/keywords.json\n✅ Loaded 6 keywords\n📁 Loading locations from: /opt/airflow/scripts/google_scraper/config/municipios_por_distrito.json\n✅ Loaded 306 parishes, 306 municipalities, 29 districts\n==================================================\nConfiguration Loaded\n==================================================\n  Keywords: 6\n  Total Locations: 641\n  Parishes: 306\n  Municipalities: 306\n  Districts: 29\n==================================================\n🧹 Cache cleared\n📅 Using calculated date: 2025-06-04 (1 days back)\n📁 Output directory: /opt/airflow/scripts/google_scraper/data/raw/2025/06/04\n🔄 Generating keyword-location combinations...\n==================================================\nCombinations Generated\n==================================================\n  Total Combinations: 3846\n  Keywords: 6\n  Locations: 641\n  Priority Keywords: 5\n==================================================\n==================================================\nProcessing Configuration\n==================================================\n  Total Combinations: 3846\n  Batch Size: 300\n  Estimated Batches: 13\n  Max Concurrent Requests: 180\n==================================================\n🔗 Setting up balanced HTTP session...\n🔍 Checking access to Google News RSS feed...\n2025-06-05 15:27:02,620 - run_scraper_airflow - ERROR - ❌ Cannot access Google News: HTTP status 503\n2025-06-05 15:27:02,621 - run_scraper_airflow - ERROR - 🛑 Cannot proceed with scraping as Google News is not accessible\n🎉 Airflow execution completed successfully! Articles: 0\n✅ Scraping completed. Saved 0 articles\n","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
