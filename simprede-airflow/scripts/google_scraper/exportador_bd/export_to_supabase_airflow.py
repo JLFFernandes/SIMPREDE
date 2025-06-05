@@ -82,6 +82,11 @@ def get_database_config():
         'schema': os.getenv('DB_SCHEMA', 'google_scraper')  # 🎯 DEFAULT SCHEMA: 'google_scraper'
     }
     
+    log_progress("🔍 Initial environment check...")
+    log_progress(f"  DB_HOST from env: {'FOUND' if db_config['host'] else 'NOT_FOUND'}")
+    log_progress(f"  DB_USER from env: {'FOUND' if db_config['user'] else 'NOT_FOUND'}")
+    log_progress(f"  DB_PASSWORD from env: {'FOUND' if db_config['password'] else 'NOT_FOUND'}")
+    
     # If not found in environment, try to load from .env file
     if not db_config['host'] or not db_config['user'] or not db_config['password']:
         log_progress("🔍 Database config not found in environment, looking for .env file...")
@@ -98,41 +103,96 @@ def get_database_config():
             os.path.join(os.path.dirname(__file__), '.env')
         ]
         
+        # Add absolute path resolution
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        additional_paths = [
+            os.path.join(script_dir, '../../../../.env'),
+            os.path.join(script_dir, '../../../.env'),
+            '/Users/ruicarvalho/Desktop/projects/SIMPREDE/simprede-airflow/.env'  # Absolute fallback
+        ]
+        possible_env_paths.extend(additional_paths)
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_paths = []
+        for path in possible_env_paths:
+            abs_path = os.path.abspath(path)
+            if abs_path not in seen:
+                seen.add(abs_path)
+                unique_paths.append(abs_path)
+        
         env_file_found = False
-        for env_path in possible_env_paths:
+        log_progress(f"🔍 Checking {len(unique_paths)} possible .env locations...")
+        
+        for env_path in unique_paths:
+            log_progress(f"  Checking: {env_path}")
             if os.path.exists(env_path):
                 log_progress(f"✅ Found .env file at: {env_path}")
                 try:
-                    # Simple .env parser
-                    with open(env_path, 'r') as f:
-                        for line in f:
+                    # Simple .env parser with better error handling
+                    with open(env_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        log_progress(f"📄 .env file size: {len(content)} chars")
+                        
+                        for line_num, line in enumerate(content.splitlines(), 1):
                             line = line.strip()
                             if line and not line.startswith('#') and '=' in line:
-                                key, value = line.split('=', 1)
-                                key = key.strip()
-                                value = value.strip()
-                                if key == 'DB_HOST' and not db_config['host']:
-                                    db_config['host'] = value
-                                elif key == 'DB_PORT':
-                                    db_config['port'] = value
-                                elif key == 'DB_NAME':
-                                    db_config['database'] = value
-                                elif key == 'DB_USER' and not db_config['user']:
-                                    db_config['user'] = value
-                                elif key == 'DB_PASSWORD' and not db_config['password']:
-                                    db_config['password'] = value
-                                elif key == 'DB_SSLMODE':
-                                    db_config['sslmode'] = value
-                                elif key == 'DB_SCHEMA':
-                                    db_config['schema'] = value
+                                try:
+                                    key, value = line.split('=', 1)
+                                    key = key.strip()
+                                    value = value.strip()
+                                    
+                                    # Remove quotes if present
+                                    if value.startswith('"') and value.endswith('"'):
+                                        value = value[1:-1]
+                                    elif value.startswith("'") and value.endswith("'"):
+                                        value = value[1:-1]
+                                    
+                                    if key == 'DB_HOST' and not db_config['host']:
+                                        db_config['host'] = value
+                                        log_progress(f"  ✅ Set DB_HOST from .env")
+                                    elif key == 'DB_PORT':
+                                        db_config['port'] = value
+                                        log_progress(f"  ✅ Set DB_PORT from .env")
+                                    elif key == 'DB_NAME':
+                                        db_config['database'] = value
+                                        log_progress(f"  ✅ Set DB_NAME from .env")
+                                    elif key == 'DB_USER' and not db_config['user']:
+                                        db_config['user'] = value
+                                        log_progress(f"  ✅ Set DB_USER from .env")
+                                    elif key == 'DB_PASSWORD' and not db_config['password']:
+                                        db_config['password'] = value
+                                        log_progress(f"  ✅ Set DB_PASSWORD from .env")
+                                    elif key == 'DB_SSLMODE':
+                                        db_config['sslmode'] = value
+                                        log_progress(f"  ✅ Set DB_SSLMODE from .env")
+                                    elif key == 'DB_SCHEMA':
+                                        db_config['schema'] = value
+                                        log_progress(f"  ✅ Set DB_SCHEMA from .env")
+                                except Exception as line_error:
+                                    log_progress(f"  ⚠️ Error parsing line {line_num}: {line_error}", "warning")
+                                    continue
+                    
                     env_file_found = True
                     break
+                    
                 except Exception as e:
                     log_progress(f"⚠️ Error reading .env file {env_path}: {e}", "warning")
                     continue
+            else:
+                log_progress(f"  ❌ Not found: {env_path}")
         
         if not env_file_found:
             log_progress("⚠️ No .env file found in any location", "warning")
+    
+    # Final configuration check
+    log_progress("🔍 Final configuration check...")
+    log_progress(f"  DB_HOST: {'SET' if db_config['host'] else 'MISSING'}")
+    log_progress(f"  DB_USER: {'SET' if db_config['user'] else 'MISSING'}")
+    log_progress(f"  DB_PASSWORD: {'SET' if db_config['password'] else 'MISSING'}")
+    log_progress(f"  DB_PORT: {db_config['port']}")
+    log_progress(f"  DB_NAME: {db_config['database']}")
+    log_progress(f"  DB_SCHEMA: {db_config['schema']}")
     
     # Validate required fields
     required_fields = ['host', 'user', 'password']
@@ -144,7 +204,43 @@ def get_database_config():
         for key in ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_SSLMODE', 'DB_SCHEMA']:
             value = os.getenv(key, 'NOT_SET')
             log_progress(f"  {key}: {'***' if 'PASSWORD' in key and value != 'NOT_SET' else value}", "debug")
-        raise ValueError(f"Missing required database configuration: {missing_fields}")
+        
+        # Try one more time with direct environment variable injection
+        log_progress("🔄 Attempting direct environment variable setup from .env...")
+        try:
+            env_file_path = '/opt/airflow/.env'
+            if os.path.exists(env_file_path):
+                with open(env_file_path, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and '=' in line:
+                            key, value = line.split('=', 1)
+                            key = key.strip()
+                            value = value.strip().strip('"').strip("'")
+                            os.environ[key] = value
+                
+                # Retry config loading
+                db_config = {
+                    'host': os.getenv('DB_HOST'),
+                    'port': os.getenv('DB_PORT', '6543'),
+                    'database': os.getenv('DB_NAME', 'postgres'),
+                    'user': os.getenv('DB_USER'),
+                    'password': os.getenv('DB_PASSWORD'),
+                    'sslmode': os.getenv('DB_SSLMODE', 'require'),
+                    'schema': os.getenv('DB_SCHEMA', 'google_scraper')
+                }
+                missing_fields = [field for field in required_fields if not db_config[field]]
+                
+                if not missing_fields:
+                    log_progress("✅ Database config loaded after environment injection")
+                else:
+                    log_progress(f"❌ Still missing after injection: {missing_fields}", "error")
+            
+        except Exception as inject_error:
+            log_progress(f"⚠️ Environment injection failed: {inject_error}", "warning")
+        
+        if missing_fields:
+            raise ValueError(f"Missing required database configuration: {missing_fields}")
     
     log_progress(f"✅ Database config loaded: {db_config['host']}:{db_config['port']}/{db_config['database']}")
     return db_config

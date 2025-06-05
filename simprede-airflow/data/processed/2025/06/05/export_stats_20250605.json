@@ -1,0 +1,10 @@
+{
+  "export_timestamp": "2025-06-05T17:26:36.631248",
+  "export_date": "2025-06-05",
+  "input_file": null,
+  "exported_count": 0,
+  "total_input_rows": 0,
+  "table_name": "artigos_filtrados_20250605_staging",
+  "status": "no_data_available",
+  "message": "No disaster-related articles found for this date"
+}

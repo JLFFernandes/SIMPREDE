@@ -1,0 +1,141 @@
+{"timestamp":"2025-06-05T16:25:25.265949","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-05T16:25:25.266721","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/google_scraper_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-05T16:25:25.307241Z","level":"info","event":"🔄 Starting export_supabase task","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.307632Z","level":"info","event":"📅 Using current date: 2025-06-05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.307946Z","level":"info","event":"📁 Ensured directories exist: ['/opt/airflow/scripts/google_scraper/data/raw/2025/06/05', '/opt/airflow/scripts/google_scraper/data/structured/2025/06/05', '/opt/airflow/scripts/google_scraper/data/processed/2025/06/05']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.308090Z","level":"info","event":"📅 Export Parameters:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.308168Z","level":"info","event":"  - Days: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.308255Z","level":"info","event":"  - Specific date: None (use execution_date)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.308329Z","level":"info","event":"  - Target date: 2025-06-05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.308397Z","level":"info","event":"  - Database table: artigos_filtrados_20250605_staging","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.308468Z","level":"info","event":"📁 Input/Output paths:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.315715Z","level":"info","event":"📋 Found 2 files from processar task via XCom","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.315831Z","level":"info","event":"🔍 Checking for input file: /opt/airflow/scripts/google_scraper/data/processed/2025/06/05/artigos_vitimas_filtrados_20250605.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.315928Z","level":"info","event":"🔍 Checking for input file: /opt/airflow/scripts/google_scraper/data/processed/2025/06/05/artigos_sem_vitimas_20250605.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.316185Z","level":"info","event":"🔍 Checking for input file: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.316781Z","level":"info","event":"✅ Found file: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv (1335 bytes)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.316862Z","level":"info","event":"🔍 Checking for input file: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.316954Z","level":"info","event":"✅ Found file: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv (1335 bytes)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.317350Z","level":"info","event":"🔍 Checking for input file: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/processing_stats_20250605.json","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.317463Z","level":"info","event":"✅ Found file: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/processing_stats_20250605.json (416 bytes)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.317615Z","level":"info","event":"📋 Selected input file: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv (1335 bytes)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.317703Z","level":"info","event":"📊 Processing all relevant disaster-related articles","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.317862Z","level":"info","event":"📁 Output paths:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.317962Z","level":"info","event":"  - export_log: /opt/airflow/scripts/google_scraper/data/processed/2025/06/05/export_log_20250605.log","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.318007Z","level":"info","event":"  - export_stats: /opt/airflow/scripts/google_scraper/data/processed/2025/06/05/export_stats_20250605.json","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.318049Z","level":"info","event":"  - backup_csv: /opt/airflow/scripts/google_scraper/data/processed/2025/06/05/export_backup_20250605.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.318105Z","level":"info","event":"🔄 Running export command: python /opt/airflow/scripts/google_scraper/exportador_bd/export_to_supabase_airflow.py --output_dir /opt/airflow/scripts/google_scraper/data/processed/2025/06/05 --date_str 2025-06-05 --input_file /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv --date 2025-06-05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:25.318178Z","level":"info","event":"⏰ Waiting for export completion with timeout: 600 seconds","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.245876Z","level":"info","event":"📋 [2025-06-05 17:25:26] Starting export_to_supabase_airflow","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.246548Z","level":"info","event":"📋 2025-06-05 17:25:26,245 - INFO - Starting export_to_supabase_airflow","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.247039Z","level":"info","event":"📋 [2025-06-05 17:25:26] Parameters: date=2025-06-05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.247111Z","level":"info","event":"📋 2025-06-05 17:25:26,246 - INFO - Parameters: date=2025-06-05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.247163Z","level":"info","event":"📋 [2025-06-05 17:25:26] Paths: input_file=/opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv, output_dir=/opt/airflow/scripts/google_scraper/data/processed/2025/06/05, date_str=2025-06-05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.248554Z","level":"info","event":"📋 2025-06-05 17:25:26,246 - INFO - Paths: input_file=/opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv, output_dir=/opt/airflow/scripts/google_scraper/data/processed/2025/06/05, date_str=2025-06-05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.248635Z","level":"info","event":"📋 [2025-06-05 17:25:26] 🚀 Starting export to Supabase for date: 2025-06-05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.248687Z","level":"info","event":"📋 2025-06-05 17:25:26,246 - INFO - 🚀 Starting export to Supabase for date: 2025-06-05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.248730Z","level":"info","event":"📋 [2025-06-05 17:25:26] 📋 Target table: artigos_filtrados_20250605_staging","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.248767Z","level":"info","event":"📋 2025-06-05 17:25:26,246 - INFO - 📋 Target table: artigos_filtrados_20250605_staging","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.248809Z","level":"info","event":"📋 [2025-06-05 17:25:26] 📁 Using controlled output directory: /opt/airflow/scripts/google_scraper/data/processed/2025/06/05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.248854Z","level":"info","event":"📋 2025-06-05 17:25:26,246 - INFO - 📁 Using controlled output directory: /opt/airflow/scripts/google_scraper/data/processed/2025/06/05","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.248899Z","level":"info","event":"📋 [2025-06-05 17:25:26] ✅ Using provided input file: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.248973Z","level":"info","event":"📋 2025-06-05 17:25:26,246 - INFO - ✅ Using provided input file: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249013Z","level":"info","event":"📋 [2025-06-05 17:25:26] 📂 Loading articles from: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249064Z","level":"info","event":"📋 2025-06-05 17:25:26,246 - INFO - 📂 Loading articles from: /opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249134Z","level":"info","event":"📋 [2025-06-05 17:25:26] 📊 Loaded 4 articles with columns: ['ID', 'type', 'subtype', 'date', 'year', 'month', 'day', 'hour', 'georef', 'district', 'municipali', 'parish', 'DICOFREG', 'source', 'sourcedate', 'sourcetype', 'page', 'fatalities', 'injured', 'evacuated', 'displaced', 'missing']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249267Z","level":"info","event":"📋 2025-06-05 17:25:26,249 - INFO - 📊 Loaded 4 articles with columns: ['ID', 'type', 'subtype', 'date', 'year', 'month', 'day', 'hour', 'georef', 'district', 'municipali', 'parish', 'DICOFREG', 'source', 'sourcedate', 'sourcetype', 'page', 'fatalities', 'injured', 'evacuated', 'displaced', 'missing']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249324Z","level":"info","event":"📋 [2025-06-05 17:25:26] 📋 Processing all relevant disaster-related articles","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249402Z","level":"info","event":"📋 2025-06-05 17:25:26,249 - INFO - 📋 Processing all relevant disaster-related articles","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249487Z","level":"info","event":"📋 [2025-06-05 17:25:26] 🔍 Initial environment check...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249545Z","level":"info","event":"📋 2025-06-05 17:25:26,249 - INFO - 🔍 Initial environment check...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249623Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_HOST from env: NOT_FOUND","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249684Z","level":"info","event":"📋 2025-06-05 17:25:26,249 - INFO -   DB_HOST from env: NOT_FOUND","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.249762Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_USER from env: NOT_FOUND","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.250478Z","level":"info","event":"📋 2025-06-05 17:25:26,249 - INFO -   DB_USER from env: NOT_FOUND","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.250808Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_PASSWORD from env: NOT_FOUND","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.251006Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   DB_PASSWORD from env: NOT_FOUND","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.251792Z","level":"info","event":"📋 [2025-06-05 17:25:26] 🔍 Database config not found in environment, looking for .env file...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.253677Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO - 🔍 Database config not found in environment, looking for .env file...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.254659Z","level":"info","event":"📋 [2025-06-05 17:25:26] 🔍 Checking 6 possible .env locations...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.255565Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO - 🔍 Checking 6 possible .env locations...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.256870Z","level":"info","event":"📋 [2025-06-05 17:25:26]   Checking: /opt/airflow/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.257323Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   Checking: /opt/airflow/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.257395Z","level":"info","event":"📋 [2025-06-05 17:25:26]   ❌ Not found: /opt/airflow/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.257626Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   ❌ Not found: /opt/airflow/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.257738Z","level":"info","event":"📋 [2025-06-05 17:25:26]   Checking: /opt/airflow/scripts/google_scraper/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.257809Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   Checking: /opt/airflow/scripts/google_scraper/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.258364Z","level":"info","event":"📋 [2025-06-05 17:25:26]   ❌ Not found: /opt/airflow/scripts/google_scraper/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.258917Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   ❌ Not found: /opt/airflow/scripts/google_scraper/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.259186Z","level":"info","event":"📋 [2025-06-05 17:25:26]   Checking: /opt/airflow/scripts/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.259264Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   Checking: /opt/airflow/scripts/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.259336Z","level":"info","event":"📋 [2025-06-05 17:25:26]   ❌ Not found: /opt/airflow/scripts/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.259403Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   ❌ Not found: /opt/airflow/scripts/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.259695Z","level":"info","event":"📋 [2025-06-05 17:25:26]   Checking: /opt/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.259925Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   Checking: /opt/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.259991Z","level":"info","event":"📋 [2025-06-05 17:25:26]   ❌ Not found: /opt/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.260412Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   ❌ Not found: /opt/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.260632Z","level":"info","event":"📋 [2025-06-05 17:25:26]   Checking: /opt/airflow/scripts/google_scraper/exportador_bd/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.260676Z","level":"info","event":"📋 2025-06-05 17:25:26,250 - INFO -   Checking: /opt/airflow/scripts/google_scraper/exportador_bd/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.260712Z","level":"info","event":"📋 [2025-06-05 17:25:26]   ❌ Not found: /opt/airflow/scripts/google_scraper/exportador_bd/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.260748Z","level":"info","event":"📋 2025-06-05 17:25:26,251 - INFO -   ❌ Not found: /opt/airflow/scripts/google_scraper/exportador_bd/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.260783Z","level":"info","event":"📋 [2025-06-05 17:25:26]   Checking: /Users/ruicarvalho/Desktop/projects/SIMPREDE/simprede-airflow/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.260818Z","level":"info","event":"📋 2025-06-05 17:25:26,251 - INFO -   Checking: /Users/ruicarvalho/Desktop/projects/SIMPREDE/simprede-airflow/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.260981Z","level":"info","event":"📋 [2025-06-05 17:25:26]   ❌ Not found: /Users/ruicarvalho/Desktop/projects/SIMPREDE/simprede-airflow/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.261114Z","level":"info","event":"📋 2025-06-05 17:25:26,260 - INFO -   ❌ Not found: /Users/ruicarvalho/Desktop/projects/SIMPREDE/simprede-airflow/.env","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.261700Z","level":"info","event":"📋 [2025-06-05 17:25:26] ⚠️ No .env file found in any location","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.261857Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - WARNING - ⚠️ No .env file found in any location","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.261977Z","level":"info","event":"📋 [2025-06-05 17:25:26] 🔍 Final configuration check...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.262021Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - INFO - 🔍 Final configuration check...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.262189Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_HOST: MISSING","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.262230Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - INFO -   DB_HOST: MISSING","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.262265Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_USER: MISSING","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.262299Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - INFO -   DB_USER: MISSING","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.262333Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_PASSWORD: MISSING","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.263577Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - INFO -   DB_PASSWORD: MISSING","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265541Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_PORT: 6543","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265613Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - INFO -   DB_PORT: 6543","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265656Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_NAME: postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265692Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - INFO -   DB_NAME: postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265728Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_SCHEMA: google_scraper","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265765Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - INFO -   DB_SCHEMA: google_scraper","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265799Z","level":"info","event":"📋 [2025-06-05 17:25:26] ❌ Missing required database configuration: ['host', 'user', 'password']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265836Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - ERROR - ❌ Missing required database configuration: ['host', 'user', 'password']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265873Z","level":"info","event":"📋 [2025-06-05 17:25:26] Available environment variables:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265908Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_HOST: NOT_SET","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265944Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_PORT: NOT_SET","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.265979Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_NAME: NOT_SET","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.266014Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_USER: NOT_SET","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.270544Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_PASSWORD: NOT_SET","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.270687Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_SSLMODE: NOT_SET","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.270756Z","level":"info","event":"📋 [2025-06-05 17:25:26]   DB_SCHEMA: NOT_SET","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.270815Z","level":"info","event":"📋 [2025-06-05 17:25:26] 🔄 Attempting direct environment variable setup from .env...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.270870Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - INFO - 🔄 Attempting direct environment variable setup from .env...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.270932Z","level":"info","event":"📋 [2025-06-05 17:25:26] ❌ Database configuration error: Missing required database configuration: ['host', 'user', 'password']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271013Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - ERROR - ❌ Database configuration error: Missing required database configuration: ['host', 'user', 'password']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271114Z","level":"info","event":"📋 [2025-06-05 17:25:26] ❌ Export failed: Missing required database configuration: ['host', 'user', 'password']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271219Z","level":"info","event":"📋 2025-06-05 17:25:26,261 - ERROR - ❌ Export failed: Missing required database configuration: ['host', 'user', 'password']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271321Z","level":"info","event":"📋 [2025-06-05 17:25:26] ❌ Full traceback: Traceback (most recent call last):","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271364Z","level":"info","event":"📋   File \"/opt/airflow/scripts/google_scraper/exportador_bd/export_to_supabase_airflow.py\", line 707, in main","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271400Z","level":"info","event":"📋     result = export_to_supabase(","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271434Z","level":"info","event":"📋              ^^^^^^^^^^^^^^^^^^^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271468Z","level":"info","event":"📋   File \"/opt/airflow/scripts/google_scraper/exportador_bd/export_to_supabase_airflow.py\", line 611, in export_to_supabase","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271509Z","level":"info","event":"📋     db_config = get_database_config()","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271560Z","level":"info","event":"📋                 ^^^^^^^^^^^^^^^^^^^^^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271594Z","level":"info","event":"📋   File \"/opt/airflow/scripts/google_scraper/exportador_bd/export_to_supabase_airflow.py\", line 243, in get_database_config","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271630Z","level":"info","event":"📋     raise ValueError(f\"Missing required database configuration: {missing_fields}\")","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271664Z","level":"info","event":"📋 ValueError: Missing required database configuration: ['host', 'user', 'password']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271698Z","level":"info","event":"📋","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271731Z","level":"info","event":"📋 2025-06-05 17:25:26,262 - ERROR - ❌ Full traceback: Traceback (most recent call last):","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271767Z","level":"info","event":"📋   File \"/opt/airflow/scripts/google_scraper/exportador_bd/export_to_supabase_airflow.py\", line 707, in main","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271850Z","level":"info","event":"📋     result = export_to_supabase(","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271891Z","level":"info","event":"📋              ^^^^^^^^^^^^^^^^^^^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271924Z","level":"info","event":"📋   File \"/opt/airflow/scripts/google_scraper/exportador_bd/export_to_supabase_airflow.py\", line 611, in export_to_supabase","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271960Z","level":"info","event":"📋     db_config = get_database_config()","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.271995Z","level":"info","event":"📋                 ^^^^^^^^^^^^^^^^^^^^^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.272032Z","level":"info","event":"📋   File \"/opt/airflow/scripts/google_scraper/exportador_bd/export_to_supabase_airflow.py\", line 243, in get_database_config","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.272067Z","level":"info","event":"📋     raise ValueError(f\"Missing required database configuration: {missing_fields}\")","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.272100Z","level":"info","event":"📋 ValueError: Missing required database configuration: ['host', 'user', 'password']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.272132Z","level":"info","event":"📋","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.358963Z","level":"info","event":"❌ Export failed with return code 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.359395Z","level":"info","event":"❌ Unexpected error in export task: Export failed with return code 1:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-05T16:25:26.359056","level":"error","event":"Task failed with exception","logger":"task","error_detail":[{"exc_type":"Exception","exc_value":"Export failed with return code 1: ","exc_notes":[],"syntax_error":null,"is_cause":false,"frames":[{"filename":"/home/airflow/.local/lib/python3.11/site-packages/airflow/sdk/execution_time/task_runner.py","lineno":838,"name":"run"},{"filename":"/home/airflow/.local/lib/python3.11/site-packages/airflow/sdk/execution_time/task_runner.py","lineno":1130,"name":"_execute_task"},{"filename":"/home/airflow/.local/lib/python3.11/site-packages/airflow/sdk/bases/operator.py","lineno":408,"name":"wrapper"},{"filename":"/home/airflow/.local/lib/python3.11/site-packages/airflow/providers/standard/operators/python.py","lineno":212,"name":"execute"},{"filename":"/home/airflow/.local/lib/python3.11/site-packages/airflow/providers/standard/operators/python.py","lineno":235,"name":"execute_callable"},{"filename":"/home/airflow/.local/lib/python3.11/site-packages/airflow/sdk/execution_time/callback_runner.py","lineno":81,"name":"run"},{"filename":"/opt/airflow/dags/google_scraper_dag.py","lineno":926,"name":"export_supabase_task"}]}]}
