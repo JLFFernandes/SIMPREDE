@@ -70,8 +70,8 @@ def log_progress(message, level="info", flush=True):
         sys.stderr.flush()
 
 def get_database_config():
-    """Get database configuration from environment variables or .env file"""
-    # First try to get from environment variables (Airflow container)
+    """Obter configuração da base de dados a partir de variáveis de ambiente ou ficheiro .env"""
+    # Primeiro tentar obter das variáveis de ambiente (contentor Airflow)
     db_config = {
         'host': os.getenv('DB_HOST'),
         'port': os.getenv('DB_PORT', '6543'),
@@ -79,17 +79,17 @@ def get_database_config():
         'user': os.getenv('DB_USER'),
         'password': os.getenv('DB_PASSWORD'),
         'sslmode': os.getenv('DB_SSLMODE', 'require'),
-        'schema': os.getenv('DB_SCHEMA', 'google_scraper')  # 🎯 DEFAULT SCHEMA: 'google_scraper'
+        'schema': os.getenv('DB_SCHEMA', 'google_scraper')  # 🎯 ESQUEMA PADRÃO: 'google_scraper'
     }
     
-    log_progress("🔍 Initial environment check...")
-    log_progress(f"  DB_HOST from env: {'FOUND' if db_config['host'] else 'NOT_FOUND'}")
-    log_progress(f"  DB_USER from env: {'FOUND' if db_config['user'] else 'NOT_FOUND'}")
-    log_progress(f"  DB_PASSWORD from env: {'FOUND' if db_config['password'] else 'NOT_FOUND'}")
+    log_progress("🔍 Verificação inicial do ambiente...")
+    log_progress(f"  DB_HOST do ambiente: {'ENCONTRADO' if db_config['host'] else 'NÃO_ENCONTRADO'}")
+    log_progress(f"  DB_USER do ambiente: {'ENCONTRADO' if db_config['user'] else 'NÃO_ENCONTRADO'}")
+    log_progress(f"  DB_PASSWORD do ambiente: {'ENCONTRADO' if db_config['password'] else 'NÃO_ENCONTRADO'}")
     
-    # If not found in environment, try to load from .env file
+    # Se não encontrado no ambiente, tentar carregar do ficheiro .env
     if not db_config['host'] or not db_config['user'] or not db_config['password']:
-        log_progress("🔍 Database config not found in environment, looking for .env file...")
+        log_progress("🔍 Configuração da base de dados não encontrada no ambiente, procurando ficheiro .env...")
         
         # Look for .env file in multiple locations
         possible_env_paths = [
@@ -122,17 +122,17 @@ def get_database_config():
                 unique_paths.append(abs_path)
         
         env_file_found = False
-        log_progress(f"🔍 Checking {len(unique_paths)} possible .env locations...")
+        log_progress(f"🔍 Verificando {len(unique_paths)} localizações possíveis do .env...")
         
         for env_path in unique_paths:
-            log_progress(f"  Checking: {env_path}")
+            log_progress(f"  A verificar: {env_path}")
             if os.path.exists(env_path):
-                log_progress(f"✅ Found .env file at: {env_path}")
+                log_progress(f"✅ Ficheiro .env encontrado em: {env_path}")
                 try:
-                    # Simple .env parser with better error handling
+                    # Parser simples do .env com melhor tratamento de erros
                     with open(env_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                        log_progress(f"📄 .env file size: {len(content)} chars")
+                        log_progress(f"📄 Tamanho do ficheiro .env: {len(content)} caracteres")
                         
                         for line_num, line in enumerate(content.splitlines(), 1):
                             line = line.strip()
@@ -142,7 +142,7 @@ def get_database_config():
                                     key = key.strip()
                                     value = value.strip()
                                     
-                                    # Remove quotes if present
+                                    # Remover aspas se presentes
                                     if value.startswith('"') and value.endswith('"'):
                                         value = value[1:-1]
                                     elif value.startswith("'") and value.endswith("'"):
@@ -150,63 +150,63 @@ def get_database_config():
                                     
                                     if key == 'DB_HOST' and not db_config['host']:
                                         db_config['host'] = value
-                                        log_progress(f"  ✅ Set DB_HOST from .env")
+                                        log_progress(f"  ✅ Definido DB_HOST do .env")
                                     elif key == 'DB_PORT':
                                         db_config['port'] = value
-                                        log_progress(f"  ✅ Set DB_PORT from .env")
+                                        log_progress(f"  ✅ Definido DB_PORT do .env")
                                     elif key == 'DB_NAME':
                                         db_config['database'] = value
-                                        log_progress(f"  ✅ Set DB_NAME from .env")
+                                        log_progress(f"  ✅ Definido DB_NAME do .env")
                                     elif key == 'DB_USER' and not db_config['user']:
                                         db_config['user'] = value
-                                        log_progress(f"  ✅ Set DB_USER from .env")
+                                        log_progress(f"  ✅ Definido DB_USER do .env")
                                     elif key == 'DB_PASSWORD' and not db_config['password']:
                                         db_config['password'] = value
-                                        log_progress(f"  ✅ Set DB_PASSWORD from .env")
+                                        log_progress(f"  ✅ Definido DB_PASSWORD do .env")
                                     elif key == 'DB_SSLMODE':
                                         db_config['sslmode'] = value
-                                        log_progress(f"  ✅ Set DB_SSLMODE from .env")
+                                        log_progress(f"  ✅ Definido DB_SSLMODE do .env")
                                     elif key == 'DB_SCHEMA':
                                         db_config['schema'] = value
-                                        log_progress(f"  ✅ Set DB_SCHEMA from .env")
+                                        log_progress(f"  ✅ Definido DB_SCHEMA do .env")
                                 except Exception as line_error:
-                                    log_progress(f"  ⚠️ Error parsing line {line_num}: {line_error}", "warning")
+                                    log_progress(f"  ⚠️ Erro ao analisar linha {line_num}: {line_error}", "warning")
                                     continue
                     
                     env_file_found = True
                     break
                     
                 except Exception as e:
-                    log_progress(f"⚠️ Error reading .env file {env_path}: {e}", "warning")
+                    log_progress(f"⚠️ Erro ao ler ficheiro .env {env_path}: {e}", "warning")
                     continue
             else:
-                log_progress(f"  ❌ Not found: {env_path}")
+                log_progress(f"  ❌ Não encontrado: {env_path}")
         
         if not env_file_found:
-            log_progress("⚠️ No .env file found in any location", "warning")
+            log_progress("⚠️ Nenhum ficheiro .env encontrado em qualquer localização", "warning")
     
-    # Final configuration check
-    log_progress("🔍 Final configuration check...")
-    log_progress(f"  DB_HOST: {'SET' if db_config['host'] else 'MISSING'}")
-    log_progress(f"  DB_USER: {'SET' if db_config['user'] else 'MISSING'}")
-    log_progress(f"  DB_PASSWORD: {'SET' if db_config['password'] else 'MISSING'}")
+    # Verificação final da configuração
+    log_progress("🔍 Verificação final da configuração...")
+    log_progress(f"  DB_HOST: {'DEFINIDO' if db_config['host'] else 'EM_FALTA'}")
+    log_progress(f"  DB_USER: {'DEFINIDO' if db_config['user'] else 'EM_FALTA'}")
+    log_progress(f"  DB_PASSWORD: {'DEFINIDO' if db_config['password'] else 'EM_FALTA'}")
     log_progress(f"  DB_PORT: {db_config['port']}")
     log_progress(f"  DB_NAME: {db_config['database']}")
     log_progress(f"  DB_SCHEMA: {db_config['schema']}")
     
-    # Validate required fields
+    # Validar campos obrigatórios
     required_fields = ['host', 'user', 'password']
     missing_fields = [field for field in required_fields if not db_config[field]]
     
     if missing_fields:
-        log_progress(f"❌ Missing required database configuration: {missing_fields}", "error")
-        log_progress("Available environment variables:", "debug")
+        log_progress(f"❌ Configuração obrigatória da base de dados em falta: {missing_fields}", "error")
+        log_progress("Variáveis de ambiente disponíveis:", "debug")
         for key in ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_SSLMODE', 'DB_SCHEMA']:
-            value = os.getenv(key, 'NOT_SET')
-            log_progress(f"  {key}: {'***' if 'PASSWORD' in key and value != 'NOT_SET' else value}", "debug")
+            value = os.getenv(key, 'NÃO_DEFINIDO')
+            log_progress(f"  {key}: {'***' if 'PASSWORD' in key and value != 'NÃO_DEFINIDO' else value}", "debug")
         
-        # Try one more time with direct environment variable injection
-        log_progress("🔄 Attempting direct environment variable setup from .env...")
+        # Tentar mais uma vez com injeção direta de variáveis de ambiente
+        log_progress("🔄 Tentativa de configuração direta de variáveis de ambiente do .env...")
         try:
             env_file_path = '/opt/airflow/.env'
             if os.path.exists(env_file_path):
@@ -219,7 +219,7 @@ def get_database_config():
                             value = value.strip().strip('"').strip("'")
                             os.environ[key] = value
                 
-                # Retry config loading
+                # Repetir carregamento da configuração
                 db_config = {
                     'host': os.getenv('DB_HOST'),
                     'port': os.getenv('DB_PORT', '6543'),
@@ -232,23 +232,23 @@ def get_database_config():
                 missing_fields = [field for field in required_fields if not db_config[field]]
                 
                 if not missing_fields:
-                    log_progress("✅ Database config loaded after environment injection")
+                    log_progress("✅ Configuração da base de dados carregada após injeção no ambiente")
                 else:
-                    log_progress(f"❌ Still missing after injection: {missing_fields}", "error")
+                    log_progress(f"❌ Ainda em falta após injeção: {missing_fields}", "error")
             
         except Exception as inject_error:
-            log_progress(f"⚠️ Environment injection failed: {inject_error}", "warning")
+            log_progress(f"⚠️ Falha na injeção no ambiente: {inject_error}", "warning")
         
         if missing_fields:
-            raise ValueError(f"Missing required database configuration: {missing_fields}")
+            raise ValueError(f"Configuração obrigatória da base de dados em falta: {missing_fields}")
     
-    log_progress(f"✅ Database config loaded: {db_config['host']}:{db_config['port']}/{db_config['database']}")
+    log_progress(f"✅ Configuração da base de dados carregada: {db_config['host']}:{db_config['port']}/{db_config['database']}")
     return db_config
 
 def find_filtered_articles_file(target_date, input_file=None):
-    """Find the filtered articles file from the previous task with controlled path support"""
+    """Encontrar o ficheiro de artigos filtrados da tarefa anterior com suporte para caminhos controlados"""
     if input_file and os.path.exists(input_file):
-        log_progress(f"✅ Using provided input file: {input_file}")
+        log_progress(f"✅ A usar ficheiro de entrada fornecido: {input_file}")
         return input_file
     
     if isinstance(target_date, str):
@@ -285,11 +285,11 @@ def find_filtered_articles_file(target_date, input_file=None):
     for path in possible_paths:
         if os.path.exists(path):
             file_size = os.path.getsize(path)
-            log_progress(f"✅ Found file: {path} ({file_size} bytes)")
+            log_progress(f"✅ Ficheiro encontrado: {path} ({file_size} bytes)")
             found_files.append((path, file_size))
     
     if not found_files:
-        log_progress(f"ℹ️ No filtered articles file found for {date_suffix}. This is normal when no disaster-related events were detected.")
+        log_progress(f"ℹ️ Nenhum ficheiro de artigos filtrados encontrado para {date_suffix}. Isto é normal quando não foram detetados eventos relacionados com desastres.")
         return None
     
     # Prefer files with victims first, then without victims, then general relevant articles
@@ -308,16 +308,16 @@ def find_filtered_articles_file(target_date, input_file=None):
     found_files.sort(key=lambda x: (file_priority(x[0]), -x[1]))
     
     selected_file = found_files[0][0]
-    log_progress(f"📋 Selected file for export: {selected_file}")
+    log_progress(f"📋 Ficheiro selecionado para exportação: {selected_file}")
     
     return selected_file
 
 def create_table_if_not_exists(cursor, schema, table_name, df_columns):
-    """Create the table if it doesn't exist with dynamic columns based on input data"""
-    # Drop the table first to ensure clean schema (since we're dealing with staging tables)
+    """Criar a tabela se não existir com colunas dinâmicas baseadas nos dados de entrada"""
+    # Eliminar a tabela primeiro para garantir esquema limpo (pois estamos a lidar com tabelas temporárias)
     drop_table_sql = f"DROP TABLE IF EXISTS {schema}.{table_name};"
     cursor.execute(drop_table_sql)
-    log_progress(f"🗑️ Dropped existing table {schema}.{table_name} if it existed")
+    log_progress(f"🗑️ Tabela existente {schema}.{table_name} eliminada se existia")
     
     # Generate column definitions based on input DataFrame
     column_defs = []
@@ -349,9 +349,9 @@ def create_table_if_not_exists(cursor, schema, table_name, df_columns):
     """
     
     cursor.execute(create_table_sql)
-    log_progress(f"✅ Table {schema}.{table_name} created with correct schema")
+    log_progress(f"✅ Tabela {schema}.{table_name} criada com esquema correto")
     
-    # Add indexes
+    # Adicionar índices
     if 'date' in df_columns:
         cursor.execute(f"CREATE INDEX idx_{table_name}_date ON {schema}.{table_name}(date);")
     if 'district' in df_columns:
@@ -359,10 +359,10 @@ def create_table_if_not_exists(cursor, schema, table_name, df_columns):
     if 'evento_nome' in df_columns:
         cursor.execute(f"CREATE INDEX idx_{table_name}_evento ON {schema}.{table_name}(evento_nome);")
     
-    log_progress(f"✅ Indexes created for table {schema}.{table_name}")
+    log_progress(f"✅ Índices criados para a tabela {schema}.{table_name}")
 
 def convert_date_format(date_str):
-    """Convert date from DD/MM/YYYY to YYYY-MM-DD format for PostgreSQL"""
+    """Converter data do formato DD/MM/AAAA para AAAA-MM-DD para PostgreSQL"""
     if pd.isna(date_str) or not date_str:
         return None
     
@@ -389,28 +389,28 @@ def convert_date_format(date_str):
         if not pd.isna(parsed_date):
             return parsed_date.strftime('%Y-%m-%d')
         
-        log_progress(f"⚠️ Could not parse date: {date_str}", "warning")
+        log_progress(f"⚠️ Não foi possível analisar data: {date_str}", "warning")
         return None
         
     except Exception as e:
-        log_progress(f"⚠️ Error converting date '{date_str}': {e}", "warning")
+        log_progress(f"⚠️ Erro ao converter data '{date_str}': {e}", "warning")
         return None
 
 def prepare_dataframe_for_insert(df):
-    """Prepare the dataframe for database insertion with proper data types"""
-    log_progress("🔧 Preparing dataframe for database insertion...")
+    """Preparar o dataframe para inserção na base de dados com tipos de dados adequados"""
+    log_progress("🔧 A preparar dataframe para inserção na base de dados...")
     
     # Create a copy to avoid modifying the original
     df_prepared = df.copy()
     
-    # Convert date column to proper format
+    # Converter coluna de data para formato adequado
     if 'date' in df_prepared.columns:
-        log_progress("📅 Converting date formats...")
+        log_progress("📅 A converter formatos de data...")
         df_prepared['date'] = df_prepared['date'].apply(convert_date_format)
-        # Remove rows with invalid dates
+        # Remover linhas com datas inválidas
         invalid_dates = df_prepared['date'].isna()
         if invalid_dates.any():
-            log_progress(f"⚠️ Removing {invalid_dates.sum()} rows with invalid dates", "warning")
+            log_progress(f"⚠️ A remover {invalid_dates.sum()} linhas com datas inválidas", "warning")
             df_prepared = df_prepared[~invalid_dates]
     
     # Ensure numeric columns are properly converted
@@ -428,20 +428,20 @@ def prepare_dataframe_for_insert(df):
             df_prepared[col] = df_prepared[col].astype(str).replace('nan', '')
             df_prepared[col] = df_prepared[col].replace('None', '')
     
-    log_progress(f"✅ Prepared {len(df_prepared)} rows for insertion")
+    log_progress(f"✅ Preparadas {len(df_prepared)} linhas para inserção")
     return df_prepared
 
 def insert_articles(cursor, schema, table_name, articles_df):
-    """Insert articles into the database"""
+    """Inserir artigos na base de dados"""
     if articles_df.empty:
-        log_progress("⚠️ No articles to insert", "warning")
+        log_progress("⚠️ Nenhum artigo para inserir", "warning")
         return 0
     
-    # Prepare the dataframe first
+    # Preparar o dataframe primeiro
     df_prepared = prepare_dataframe_for_insert(articles_df)
     
     if df_prepared.empty:
-        log_progress("⚠️ No valid articles to insert after preparation", "warning")
+        log_progress("⚠️ Nenhum artigo válido para inserir após preparação", "warning")
         return 0
     
     # Use all columns from the input DataFrame
@@ -487,19 +487,19 @@ def insert_articles(cursor, schema, table_name, articles_df):
             
         except Exception as e:
             error_count += 1
-            log_progress(f"⚠️ Error inserting article {idx}: {e}", "warning")
+            log_progress(f"⚠️ Erro ao inserir artigo {idx}: {e}", "warning")
             if error_count <= 3:  # Only show first 3 errors to avoid spam
-                log_progress(f"   Row data: {dict(row[columns])}", "debug")
+                log_progress(f"   Dados da linha: {dict(row[columns])}", "debug")
             continue
     
     if error_count > 3:
-        log_progress(f"⚠️ ... and {error_count - 3} more errors", "warning")
+        log_progress(f"⚠️ ... e mais {error_count - 3} erros", "warning")
     
-    log_progress(f"✅ Inserted/updated {inserted_count} articles (failed: {error_count})")
+    log_progress(f"✅ Inseridos/atualizados {inserted_count} artigos (falharam: {error_count})")
     return inserted_count
 
 def save_export_statistics(output_dir, date_str, stats):
-    """Save export statistics to controlled output paths"""
+    """Guardar estatísticas de exportação em caminhos de saída controlados"""
     if not output_dir:
         return
     
@@ -520,18 +520,18 @@ def save_export_statistics(output_dir, date_str, stats):
         with open(stats_file, 'w', encoding='utf-8') as f:
             json.dump(enhanced_stats, f, indent=2, ensure_ascii=False)
         
-        log_progress(f"✅ Export statistics saved: {stats_file}")
+        log_progress(f"✅ Estatísticas de exportação guardadas: {stats_file}")
         
-        # Also save a backup CSV for manual inspection
+        # Também guardar um CSV de backup para inspeção manual
         if 'exported_count' in stats and stats['exported_count'] > 0:
             backup_file = os.path.join(output_dir, f"export_backup_{date_str.replace('-', '')}.csv")
-            log_progress(f"📋 Export backup location prepared: {backup_file}")
+            log_progress(f"📋 Localização de backup de exportação preparada: {backup_file}")
             
     except Exception as e:
-        log_progress(f"⚠️ Could not save export statistics: {e}", "warning")
+        log_progress(f"⚠️ Não foi possível guardar estatísticas de exportação: {e}", "warning")
 
 def export_to_supabase(target_date=None, input_file=None, output_dir=None, date_str=None):
-    """Main export function with controlled paths support"""
+    """Função principal de exportação com suporte para caminhos controlados"""
     if not target_date:
         target_date = datetime.now().strftime('%Y-%m-%d')
     
@@ -543,53 +543,53 @@ def export_to_supabase(target_date=None, input_file=None, output_dir=None, date_
     date_compact = date_str.replace('-', '')
     table_name = f"artigos_filtrados_{date_compact}_staging"
     
-    log_progress(f"🚀 Starting export to Supabase for date: {target_date}")
-    log_progress(f"📋 Target table: {table_name}")
+    log_progress(f"🚀 A iniciar exportação para Supabase para a data: {target_date}")
+    log_progress(f"📋 Tabela de destino: {table_name}")
     
     if output_dir:
-        log_progress(f"📁 Using controlled output directory: {output_dir}")
+        log_progress(f"📁 A usar diretório de saída controlado: {output_dir}")
     
-    # Find the filtered articles file with controlled path support
+    # Encontrar o ficheiro de artigos filtrados com suporte para caminhos controlados
     input_file_path = find_filtered_articles_file(target_date, input_file)
     if not input_file_path:
-        log_progress("ℹ️ No filtered articles file found. This typically means no disaster-related events were detected for this date.")
-        log_progress("✅ Export task completed successfully - no data to export.")
+        log_progress("ℹ️ Nenhum ficheiro de artigos filtrados encontrado. Isto normalmente significa que não foram detetados eventos relacionados com desastres para esta data.")
+        log_progress("✅ Tarefa de exportação concluída com sucesso - nenhum dado para exportar.")
         
-        # Save statistics indicating no data was available
+        # Guardar estatísticas indicando que não havia dados disponíveis
         if output_dir:
             save_export_statistics(output_dir, date_str, {
                 "input_file": None,
                 "exported_count": 0,
                 "total_input_rows": 0,
                 "table_name": table_name,
-                "status": "no_data_available",
-                "message": "No disaster-related articles found for this date"
+                "status": "sem_dados_disponiveis",
+                "message": "Nenhum artigo relacionado com desastres encontrado para esta data"
             })
         
-        return 0  # Return success (0) instead of raising an exception
+        return 0  # Retornar sucesso (0) em vez de lançar exceção
     
-    # Load articles
+    # Carregar artigos
     try:
-        log_progress(f"📂 Loading articles from: {input_file_path}")
+        log_progress(f"📂 A carregar artigos de: {input_file_path}")
         df = pd.read_csv(input_file_path)
-        log_progress(f"📊 Loaded {len(df)} articles with columns: {list(df.columns)}")
+        log_progress(f"📊 Carregados {len(df)} artigos com colunas: {list(df.columns)}")
         
-        # Determine file type for logging
+        # Determinar tipo de ficheiro para registo
         if 'vitimas_filtrados' in input_file_path:
-            file_type = "articles with victims"
+            file_type = "artigos com vítimas"
         elif 'sem_vitimas' in input_file_path:
-            file_type = "articles without victims (but disaster-related)"
+            file_type = "artigos sem vítimas (mas relacionados com desastres)"
         elif 'municipios_pt' in input_file_path:
-            file_type = "all relevant disaster-related articles"
+            file_type = "todos os artigos relevantes relacionados com desastres"
         else:
-            file_type = "filtered articles"
+            file_type = "artigos filtrados"
         
-        log_progress(f"📋 Processing {file_type}")
+        log_progress(f"📋 A processar {file_type}")
         
         if df.empty:
-            log_progress("ℹ️ Articles file is empty - no disaster-related events detected.")
-            log_progress("✅ Export task completed successfully - no data to export.")
-            # Save empty export statistics
+            log_progress("ℹ️ Ficheiro de artigos está vazio - nenhum evento relacionado com desastres detetado.")
+            log_progress("✅ Tarefa de exportação concluída com sucesso - nenhum dado para exportar.")
+            # Guardar estatísticas de exportação vazia
             if output_dir:
                 save_export_statistics(output_dir, date_str, {
                     "input_file": input_file_path,
@@ -597,26 +597,26 @@ def export_to_supabase(target_date=None, input_file=None, output_dir=None, date_
                     "total_input_rows": 0,
                     "table_name": table_name,
                     "file_type": file_type,
-                    "status": "no_data_empty_file",
-                    "message": "Input file was empty - no disaster-related articles found"
+                    "status": "sem_dados_ficheiro_vazio",
+                    "message": "Ficheiro de entrada estava vazio - nenhum artigo relacionado com desastres encontrado"
                 })
             return 0
         
     except Exception as e:
-        log_progress(f"❌ Error loading articles file: {e}", "error")
+        log_progress(f"❌ Erro ao carregar ficheiro de artigos: {e}", "error")
         raise
     
-    # Get database configuration
+    # Obter configuração da base de dados
     try:
         db_config = get_database_config()
     except Exception as e:
-        log_progress(f"❌ Database configuration error: {e}", "error")
+        log_progress(f"❌ Erro de configuração da base de dados: {e}", "error")
         raise
     
-    # Connect to database and export
+    # Conectar à base de dados e exportar
     connection = None
     try:
-        log_progress(f"🔗 Connecting to database...")
+        log_progress(f"🔗 A conectar à base de dados...")
         connection = psycopg2.connect(
             host=db_config['host'],
             port=db_config['port'],
@@ -628,26 +628,26 @@ def export_to_supabase(target_date=None, input_file=None, output_dir=None, date_
         connection.autocommit = True
         cursor = connection.cursor()
         
-        log_progress(f"✅ Connected to database successfully")
+        log_progress(f"✅ Conectado à base de dados com sucesso")
         
-        # Create table if not exists with dynamic columns
+        # Criar tabela se não existir com colunas dinâmicas
         create_table_if_not_exists(cursor, db_config['schema'], table_name, df.columns)
         
-        # Insert articles
+        # Inserir artigos
         inserted_count = insert_articles(cursor, db_config['schema'], table_name, df)
         
-        # Create backup CSV in output directory
+        # Criar CSV de backup no diretório de saída
         backup_file = None
         if output_dir:
             try:
                 os.makedirs(output_dir, exist_ok=True)
                 backup_file = os.path.join(output_dir, f"export_backup_{date_str.replace('-', '')}.csv")
                 df.to_csv(backup_file, index=False)
-                log_progress(f"💾 Export backup saved: {backup_file}")
+                log_progress(f"💾 Backup de exportação guardado: {backup_file}")
             except Exception as e:
-                log_progress(f"⚠️ Could not save backup CSV: {e}", "warning")
+                log_progress(f"⚠️ Não foi possível guardar CSV de backup: {e}", "warning")
         
-        # Save export statistics to controlled paths
+        # Guardar estatísticas de exportação em caminhos controlados
         export_stats = {
             "input_file": input_file_path,
             "exported_count": inserted_count,
@@ -657,51 +657,51 @@ def export_to_supabase(target_date=None, input_file=None, output_dir=None, date_
             "file_type": file_type,
             "backup_file": backup_file,
             "columns": list(df.columns),
-            "status": "success"
+            "status": "sucesso"
         }
         
         if output_dir:
             save_export_statistics(output_dir, date_str, export_stats)
         
-        log_progress(f"✅ Export completed successfully. Inserted/updated {inserted_count} {file_type} into table {table_name}")
+        log_progress(f"✅ Exportação concluída com sucesso. Inseridos/atualizados {inserted_count} {file_type} na tabela {table_name}")
         return inserted_count
         
     except Exception as e:
-        log_progress(f"❌ Database operation failed: {e}", "error")
+        log_progress(f"❌ Operação de base de dados falhou: {e}", "error")
         
-        # Save error statistics
+        # Guardar estatísticas de erro
         if output_dir:
             save_export_statistics(output_dir, date_str, {
                 "input_file": input_file_path if 'input_file_path' in locals() else input_file,
                 "exported_count": 0,
                 "table_name": table_name,
                 "error": str(e),
-                "status": "failed"
+                "status": "falhado"
             })
         
         raise
     finally:
         if connection:
             connection.close()
-            log_progress("🔗 Database connection closed")
+            log_progress("🔗 Ligação à base de dados fechada")
 
 def main():
-    """Main function with controlled output paths support"""
-    parser = argparse.ArgumentParser(description="Export filtered articles to Supabase (Airflow version)")
-    parser.add_argument("--date", type=str, help="Target date (YYYY-MM-DD)")
-    parser.add_argument("--input_file", type=str, help="Specific input file path")
-    parser.add_argument("--output_dir", type=str, help="Output directory for export logs and statistics")
-    parser.add_argument("--date_str", type=str, help="Date string for file naming")
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    """Função principal com suporte para caminhos de saída controlados"""
+    parser = argparse.ArgumentParser(description="Exportar artigos filtrados para Supabase (versão Airflow)")
+    parser.add_argument("--date", type=str, help="Data alvo (AAAA-MM-DD)")
+    parser.add_argument("--input_file", type=str, help="Caminho do ficheiro de entrada específico")
+    parser.add_argument("--output_dir", type=str, help="Diretório de saída para registos e estatísticas de exportação")
+    parser.add_argument("--date_str", type=str, help="String de data para nomeação de ficheiros")
+    parser.add_argument("--debug", action="store_true", help="Ativar registo de depuração")
     args = parser.parse_args()
     
     if args.debug:
         logger.setLevel(logging.DEBUG)
-        log_progress("🔍 DEBUG logging enabled", "debug")
+        log_progress("🔍 REGISTO DE DEPURAÇÃO ativado", "debug")
     
-    log_progress("Starting export_to_supabase_airflow")
-    log_progress(f"Parameters: date={args.date}")
-    log_progress(f"Paths: input_file={args.input_file}, output_dir={args.output_dir}, date_str={args.date_str}")
+    log_progress("A iniciar export_to_supabase_airflow")
+    log_progress(f"Parâmetros: date={args.date}")
+    log_progress(f"Caminhos: input_file={args.input_file}, output_dir={args.output_dir}, date_str={args.date_str}")
     
     try:
         result = export_to_supabase(
@@ -710,12 +710,12 @@ def main():
             output_dir=args.output_dir,
             date_str=args.date_str
         )
-        log_progress(f"✅ Export completed successfully. Processed {result} articles")
+        log_progress(f"✅ Exportação concluída com sucesso. Processados {result} artigos")
         return 0
     except Exception as e:
-        log_progress(f"❌ Export failed: {e}", "error")
+        log_progress(f"❌ Exportação falhou: {e}", "error")
         import traceback
-        log_progress(f"❌ Full traceback: {traceback.format_exc()}", "error")
+        log_progress(f"❌ Traceback completo: {traceback.format_exc()}", "error")
         return 1
 
 if __name__ == "__main__":

@@ -28,6 +28,18 @@ echo -e "${BLUE}================================================${NC}"
 echo -e "${BLUE}           AIRFLOW ADMIN CREDENTIALS${NC}"
 echo -e "${BLUE}================================================${NC}"
 
+# Check .env file status first
+echo -e "${BLUE}[INFO]${NC} Verifying .env file status..."
+if [ -f ".env" ]; then
+    if grep -q "^DB_HOST=" .env && grep -q "^DB_USER=" .env && grep -q "^DB_PASSWORD=" .env; then
+        echo -e "${GREEN}✅ Database credentials are set${NC}"
+    else
+        echo -e "${YELLOW}⚠️ WARNING: Database credentials may be missing${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠️ WARNING: .env file not found${NC}"
+fi
+
 ADMIN_USERNAME="admin"
 
 # Extract password from logs
