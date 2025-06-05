@@ -14,11 +14,13 @@ import sys
 import time
 import random
 import asyncio
+import importlib.util
 import argparse
 import logging
-import json
 from datetime import datetime, timedelta
 from collections import defaultdict
+from pathlib import Path
+import gc
 import traceback
 
 # Configure logging for Airflow compatibility
@@ -84,7 +86,7 @@ def lazy_imports():
     import aiohttp
     
     # Import local utilities
-    sys.path
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from utils.helpers import load_keywords, carregar_paroquias_com_municipios, gerar_id
     return load_keywords, carregar_paroquias_com_municipios, gerar_id
 
@@ -545,24 +547,25 @@ def prioritize_combinations(combinations, dias):
     
     return priority_combinations[:priority_count] + normal_combinations + priority_combinations[priority_count:]
 
-def save_intermediate_csv(data, raw_data_dir, current_date):
-    """Save scraped data to CSV files with improved handling"""
+def save_intermediate_csv(data, output_dir, date_str, output_filename=None):
+    """Save scraped data to CSV files with controlled paths"""
     if not data:
         return 0
     
     # Ensure consistent field names that match processar_relevantes_airflow expectations
     fieldnames = ["ID", "keyword", "localidade", "title", "link", "published", "collection_date"]
     
-    # Use the provided raw_data_dir and current_date - this should match processar expectations
-    intermediate_csv = os.path.join(raw_data_dir, f"intermediate_google_news_{current_date}.csv")
+    # Use controlled output paths
+    if output_filename:
+        primary_csv = os.path.join(output_dir, output_filename)
+    else:
+        primary_csv = os.path.join(output_dir, f"intermediate_google_news_{date_str}.csv")
     
-    # Also create backward compatibility file in the simple raw directory
-    simple_raw_dir = os.path.dirname(os.path.dirname(os.path.dirname(raw_data_dir)))  # Go back to data/raw
-    default_intermediate_csv = os.path.join(simple_raw_dir, "raw", "intermediate_google_news.csv")
+    # Also create final output file
+    final_csv = os.path.join(output_dir, f"google_news_articles_{date_str}.csv")
     
-    # Create directories if they don't exist
-    os.makedirs(os.path.dirname(intermediate_csv), exist_ok=True)
-    os.makedirs(os.path.dirname(default_intermediate_csv), exist_ok=True)
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
     
     # Validate data format before saving
     validated_data = []
@@ -586,29 +589,27 @@ def save_intermediate_csv(data, raw_data_dir, current_date):
         log_progress("⚠️ Nenhum artigo válido para guardar", "warning")
         return 0
     
-    # Save to date-specific file (primary location)
-    file_exists = os.path.isfile(intermediate_csv)
+    # Save to primary intermediate file
+    file_exists = os.path.isfile(primary_csv)
     try:
-        with open(intermediate_csv, "a", newline="", encoding="utf-8") as f:
+        with open(primary_csv, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
             writer.writerows(validated_data)
-        log_progress(f"✅ Guardados {len(validated_data)} artigos em {intermediate_csv}")
+        log_progress(f"✅ Guardados {len(validated_data)} artigos em {primary_csv}")
     except Exception as e:
-        log_progress(f"Erro ao guardar em {intermediate_csv}: {e}", "error")
+        log_progress(f"Erro ao guardar em {primary_csv}: {e}", "error")
     
-    # Also save to default file for backward compatibility
-    file_exists = os.path.isfile(default_intermediate_csv)
+    # Also save to final file (for processing pipeline)
     try:
-        with open(default_intermediate_csv, "a", newline="", encoding="utf-8") as f:
+        with open(final_csv, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if not file_exists:
-                writer.writeheader()
+            writer.writeheader()
             writer.writerows(validated_data)
-        log_progress(f"✅ Guardados {len(validated_data)} artigos em {default_intermediate_csv}")
+        log_progress(f"✅ Ficheiro final criado: {final_csv}")
     except Exception as e:
-        log_progress(f"Erro ao guardar em {default_intermediate_csv}: {e}", "error")
+        log_progress(f"Erro ao criar ficheiro final {final_csv}: {e}", "error")
     
     return len(validated_data)
 
@@ -727,12 +728,17 @@ async def fetch_with_playwright(url):
         return content
 
 # Then define main functions that use these helpers
-async def run_scraper_async(specific_date=None, dias=1):
-    """Main async function to run the scraper with improved efficiency and stealth"""
+async def run_scraper_async(specific_date=None, dias=1, output_dir=None, date_str=None):
+    """Main async function to run the scraper with controlled output paths"""
     start_time = time.time()
     
     log_progress("🚀 A iniciar o scraper do Google News...")
     log_progress(f"📅 Data: {specific_date or 'atual'}, Dias anteriores: {dias}")
+    
+    if output_dir:
+        log_progress(f"📁 Diretoria de saída controlada: {output_dir}")
+    if date_str:
+        log_progress(f"📅 String de data: {date_str}")
     
     # Lazy import dependencies
     import aiohttp
@@ -1031,19 +1037,29 @@ async def run_scraper_async(specific_date=None, dias=1):
     log_progress(f"✅ Scraping concluído! {total_articles_collected} artigos recolhidos.")
     return total_articles_collected
 
-async def airflow_optimized_main(days_back=1, search_date=None, max_execution_time=3600):
+async def airflow_optimized_main(days_back=1, search_date=None, max_execution_time=3600, output_dir=None, date_str=None):
     """
-    Async function for direct import by Airflow DAG
+    Async function for direct import by Airflow DAG with controlled output paths
     Returns number of articles scraped
     """
     log_progress("🚀 A iniciar função do scraper otimizada para Airflow")
     log_progress(f"⚙️  Parâmetros: days_back={days_back}, search_date={search_date}, max_time={max_execution_time}s")
     
+    if output_dir:
+        log_progress(f"📁 Diretoria de saída: {output_dir}")
+    if date_str:
+        log_progress(f"📅 String de data: {date_str}")
+    
     try:
-        # Run with timeout
+        # Run with timeout and controlled paths
         result = await asyncio.wait_for(
-            run_scraper_async(specific_date=search_date, dias=days_back),
-            timeout=max_execution_time  # 3600 seconds (1 hour) default maximum execution time
+            run_scraper_async(
+                specific_date=search_date, 
+                dias=days_back,
+                output_dir=output_dir,
+                date_str=date_str
+            ),
+            timeout=max_execution_time
         )
         log_progress(f"🎉 Execução do Airflow concluída com sucesso! Artigos: {result}")
         return result
@@ -1122,11 +1138,13 @@ original_print = print
 print = functools.partial(print, flush=True)
 
 def main():
-    """Main function with lazy imports"""
+    """Main function with controlled output paths support"""
     parser = argparse.ArgumentParser(description="Executar scraper do Google News (versão Airflow)")
     parser.add_argument("--dias", type=int, default=1, help="Número de dias anteriores para fazer scraping")
     parser.add_argument("--date", type=str, help="Data específica para fazer scraping (AAAA-MM-DD)")
     parser.add_argument("--max_time", type=int, default=3600, help="Tempo máximo de execução em segundos")
+    parser.add_argument("--output_dir", type=str, help="Diretoria de saída para os ficheiros")
+    parser.add_argument("--date_str", type=str, help="String de data para nomes de ficheiros")
     parser.add_argument("--quiet", action="store_true", help="Executar com saída mínima")
     parser.add_argument("--debug", action="store_true", help="Ativar logging de debug")
     
@@ -1142,8 +1160,9 @@ def main():
         logger.setLevel(logging.INFO)
     
     log_progress("A iniciar scraper do Google News (versão Airflow)")
-    log_progress(f"Parâmetros: dias={args.dias}, date={args.date}, max_time={args.max_time}, quiet={args.quiet}")
-    
+    log_progress(f"Parâmetros: dias={args.dias}, date={args.date}, max_time={args.max_time}")
+    log_progress(f"Paths: output_dir={args.output_dir}, date_str={args.date_str}")
+
     # Get appropriate date for output path
     if args.date:
         try:
@@ -1158,12 +1177,17 @@ def main():
     current_month = dt.strftime("%m")
     current_day = dt.strftime("%d")
     
-    # Set up output path - fix for Docker environment
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
-    output_file = os.path.join(project_root, "data", "raw", current_year, current_month, current_day, f"intermediate_google_news_{current_date}.csv")
-    
-    log_progress(f"📁 Ficheiro de saída: {output_file}")
+    # Use controlled output path if provided
+    if args.output_dir and args.date_str:
+        output_file = os.path.join(args.output_dir, f"intermediate_google_news_{args.date_str}.csv")
+        log_progress(f"📁 A usar ficheiro de saída controlado: {output_file}")
+    else:
+        # Fallback to original path logic
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
+        output_file = os.path.join(project_root, "data", "raw", current_year, current_month, current_day, f"intermediate_google_news_{current_date}.csv")
+        log_progress(f"📁 A usar ficheiro de saída padrão: {output_file}")
+
     log_progress(f"⏱️ Tempo máximo de execução: {args.max_time} segundos")
 
     # Run the async function
@@ -1178,7 +1202,9 @@ def main():
             airflow_optimized_main(
                 days_back=args.dias,
                 search_date=args.date,
-                max_execution_time=args.max_time
+                max_execution_time=args.max_time,
+                output_dir=args.output_dir,
+                date_str=args.date_str
             )
         )
         

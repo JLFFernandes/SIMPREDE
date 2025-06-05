@@ -122,8 +122,8 @@ def find_input_file(project_root, target_date):
     
     return None
 
-def setup_paths_and_dates(target_date=None, dias=1):
-    """Setup all paths and dates for filtering"""
+def setup_paths_and_dates(target_date=None, dias=1, input_file=None, output_dir=None, date_str=None):
+    """Setup all paths and dates for filtering with controlled output paths"""
     if target_date:
         if isinstance(target_date, str):
             dt = datetime.strptime(target_date, "%Y-%m-%d")
@@ -136,7 +136,7 @@ def setup_paths_and_dates(target_date=None, dias=1):
     current_year = dt.strftime("%Y")
     current_month = dt.strftime("%m")
     current_day = dt.strftime("%d")
-    date_suffix = dt.strftime("%Y-%m-%d")  # Format used by processar_relevantes
+    date_suffix = date_str if date_str else dt.strftime("%Y-%m-%d")  # Use provided date_str or default format
     
     # Get the directory where this script is located
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -147,15 +147,34 @@ def setup_paths_and_dates(target_date=None, dias=1):
     log_progress(f"   Script dir: {SCRIPT_DIR}")
     log_progress(f"   Project root: {PROJECT_ROOT}")
     
-    # Create directory structure for structured data by year/month/day
-    STRUCTURED_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "structured", current_year, current_month, current_day)
-    os.makedirs(STRUCTURED_DATA_DIR, exist_ok=True)
+    # Use controlled output directory if provided
+    if output_dir:
+        PROCESSED_DATA_DIR = output_dir
+        log_progress(f"📁 Using controlled output directory: {PROCESSED_DATA_DIR}")
+    else:
+        # Fallback to default structure
+        PROCESSED_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "processed", current_year, current_month, current_day)
     
-    # Find input file using the search function
-    INPUT_CSV = find_input_file(PROJECT_ROOT, dt)
+    # Ensure directories exist
+    os.makedirs(PROCESSED_DATA_DIR, exist_ok=True)
     
-    # Define output file paths with consistent naming
-    OUTPUT_CSV = os.path.join(STRUCTURED_DATA_DIR, f"artigos_vitimas_filtrados_{date_suffix}.csv")
+    # Use provided input file or search for it
+    if input_file and os.path.exists(input_file):
+        INPUT_CSV = input_file
+        log_progress(f"📁 Using provided input file: {INPUT_CSV}")
+    else:
+        # Find input file using the search function
+        INPUT_CSV = find_input_file(PROJECT_ROOT, dt)
+        if not INPUT_CSV and input_file:
+            log_progress(f"⚠️ Provided input file not found: {input_file}", "warning")
+    
+    # Define output file paths with controlled naming
+    OUTPUT_CSV = os.path.join(PROCESSED_DATA_DIR, f"artigos_vitimas_filtrados_{date_suffix}.csv")
+    
+    # Additional output files for better organization
+    NO_VICTIMS_CSV = os.path.join(PROCESSED_DATA_DIR, f"artigos_sem_vitimas_{date_suffix}.csv")
+    FILTERING_LOG = os.path.join(PROCESSED_DATA_DIR, f"filtering_log_{current_date}.log")
+    STATS_JSON = os.path.join(PROCESSED_DATA_DIR, f"filtering_stats_{current_date}.json")
     
     # Standard output filename for backward compatibility
     DEFAULT_OUTPUT_CSV = os.path.join(PROJECT_ROOT, "data", "structured", "artigos_vitimas_filtrados.csv")
@@ -163,8 +182,11 @@ def setup_paths_and_dates(target_date=None, dias=1):
     return {
         'input_csv': INPUT_CSV,
         'output_csv': OUTPUT_CSV,
+        'no_victims_csv': NO_VICTIMS_CSV,
+        'filtering_log': FILTERING_LOG,
+        'stats_json': STATS_JSON,
         'default_output_csv': DEFAULT_OUTPUT_CSV,
-        'structured_data_dir': STRUCTURED_DATA_DIR,
+        'processed_data_dir': PROCESSED_DATA_DIR,
         'project_root': PROJECT_ROOT,
         'current_date': current_date,
         'dt': dt
@@ -204,6 +226,43 @@ def guardar_csv_incremental_with_date(output_csv, default_output_csv, artigos):
     guardar_csv_incremental(default_output_csv, artigos)
     
     log_progress(f"✅ Filtered files saved with year/month/day organization")
+
+def guardar_csv_incremental_with_controlled_paths(paths, artigos_filtrados, artigos_sem_vitimas=None):
+    """
+    Save to controlled output paths with better organization
+    """
+    # Save filtered articles with victims
+    if artigos_filtrados:
+        guardar_csv_incremental(paths['output_csv'], artigos_filtrados)
+        guardar_csv_incremental(paths['default_output_csv'], artigos_filtrados)
+        log_progress(f"✅ Filtered articles with victims saved: {len(artigos_filtrados)} articles")
+    
+    # Save articles without victims separately if provided
+    if artigos_sem_vitimas:
+        guardar_csv_incremental(paths['no_victims_csv'], artigos_sem_vitimas)
+        log_progress(f"✅ Articles without victims saved: {len(artigos_sem_vitimas)} articles")
+    
+    # Save filtering statistics
+    if artigos_filtrados or artigos_sem_vitimas:
+        stats = {
+            "filtering_date": datetime.now().isoformat(),
+            "articles_with_victims": len(artigos_filtrados) if artigos_filtrados else 0,
+            "articles_without_victims": len(artigos_sem_vitimas) if artigos_sem_vitimas else 0,
+            "total_filtered": (len(artigos_filtrados) if artigos_filtrados else 0) + (len(artigos_sem_vitimas) if artigos_sem_vitimas else 0),
+            "output_files": {
+                "victims_articles": paths['output_csv'],
+                "victims_articles_legacy": paths['default_output_csv'],
+                "no_victims_articles": paths['no_victims_csv'] if artigos_sem_vitimas else None
+            }
+        }
+        
+        try:
+            import json
+            with open(paths['stats_json'], 'w', encoding='utf-8') as f:
+                json.dump(stats, f, indent=2, ensure_ascii=False)
+            log_progress(f"✅ Filtering statistics saved: {paths['stats_json']}")
+        except Exception as e:
+            log_progress(f"⚠️ Could not save statistics: {e}", "warning")
 
 def load_config_data(project_root):
     """Load municipios and eventos climaticos configuration"""
@@ -414,16 +473,16 @@ def apply_comprehensive_filters(df, project_root):
     
     return df
 
-def airflow_main(target_date=None, dias=1):
+def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, date_str=None):
     """
-    Main function optimized for Airflow execution
+    Main function optimized for Airflow execution with controlled paths
     Returns number of articles with victims for Airflow compatibility
     """
     log_progress("🚀 Starting filtrar_artigos_vitimas_airflow")
     
-    # Setup paths and configuration
+    # Setup paths and configuration with controlled paths
     try:
-        paths = setup_paths_and_dates(target_date, dias)
+        paths = setup_paths_and_dates(target_date, dias, input_file, output_dir, date_str)
         if not paths['input_csv']:
             log_progress("❌ No input file found. Cannot proceed.", "error")
             return 0
@@ -441,6 +500,7 @@ def airflow_main(target_date=None, dias=1):
             "Total Articles Loaded": len(df),
             "Input File": paths['input_csv'],
             "Output File": paths['output_csv'],
+            "Processed Data Directory": paths['processed_data_dir'],
             "Days Filter": dias
         }
         log_statistics(initial_stats, "Filtering Started")
@@ -453,17 +513,18 @@ def airflow_main(target_date=None, dias=1):
             log_progress("⚠️ No articles remaining after comprehensive filtering.", "warning")
             return 0
         
-        # Convert DataFrame to list of dictionaries for compatibility
-        artigos_filtrados = filtered_df.to_dict('records')
+        # Separate articles with and without victims for better organization
+        victim_columns = ['fatalities', 'injured', 'evacuated', 'displaced', 'missing']
+        has_victims_mask = filtered_df[victim_columns].sum(axis=1) > 0
+        
+        artigos_com_vitimas = filtered_df[has_victims_mask].to_dict('records')
+        artigos_sem_vitimas = filtered_df[~has_victims_mask].to_dict('records')
         
         # Calculate comprehensive statistics
         comprehensive_stats = {
-            "Articles After All Filters": len(artigos_filtrados),
-            "Articles with Victims": len(filtered_df[(filtered_df['fatalities'] > 0) | 
-                                                   (filtered_df['injured'] > 0) | 
-                                                   (filtered_df['evacuated'] > 0) | 
-                                                   (filtered_df['displaced'] > 0) |
-                                                   (filtered_df['missing'] > 0)]),
+            "Articles After All Filters": len(filtered_df),
+            "Articles with Victims": len(artigos_com_vitimas),
+            "Articles without Victims": len(artigos_sem_vitimas),
             "Total Fatalities": filtered_df['fatalities'].sum(),
             "Total Injured": filtered_df['injured'].sum(),
             "Total Evacuated": filtered_df['evacuated'].sum(),
@@ -473,18 +534,22 @@ def airflow_main(target_date=None, dias=1):
         }
         log_statistics(comprehensive_stats, "Comprehensive Filtering Results")
         
-        # Save filtered articles
+        # Save filtered articles with controlled paths
         log_progress("💾 Saving comprehensively filtered articles...")
-        guardar_csv_incremental_with_date(paths['output_csv'], paths['default_output_csv'], artigos_filtrados)
+        guardar_csv_incremental_with_controlled_paths(paths, artigos_com_vitimas, artigos_sem_vitimas)
         
         final_stats = {
-            "Total Articles Filtered": len(artigos_filtrados),
-            "Filter Rate": f"{len(artigos_filtrados)/len(df)*100:.1f}%" if len(df) > 0 else "0%",
-            "Output Files": f"{paths['output_csv']} and {paths['default_output_csv']}"
+            "Articles with Victims": len(artigos_com_vitimas),
+            "Articles without Victims": len(artigos_sem_vitimas),
+            "Total Articles Processed": len(filtered_df),
+            "Filter Rate": f"{len(filtered_df)/len(df)*100:.1f}%" if len(df) > 0 else "0%",
+            "Victim Rate": f"{len(artigos_com_vitimas)/len(filtered_df)*100:.1f}%" if len(filtered_df) > 0 else "0%",
+            "Main Output File": paths['output_csv'],
+            "Statistics File": paths['stats_json']
         }
         log_statistics(final_stats, "Comprehensive Filtering Completed Successfully")
         
-        return len(artigos_filtrados)
+        return len(artigos_com_vitimas)
         
     except FileNotFoundError as e:
         log_progress(f"❌ File not found error: {str(e)}", "error")
@@ -496,11 +561,14 @@ def airflow_main(target_date=None, dias=1):
         raise
 
 def main():
-    """Main function with argument parsing for CLI usage"""
+    """Main function with controlled output paths support"""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Filter articles with victims (Airflow version)")
     parser.add_argument("--dias", type=int, default=1, help="Number of days to process")
     parser.add_argument("--date", type=str, help="Specific target date (YYYY-MM-DD)")
+    parser.add_argument("--input_file", type=str, help="Specific input file path")
+    parser.add_argument("--output_dir", type=str, help="Output directory for filtered files")
+    parser.add_argument("--date_str", type=str, help="Date string for file naming")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     args = parser.parse_args()
     
@@ -511,9 +579,16 @@ def main():
     
     log_progress("Starting filtrar_artigos_vitimas_airflow")
     log_progress(f"Parameters: dias={args.dias}, date={args.date}")
+    log_progress(f"Paths: input_file={args.input_file}, output_dir={args.output_dir}, date_str={args.date_str}")
     
     try:
-        result = airflow_main(target_date=args.date, dias=args.dias)
+        result = airflow_main(
+            target_date=args.date, 
+            dias=args.dias,
+            input_file=args.input_file,
+            output_dir=args.output_dir,
+            date_str=args.date_str
+        )
         log_progress(f"✅ Filtering completed. Found {result} articles with victims")
         return 0
     except Exception as e:

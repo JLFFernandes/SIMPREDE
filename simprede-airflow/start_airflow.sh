@@ -39,7 +39,6 @@ check_docker() {
         print_error "Docker is not running. Please start Docker Desktop and try again."
         exit 1
     fi
-    print_success "Docker is running"
 }
 
 # Function to check if docker-compose is available
@@ -69,13 +68,45 @@ set_permissions() {
     print_success "Permissions set (AIRFLOW_UID=$AIRFLOW_UID)"
 }
 
+# Function to create necessary directories
+create_directories() {
+    print_info "Creating necessary directories..."
+    
+    # Create data directories on host
+    mkdir -p ./data/raw
+    mkdir -p ./data/structured  
+    mkdir -p ./data/processed
+    mkdir -p ./logs
+    mkdir -p ./plugins
+    mkdir -p ./config
+    
+    # Set proper permissions
+    chmod 755 ./data ./logs ./plugins ./config
+    chmod -R 755 ./data/raw ./data/structured ./data/processed
+    
+    print_success "Directories created successfully"
+}
+
 # Function to build and start containers
 start_containers() {
-    print_info "Building Docker images..."
-    $DOCKER_COMPOSE_CMD build --no-cache
+    print_info "Building and starting Airflow containers..."
     
-    print_info "Starting Airflow containers..."
-    $DOCKER_COMPOSE_CMD up -d
+    # Set AIRFLOW_UID if not already set
+    if [ -z "${AIRFLOW_UID}" ]; then
+        export AIRFLOW_UID=$(id -u)
+        echo "AIRFLOW_UID=${AIRFLOW_UID}" >> .env
+        print_info "Set AIRFLOW_UID to ${AIRFLOW_UID}"
+    fi
+    
+    # Build and start containers
+    if command -v docker-compose > /dev/null 2>&1; then
+        docker-compose up --build -d
+    elif docker compose version > /dev/null 2>&1; then
+        docker compose up --build -d
+    else
+        print_error "Neither 'docker-compose' nor 'docker compose' is available."
+        exit 1
+    fi
     
     print_success "Containers started successfully"
 }
@@ -217,6 +248,7 @@ main() {
     
     # Setup
     set_permissions
+    create_directories
     
     # Ask user if they want to continue
     echo ""
