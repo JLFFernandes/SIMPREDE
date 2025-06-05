@@ -1,4 +1,4 @@
-FROM apache/airflow:2.8.1-python3.11
+FROM apache/airflow:3.0.1-python3.11
 
 # Switch to root to install system packages
 USER root
@@ -34,8 +34,7 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 \
     libxfixes3 \
     libxrandr2 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Chrome/Chromium and related dependencies
 RUN apt-get update && \
@@ -43,16 +42,15 @@ RUN apt-get update && \
     ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
         # x86_64 architecture - Use Google Chrome official repo
-        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list && \
+        curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-linux.gpg && \
+        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list && \
         apt-get update && \
         apt-get install -y google-chrome-stable; \
     else \
         # ARM64 architecture - Use Chromium instead
         apt-get install -y chromium chromium-driver; \
     fi && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create symlinks for compatibility and ensure proper directory permissions
 RUN ARCH=$(uname -m) && \
@@ -90,7 +88,6 @@ RUN ARCH=$(uname -m) && \
 
 # Set environment variables in ENV as well
 ENV PATH="/usr/bin:${PATH}"
-ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Install ChromeDriver (make sure it matches Chrome version)
@@ -114,8 +111,8 @@ RUN ARCH=$(uname -m) && \
         fi; \
     fi && \
     # Verify installation
-    ls -la /usr/bin/chromium /usr/bin/chromedriver 2>/dev/null || true && \
-    chromium --version || true && \
+    which google-chrome || which chromium || true && \
+    google-chrome --version || chromium --version || true && \
     chromedriver --version || true
 
 # Switch back to airflow user

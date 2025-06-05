@@ -3,18 +3,17 @@ sqlalchemy<2.0.0,>=1.4.0
 psycopg2-binary>=2.9.9
 
 # Web scraping essentials
-beautifulsoup4==4.13.3
-requests==2.32.3
-lxml>=4.9.3
+beautifulsoup4>=4.9.0
+requests>=2.25.0
+lxml>=4.6.0
 lxml_html_clean>=0.2.2
 
 # Selenium (core only)
-selenium==4.21.0
-webdriver-manager==3.8.6
+selenium>=4.0.0
+webdriver-manager>=3.8.0
 
 # Data processing
-pandas>=1.5.0,<3.0.0
-numpy>=1.21.0,<2.0.0
+pandas>=1.3.0
 
 # NLP basics
 nltk>=3.8.1
@@ -24,6 +23,8 @@ python-dotenv>=1.0.0
 tenacity>=8.2.3
 feedparser>=6.0.0
 psutil>=5.9.6
+urllib3>=1.26.0
+python-dateutil>=2.8.0
 
 # ML (lightweight versions)
 scikit-learn>=1.3.0,<1.5.0
@@ -32,3 +33,8 @@ imbalanced-learn>=0.11.0
 
 # News processing
 newspaper3k>=0.2.8
+fake-useragent>=1.4.0
+
+# Optional dependencies for better performance
+aiohttp>=3.8.0
+asyncio-throttle>=1.0.0

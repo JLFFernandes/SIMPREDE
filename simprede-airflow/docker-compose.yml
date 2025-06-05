@@ -11,28 +11,37 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
     AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 60
-    # Fix SQLAlchemy configuration - remove problematic parameters
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN_EXTRA: '{"options": "-c timezone=UTC"}'
-    # Chrome environment variables
+    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+    AIRFLOW__WEBSERVER__AUTHENTICATE: 'true'
+    AIRFLOW__WEBSERVER__RBAC: 'true'
+    # Chrome/Selenium environment variables
     CHROME_BIN: /usr/bin/chromium
     CHROMEDRIVER_PATH: /usr/bin/chromedriver
     DISPLAY: :99
     SELENIUM_HEADLESS: 1
-    # This is a better way to add pip requirements
-    _PIP_ADDITIONAL_REQUIREMENTS: ''
+    PYTHONUNBUFFERED: 1
+    PYTHONDONTWRITEBYTECODE: 1
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
     - ./data:/opt/airflow/data
+    - ./config:/opt/airflow/config
+    - ./scripts:/opt/airflow/scripts
     - ./requirements.txt:/opt/airflow/requirements.txt
+    # Add specific mapping for Google Scraper data
+    - ./data:/opt/airflow/scripts/google_scraper/data
+    # Add timezone data
+    - /etc/localtime:/etc/localtime:ro
+  user: "${AIRFLOW_UID:-50000}:0"
   depends_on: &airflow-common-depends-on
     postgres:
       condition: service_healthy
 
 services:
   postgres:
-    image: postgres:14
+    image: postgres:15
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
@@ -41,35 +50,33 @@ services:
       - postgres-db-volume:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "airflow"]
-      interval: 5s
+      interval: 10s
+      timeout: 5s
       retries: 5
+      start_period: 10s
     restart: always
-
-  airflow-webserver:
-    <<: *airflow-common
-    command: webserver
     ports:
-      - 8080:8080
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-    restart: always
-    depends_on:
-      <<: *airflow-common-depends-on
-      airflow-init:
-        condition: service_completed_successfully
+      - "5432:5432"
 
-  airflow-scheduler:
+  # Use standalone mode for Airflow 3.0.1 - includes webserver, scheduler, and triggerer
+  airflow-standalone:
     <<: *airflow-common
-    command: scheduler
+    command: standalone
+    ports:
+      - "8080:8080"
     healthcheck:
-      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
-      interval: 10s
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 60s
     restart: always
+    environment:
+      <<: *airflow-common-env
+      # Core configurations for Airflow 3.x
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
@@ -81,60 +88,56 @@ services:
     command:
       - -c
       - |
-        # Set up environment and verify Chrome
-        export CHROME_BIN=${CHROME_BIN:-/usr/bin/chromium}
-        export CHROMEDRIVER_PATH=${CHROMEDRIVER_PATH:-/usr/bin/chromedriver}
-        export DISPLAY=${DISPLAY:-:99}
+        # Set up environment and verify Chrome/Chromium
+        export CHROME_BIN=$${CHROME_BIN:-/usr/bin/chromium}
+        export CHROMEDRIVER_PATH=$${CHROMEDRIVER_PATH:-/usr/bin/chromedriver}
+        export DISPLAY=$${DISPLAY:-:99}
         export SELENIUM_HEADLESS=1
         
-        function ver() {
-          printf "%04d%04d%04d%04d" $${1//./ }
-        }
+        echo "=== Airflow 3.0.1 Initialization ==="
         
-        # Check Airflow version
-        airflow_version=$$(gosu airflow airflow version)
-        airflow_version_comparable=$$(ver $${airflow_version})
-        min_airflow_version=2.2.0
-        min_airflow_version_comparable=$$(ver $${min_airflow_version})
-        if (( airflow_version_comparable < min_airflow_version_comparable )); then
-          echo
-          echo -e "\033[1;31mERROR!!!: Too old Airflow version $${airflow_version}!\e[0m"
-          echo "The minimum Airflow version supported: $${min_airflow_version}. Only use this or higher!"
-          echo
-          exit 1
+        # Verify Chrome/Chromium installation
+        if command -v google-chrome >/dev/null 2>&1; then
+          echo "✓ Google Chrome found: $$(google-chrome --version)"
+          export CHROME_BIN=/usr/bin/google-chrome
+        elif command -v chromium >/dev/null 2>&1; then
+          echo "✓ Chromium found: $$(chromium --version)"
+          export CHROME_BIN=/usr/bin/chromium
+        else
+          echo "⚠ Warning: No Chrome/Chromium found"
+        fi
+        
+        # Verify ChromeDriver
+        if command -v chromedriver >/dev/null 2>&1; then
+          echo "✓ ChromeDriver found: $$(chromedriver --version)"
+        else
+          echo "⚠ Warning: ChromeDriver not found"
         fi
         
         # Initialize the database
-        gosu airflow airflow db init
+        echo "Initializing Airflow database..."
+        airflow db migrate
         
-        # Create admin user
-        gosu airflow airflow users create \
-          --username admin \
-          --firstname Admin \
-          --lastname User \
-          --role Admin \
-          --email admin@example.com \
-          --password simprede
-        
+        echo "=== Initialization Complete ==="
+        echo "Admin user will be created automatically by standalone mode"
         exit 0
 
     environment:
       <<: *airflow-common-env
-      _AIRFLOW_DB_UPGRADE: 'true'
-      _AIRFLOW_WWW_USER_CREATE: 'true'
-      _AIRFLOW_WWW_USER_USERNAME: 'admin'
-      _AIRFLOW_WWW_USER_PASSWORD: 'simprede'
-      _AIRFLOW_WWW_USER_FIRSTNAME: 'Admin'
-      _AIRFLOW_WWW_USER_LASTNAME: 'User'
-      _AIRFLOW_WWW_USER_EMAIL: 'admin@example.com'
-      _AIRFLOW_WWW_USER_ROLE: 'Admin'
+      _AIRFLOW_DB_MIGRATE: 'true'
     user: "0:0"
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
       - ./data:/opt/airflow/data
+      - ./config:/opt/airflow/config
+      - ./scripts:/opt/airflow/scripts
       - ./requirements.txt:/opt/airflow/requirements.txt
 
 volumes:
   postgres-db-volume:
+
+networks:
+  default:
+    name: airflow-network
