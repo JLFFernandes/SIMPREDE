@@ -56,21 +56,42 @@ check_docker_compose() {
 
 # Function to set proper permissions
 set_permissions() {
-    print_info "Setting up directory permissions..."
+    print_info "Configuração de permissões dos diretórios..."
     
     # Create directories if they don't exist
     mkdir -p logs dags plugins data config scripts
     
     # Set AIRFLOW_UID environment variable
     export AIRFLOW_UID=$(id -u)
-    echo "AIRFLOW_UID=$AIRFLOW_UID" > .env
     
-    print_success "Permissions set (AIRFLOW_UID=$AIRFLOW_UID)"
+    # Safely update .env file without overwriting existing content
+    if [ -f ".env" ]; then
+        # Check if AIRFLOW_UID already exists in .env
+        if grep -q "^AIRFLOW_UID=" .env; then
+            # Update existing AIRFLOW_UID (fix for macOS sed)
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "s/^AIRFLOW_UID=.*/AIRFLOW_UID=$AIRFLOW_UID/" .env
+            else
+                sed -i "s/^AIRFLOW_UID=.*/AIRFLOW_UID=$AIRFLOW_UID/" .env
+            fi
+            print_info "AIRFLOW_UID atualizado no ficheiro .env existente"
+        else
+            # Append AIRFLOW_UID to existing .env
+            echo "AIRFLOW_UID=$AIRFLOW_UID" >> .env
+            print_info "AIRFLOW_UID adicionado ao ficheiro .env existente"
+        fi
+    else
+        # Create new .env with only AIRFLOW_UID
+        echo "AIRFLOW_UID=$AIRFLOW_UID" > .env
+        print_info "Ficheiro .env criado com AIRFLOW_UID"
+    fi
+    
+    print_success "Permissões configuradas (AIRFLOW_UID=$AIRFLOW_UID)"
 }
 
 # Function to create necessary directories
 create_directories() {
-    print_info "Creating necessary directories..."
+    print_info "Criação dos diretórios necessários..."
     
     # Create data directories on host
     mkdir -p ./data/raw
@@ -84,18 +105,46 @@ create_directories() {
     chmod 755 ./data ./logs ./plugins ./config
     chmod -R 755 ./data/raw ./data/structured ./data/processed
     
-    print_success "Directories created successfully"
+    print_success "Diretórios criados com sucesso"
 }
 
 # Function to build and start containers
 start_containers() {
-    print_info "Building and starting Airflow containers..."
+    print_info "Construção e arranque dos contentores Airflow..."
     
     # Set AIRFLOW_UID if not already set
     if [ -z "${AIRFLOW_UID}" ]; then
         export AIRFLOW_UID=$(id -u)
-        echo "AIRFLOW_UID=${AIRFLOW_UID}" >> .env
-        print_info "Set AIRFLOW_UID to ${AIRFLOW_UID}"
+        
+        # Safely append to .env if it doesn't already contain AIRFLOW_UID
+        if [ -f ".env" ]; then
+            if ! grep -q "^AIRFLOW_UID=" .env; then
+                echo "AIRFLOW_UID=${AIRFLOW_UID}" >> .env
+                print_info "AIRFLOW_UID definido como ${AIRFLOW_UID} e adicionado ao .env"
+            fi
+        else
+            echo "AIRFLOW_UID=${AIRFLOW_UID}" > .env
+            print_info "Ficheiro .env criado com AIRFLOW_UID=${AIRFLOW_UID}"
+        fi
+    fi
+    
+    # Verify .env content before starting
+    print_info "Verificação do conteúdo do ficheiro .env:"
+    if [ -f ".env" ]; then
+        grep -v "PASSWORD" .env | while read line; do
+            if [ ! -z "$line" ] && [[ ! "$line" =~ ^#.* ]]; then
+                print_info "  $line"
+            fi
+        done
+        
+        # Check for database credentials without showing them
+        if grep -q "^DB_HOST=" .env; then
+            print_success "Credenciais da base de dados preservadas no .env"
+        else
+            print_warning "Credenciais da base de dados não encontradas no .env"
+        fi
+    else
+        print_warning "Ficheiro .env não encontrado"
     fi
     
     # Build and start containers

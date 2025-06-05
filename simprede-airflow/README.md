@@ -80,49 +80,78 @@ After running the scraper, you'll find files like:
 
 The environment variables can be configured in the `.env` file. The default configuration includes:
 
-- Airflow credentials: Username `airflow`, Password `airflow`
-- PostgreSQL database: User `airflow`, Password `airflow`, Database `airflow`
+- **Airflow credentials**: Username `admin`, Password auto-gerado
+- **PostgreSQL database**: Configuração interna do Airflow
+- **Supabase database**: Configuração para exportação de dados
 - Other settings for the Google scraper and additional components
 
-## Getting Started
+### ⚠️ Proteção do Ficheiro .env
 
-1. Build and start the containers:
+**IMPORTANTE**: O ficheiro `.env` contém credenciais sensíveis da base de dados Supabase. Os scripts de arranque foram otimizados para preservar estas credenciais:
+
+- `start_airflow.sh` apenas adiciona/atualiza `AIRFLOW_UID` sem eliminar outras variáveis
+- `restart_airflow.sh` verifica a integridade das credenciais antes do reinício
+- Nunca edite manualmente as linhas das credenciais da base de dados
+
+### Verificação das Credenciais
+
+Para verificar se as credenciais estão intactas:
+```bash
+./get_admin_password.sh
+```
+
+Se as credenciais da base de dados estiverem em falta, restaure-as no ficheiro `.env`:
+```bash
+DB_HOST=aws-0-eu-west-3.pooler.supabase.com
+DB_PORT=6543
+DB_NAME=postgres
+DB_USER=postgres.kyrfsylobmsdjlrrpful
+DB_PASSWORD=HXU3tLVVXRa1jtjo
+DB_SSLMODE=require
+DB_SCHEMA=google_scraper
+```
+
+## Primeiros Passos
+
+1. Construir e arrancar os contentores:
 
    ```bash
-   docker-compose up -d
+   ./start_airflow.sh
    ```
 
-2. Access the Airflow web interface:
+2. Aceder à interface web do Airflow:
    
-   Open your browser and navigate to `http://localhost:8080`
+   Abra o navegador e vá para `http://localhost:8080`
    
-   Login with the credentials specified in the `.env` file (default: `airflow`/`airflow`)
+   Faça login com as credenciais mostradas pelo script de arranque
 
-3. Enable the DAGs that you want to run
+3. Ativar os DAGs que pretende executar
 
-## Stopping the Containers
+## Paragem dos Contentores
 
-To stop all containers:
+Para parar todos os contentores:
 
 ```bash
 docker-compose down
 ```
 
-To stop all containers and remove volumes (this will delete all the data in the PostgreSQL database):
+Para parar todos os contentores e remover volumes (isto eliminará todos os dados na base de dados PostgreSQL):
 
 ```bash
 docker-compose down -v
 ```
 
-## Troubleshooting
+## Resolução de Problemas
 
-- If you encounter permission issues, ensure that the `AIRFLOW_UID` in the `.env` file is set correctly.
-- **Data Dependencies**: Some tasks may skip gracefully when no input data is available (e.g., export tasks when no disaster-related articles are found)
-- For other issues, check the logs in the `logs/` directory or via the Airflow web interface.
+- Se encontrar problemas de permissões, certifique-se de que `AIRFLOW_UID` no ficheiro `.env` está definido corretamente
+- **Credenciais em Falta**: Se as credenciais da base de dados Supabase estiverem em falta, restaure-as manualmente no `.env`
+- **Dependências de Dados**: Algumas tarefas podem ignorar graciosamente quando não há dados de entrada disponíveis
+- Para outros problemas, verifique os logs no diretório `logs/` ou através da interface web do Airflow
 
-## Additional Notes
+## Notas Adicionais
 
-- **Data Persistence**: All scraped data is automatically saved to the `./data/` directory on your host machine
-- The Google scraper is configured to run in headless mode by default. This can be changed in the `.env` file.
-- To update the Python dependencies, modify the `requirements.txt` file and rebuild the container.
-- **Data Location**: Check `./data/raw/`, `./data/structured/`, and `./data/processed/` for extracted files
+- **Persistência de Dados**: Todos os dados extraídos são automaticamente guardados no diretório `./data/` na máquina host
+- **Proteção do .env**: Os scripts preservam automaticamente as credenciais da base de dados no ficheiro `.env`
+- O Google scraper está configurado para executar em modo headless por padrão. Isto pode ser alterado no ficheiro `.env`
+- Para atualizar as dependências Python, modifique o ficheiro `requirements.txt` e reconstrua o contentor
+- **Localização dos Dados**: Verifique `./data/raw/`, `./data/structured/`, e `./data/processed/` para os ficheiros extraídos

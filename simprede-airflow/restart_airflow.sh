@@ -34,20 +34,38 @@ else
 fi
 
 echo -e "${BLUE}================================================${NC}"
-print_info "RESTARTING AIRFLOW CONTAINERS"
+print_info "REINÍCIO DOS CONTENTORES AIRFLOW"
 echo -e "${BLUE}================================================${NC}"
 
-print_info "Stopping containers..."
+# Verify .env file before restarting
+print_info "Verificação do ficheiro .env antes do reinício..."
+if [ -f ".env" ]; then
+    if grep -q "^DB_HOST=" .env && grep -q "^DB_USER=" .env && grep -q "^DB_PASSWORD=" .env; then
+        print_success "Credenciais da base de dados encontradas no .env"
+    else
+        print_warning "AVISO: Credenciais da base de dados podem estar em falta no .env"
+        print_info "Conteúdo atual do .env (sem passwords):"
+        grep -v "PASSWORD" .env | while read line; do
+            if [ ! -z "$line" ] && [[ ! "$line" =~ ^#.* ]]; then
+                echo "  $line"
+            fi
+        done
+    fi
+else
+    print_warning "AVISO: Ficheiro .env não encontrado"
+fi
+
+print_info "Paragem dos contentores..."
 $DOCKER_COMPOSE_CMD down
 
-print_info "Starting containers..."
+print_info "Arranque dos contentores..."
 $DOCKER_COMPOSE_CMD up -d
 
-print_info "Waiting for services to be ready..."
+print_info "Aguardando que os serviços fiquem prontos..."
 sleep 10
 
-print_success "Airflow restarted successfully!"
-echo -e "${GREEN}Web UI:${NC} http://localhost:8080"
+print_success "Airflow reiniciado com sucesso!"
+echo -e "${GREEN}Interface Web:${NC} http://localhost:8080"
 
 # Extract the actual admin password
 print_info "Extracting admin credentials..."

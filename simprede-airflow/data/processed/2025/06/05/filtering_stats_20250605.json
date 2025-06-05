@@ -1,0 +1,11 @@
+{
+  "filtering_date": "2025-06-05T18:38:19.310482",
+  "articles_with_victims": 1,
+  "articles_without_victims": 0,
+  "total_filtered": 1,
+  "output_files": {
+    "victims_articles": "/opt/airflow/scripts/google_scraper/data/processed/2025/06/05/artigos_vitimas_filtrados_2025-06-05.csv",
+    "victims_articles_legacy": "/opt/airflow/data/structured/artigos_vitimas_filtrados.csv",
+    "no_victims_articles": null
+  }
+}

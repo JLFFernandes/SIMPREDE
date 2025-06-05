@@ -379,106 +379,295 @@ def identificar_evento(url, eventos_climaticos):
                 return e
     return "desconhecido"
 
-def apply_comprehensive_filters(df, project_root):
-    """Apply all filtering logic from the original script"""
-    log_progress("🔧 Loading configuration data...")
+def enhanced_keyword_filter(text, keywords_dict):
+    """Enhanced keyword filtering with pattern matching and context"""
+    if not isinstance(text, str):
+        return False, []
+    
+    text_lower = text.lower()
+    matched_keywords = []
+    
+    # Check for positive keywords with context
+    positive_patterns = keywords_dict.get('positive', [])
+    negative_patterns = keywords_dict.get('negative', [])
+    
+    # Find positive matches
+    for pattern in positive_patterns:
+        if isinstance(pattern, dict):
+            keyword = pattern['keyword']
+            context = pattern.get('context', [])
+            weight = pattern.get('weight', 1)
+            
+            if keyword in text_lower:
+                # Check if negative context is present
+                has_negative_context = any(neg in text_lower for neg in context)
+                if not has_negative_context:
+                    matched_keywords.append({'keyword': keyword, 'weight': weight})
+        else:
+            if pattern in text_lower:
+                matched_keywords.append({'keyword': pattern, 'weight': 1})
+    
+    # Check for negative patterns that invalidate the article
+    for neg_pattern in negative_patterns:
+        if neg_pattern in text_lower:
+            return False, []
+    
+    return len(matched_keywords) > 0, matched_keywords
+
+def validate_victim_counts(row):
+    """Validate victim counts to filter out false positives"""
+    victim_fields = ["fatalities", "injured", "evacuated", "displaced", "missing"]
+    
+    # Check for reasonable victim counts (not impossibly high)
+    max_reasonable_victims = 10000  # Adjust based on your data
+    
+    total_victims = 0
+    for field in victim_fields:
+        value = row.get(field, 0)
+        if pd.notna(value) and value > 0:
+            if value > max_reasonable_victims:
+                return False  # Unreasonably high numbers
+            total_victims += value
+    
+    # Check if total victims is reasonable
+    if total_victims > max_reasonable_victims:
+        return False
+    
+    return total_victims > 0
+
+def content_quality_filter(row):
+    """Filter based on content quality indicators"""
+    url = str(row.get('page', '')).lower()
+    title = str(row.get('title', '')).lower()
+    
+    # Quality indicators
+    quality_checks = {
+        'has_meaningful_url': len(url) > 20 and not url.endswith('/'),
+        'has_title': len(title) > 10,
+        'not_social_media': not any(social in url for social in ['facebook.com', 'twitter.com', 'instagram.com']),
+        'not_forum': not any(forum in url for forum in ['forum', 'chat', 'comments']),
+        'reputable_source': any(source in url for source in [
+            'rtp.pt', 'publico.pt', 'dn.pt', 'tvi24.pt', 'sic.pt', 'cmjornal.pt',
+            'jn.pt', 'record.pt', 'observador.pt', 'expresso.pt'
+        ])
+    }
+    
+    # Require at least 3 quality indicators
+    quality_score = sum(quality_checks.values())
+    return quality_score >= 3
+
+def enhanced_geographic_filter(row, distritos_validos, paroquias_validas):
+    """Enhanced geographic filtering with fuzzy matching"""
+    distrito = str(row.get('district', '')).strip()
+    parish = str(row.get('parish', '')).strip()
+    url = str(row.get('page', '')).lower()
+    
+    # Normalize district and parish names
+    distrito_normalized = distrito.title() if distrito else ""
+    parish_normalized = parish.title() if parish else ""
+    
+    # Check exact matches first
+    valid_district = distrito_normalized in distritos_validos
+    valid_parish = not parish_normalized or parish_normalized in paroquias_validas
+    
+    # If exact match fails, try fuzzy matching for common variations
+    if not valid_district and distrito:
+        # Handle common district name variations
+        distrito_variations = {
+            'porto': 'Porto',
+            'lisboa': 'Lisboa',
+            'coimbra': 'Coimbra',
+            'braga': 'Braga',
+            'aveiro': 'Aveiro'
+        }
+        distrito_key = distrito.lower()
+        if distrito_key in distrito_variations:
+            valid_district = distrito_variations[distrito_key] in distritos_validos
+    
+    # Additional URL-based geographic validation
+    portugal_indicators = [
+        'portugal', '.pt', 'portugues', 'portuguesa', 'lusa', 'lusitania'
+    ]
+    has_portugal_indicator = any(indicator in url for indicator in portugal_indicators)
+    
+    # International exclusion (more comprehensive)
+    international_exclusions = [
+        'brasil', 'brazil', 'espanha', 'spain', 'franca', 'france', 'italia', 'italy',
+        'alemanha', 'germany', 'inglaterra', 'england', 'holanda', 'netherlands',
+        'belgica', 'belgium', 'suica', 'switzerland', 'austria', 'grecia', 'greece',
+        'internacional', 'mundial', 'global', 'europa', 'america', 'africa', 'asia'
+    ]
+    is_international = any(exclusion in url for exclusion in international_exclusions)
+    
+    return valid_district and valid_parish and (has_portugal_indicator or not is_international)
+
+def temporal_relevance_filter(row, target_date=None, max_age_days=365):
+    """Filter based on temporal relevance"""
+    if target_date is None:
+        target_date = datetime.now()
+    elif isinstance(target_date, str):
+        target_date = datetime.strptime(target_date, "%Y-%m-%d")
+    
+    # Check article date
+    article_date = None
+    if 'date' in row and pd.notna(row['date']):
+        try:
+            if isinstance(row['date'], str):
+                # Try multiple date formats
+                for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%Y-%m-%d %H:%M:%S']:
+                    try:
+                        article_date = datetime.strptime(row['date'], fmt)
+                        break
+                    except ValueError:
+                        continue
+            else:
+                article_date = pd.to_datetime(row['date']).to_pydatetime()
+        except:
+            pass
+    
+    if article_date:
+        days_old = (target_date - article_date).days
+        return 0 <= days_old <= max_age_days
+    
+    return True  # If no date available, don't filter out
+
+def calculate_enhanced_relevance_score(row):
+    """Calculate enhanced relevance score with weighted keywords"""
+    url = str(row.get('page', '')).lower()
+    title = str(row.get('title', '')).lower()
+    
+    # Weighted keyword categories
+    keyword_weights = {
+        'victims': {'weight': 3, 'keywords': ['vitima', 'morto', 'morreu', 'faleceu', 'obito']},
+        'injuries': {'weight': 2, 'keywords': ['ferido', 'ferimento', 'lesao', 'hospital']},
+        'displacement': {'weight': 2, 'keywords': ['desalojado', 'evacuado', 'realojado', 'abrigo']},
+        'missing': {'weight': 3, 'keywords': ['desaparecido', 'perdido', 'procura']},
+        'weather_events': {'weight': 1, 'keywords': [
+            'tempestade', 'temporal', 'inundacao', 'cheia', 'chuva', 'vento',
+            'tornado', 'ciclone', 'granizo', 'neve', 'gelo', 'seca'
+        ]},
+        'infrastructure': {'weight': 1, 'keywords': [
+            'estrada', 'ponte', 'casa', 'edificio', 'destruicao', 'dano'
+        ]}
+    }
+    
+    total_score = 0
+    matched_categories = []
+    
+    combined_text = f"{url} {title}"
+    
+    for category, data in keyword_weights.items():
+        weight = data['weight']
+        keywords = data['keywords']
+        
+        category_matches = sum(1 for keyword in keywords if keyword in combined_text)
+        if category_matches > 0:
+            total_score += category_matches * weight
+            matched_categories.append(category)
+    
+    return total_score, matched_categories
+
+def apply_enhanced_comprehensive_filters(df, project_root, target_date=None):
+    """Apply enhanced comprehensive filtering logic"""
+    log_progress("🔧 Loading configuration data for enhanced filtering...")
     distritos_validos, paroquias_validas, eventos_climaticos = load_config_data(project_root)
     
-    log_progress(f"📊 Starting comprehensive filtering with {len(df)} articles")
+    log_progress(f"📊 Starting enhanced comprehensive filtering with {len(df)} articles")
     
     # Make sure numeric columns are properly converted
     numeric_columns = ['fatalities', 'injured', 'evacuated', 'displaced', 'missing', 'year']
     df = safe_numeric_conversion(df, numeric_columns)
     
-    # Apply national filter
-    log_progress("🇵🇹 Applying national article filter...")
+    # Enhanced geographic filter
+    log_progress("🇵🇹 Applying enhanced geographic filter...")
     initial_count = len(df)
-    df = df[df.apply(lambda row: filtra_artigo_nacional(row, distritos_validos, paroquias_validas), axis=1)]
-    log_progress(f"   After national filter: {len(df)} articles (removed {initial_count - len(df)})")
+    df = df[df.apply(lambda row: enhanced_geographic_filter(row, distritos_validos, paroquias_validas), axis=1)]
+    log_progress(f"   After enhanced geographic filter: {len(df)} articles (removed {initial_count - len(df)})")
     
-    # Unwanted keywords filter
-    log_progress("🚫 Applying unwanted keywords filter...")
-    palavras_indesejadas = [
-        "brasil", "espanh", "venezuela", "cuba", "nepal", "china", "argentina", "eua", "angola",
-        "moçambique", "india", "internacional", "global", "historia", "histórico", "históricas",
-        "retrospectiva", "em.com.br", "correiobraziliense", "aviso-amarelo", "aviso-laranja", 
-        "previsao", "g1.globo.com", "alerta", "previsto", "emite aviso", "incendios", 
-        "desporto", "preve", "avisos", "alertas", "alerta", "aviso", "previsão", "previsões", 
-        "previsões meteorológicas", ".com.br", "moçambique", "futuro", "nationalgeographic", 
-        "colisao", "belgica"
-    ]
+    # Content quality filter
+    log_progress("✨ Applying content quality filter...")
+    initial_count = len(df)
+    df = df[df.apply(content_quality_filter, axis=1)]
+    log_progress(f"   After quality filter: {len(df)} articles (removed {initial_count - len(df)})")
+    
+    # Enhanced keyword filtering
+    log_progress("🔍 Applying enhanced keyword filtering...")
+    enhanced_keywords = {
+        'positive': [
+            {'keyword': 'vitima', 'context': ['simulacro', 'exercicio'], 'weight': 3},
+            {'keyword': 'morto', 'context': ['filme', 'livro'], 'weight': 3},
+            {'keyword': 'ferido', 'context': ['futebol', 'desporto'], 'weight': 2},
+            'inundacao', 'temporal', 'tempestade', 'evacuado', 'desalojado'
+        ],
+        'negative': [
+            'previsao', 'previsto', 'aviso', 'alerta', 'meteorologia',
+            'historia', 'historico', 'retrospectiva', 'filme', 'livro',
+            'desporto', 'futebol', 'simulacro', 'exercicio'
+        ]
+    }
     
     initial_count = len(df)
     if 'page' in df.columns:
-        df = df[~df["page"].str.contains("|".join(palavras_indesejadas), case=False, na=False)]
-    log_progress(f"   After unwanted keywords filter: {len(df)} articles (removed {initial_count - len(df)})")
+        keyword_results = df['page'].apply(lambda url: enhanced_keyword_filter(url, enhanced_keywords))
+        df = df[keyword_results.apply(lambda x: x[0])]  # Keep only articles that pass keyword filter
+    log_progress(f"   After enhanced keyword filter: {len(df)} articles (removed {initial_count - len(df)})")
     
-    # Year filter
-    log_progress("📅 Applying year range filter...")
-    ano_atual = datetime.now().year
+    # Temporal relevance filter
+    log_progress("📅 Applying temporal relevance filter...")
     initial_count = len(df)
-    if 'year' in df.columns:
-        df = df[df["year"].between(2017, ano_atual)]
-    log_progress(f"   After year filter: {len(df)} articles (removed {initial_count - len(df)})")
+    df = df[df.apply(lambda row: temporal_relevance_filter(row, target_date), axis=1)]
+    log_progress(f"   After temporal filter: {len(df)} articles (removed {initial_count - len(df)})")
     
-    # Relevance score calculation
-    log_progress("⭐ Calculating relevance scores...")
-    palavras_relevantes = ["vitima", "morto", "ferido", "desalojado", "evacuado", "desaparecido", 
-                          "tempestade", "inundação", "temporal", "chuva", "vento", "tornado", 
-                          "ciclone", "furacão", "deslizamento", "enchente", "tromba", "água"]
-    
-    if 'page' in df.columns:
-        df['relevance_score'] = df['page'].apply(lambda url: calculate_relevance_score(url, palavras_relevantes))
-    else:
-        df['relevance_score'] = 0
-    
-    # Keep articles with relevance or confirmed victims
-    log_progress("🎯 Applying relevance and victim filters...")
+    # Enhanced victim validation
+    log_progress("👥 Applying enhanced victim validation...")
     initial_count = len(df)
-    df = df[(df['relevance_score'] > 0) | 
-            (df['fatalities'] > 0) | 
-            (df['injured'] > 0) | 
-            (df['evacuated'] > 0) | 
-            (df['displaced'] > 0) |
-            (df['missing'] > 0)]
-    log_progress(f"   After relevance/victim filter: {len(df)} articles (removed {initial_count - len(df)})")
+    df = df[df.apply(validate_victim_counts, axis=1)]
+    log_progress(f"   After victim validation: {len(df)} articles (removed {initial_count - len(df)})")
     
-    # Remove duplicates based on page URL
+    # Calculate enhanced relevance scores
+    log_progress("⭐ Calculating enhanced relevance scores...")
+    relevance_results = df.apply(calculate_enhanced_relevance_score, axis=1)
+    df['relevance_score'] = relevance_results.apply(lambda x: x[0])
+    df['matched_categories'] = relevance_results.apply(lambda x: x[1])
+    
+    # Filter by minimum relevance score
+    min_relevance_score = 2
+    initial_count = len(df)
+    df = df[df['relevance_score'] >= min_relevance_score]
+    log_progress(f"   After relevance score filter (min {min_relevance_score}): {len(df)} articles (removed {initial_count - len(df)})")
+    
+    # Remove duplicates with enhanced logic
+    log_progress("🔄 Removing duplicates with enhanced logic...")
     if 'page' in df.columns:
-        log_progress("🔄 Removing URL duplicates...")
         initial_count = len(df)
+        # First remove exact URL duplicates
         df = df.drop_duplicates(subset=['page'])
         log_progress(f"   After URL deduplication: {len(df)} articles (removed {initial_count - len(df)})")
+        
+        # Then remove similar content duplicates
+        initial_count = len(df)
+        similarity_columns = ['district', 'parish', 'date', 'fatalities', 'injured']
+        existing_columns = [col for col in similarity_columns if col in df.columns]
+        if existing_columns:
+            df = df.drop_duplicates(subset=existing_columns)
+            log_progress(f"   After content similarity deduplication: {len(df)} articles (removed {initial_count - len(df)})")
     
-    # Remove empty rows
+    # Final cleanup
     df = df.dropna(how='all')
     
-    # Add event identification
-    log_progress("🌦️ Identifying climate events...")
+    # Add enhanced event identification
+    log_progress("🌦️ Enhanced climate event identification...")
     if 'page' in df.columns:
         df["evento_nome"] = df["page"].apply(lambda url: identificar_evento(url, eventos_climaticos))
         df["evento_nome"] = df["evento_nome"].fillna("desconhecido")
-    else:
-        df["evento_nome"] = "desconhecido"
-    
-    # Remove duplicates based on event, date and impact
-    log_progress("🔄 Removing event-based duplicates...")
-    columns_to_check = ["evento_nome", "date", "fatalities", "injured", "displaced"]
-    existing_columns = [col for col in columns_to_check if col in df.columns]
-    
-    if existing_columns:
-        initial_count = len(df)
-        df = df.drop_duplicates(subset=existing_columns)
-        log_progress(f"   After event deduplication: {len(df)} articles (removed {initial_count - len(df)})")
     
     return df
 
 def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, date_str=None):
     """
-    Main function optimized for Airflow execution with controlled paths
-    Returns number of articles with victims for Airflow compatibility
+    Main function optimized for Airflow execution with enhanced filtering
     """
-    log_progress("🚀 Starting filtrar_artigos_vitimas_airflow")
+    log_progress("🚀 Starting enhanced filtrar_artigos_vitimas_airflow")
     
     # Setup paths and configuration with controlled paths
     try:
@@ -503,14 +692,14 @@ def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, dat
             "Processed Data Directory": paths['processed_data_dir'],
             "Days Filter": dias
         }
-        log_statistics(initial_stats, "Filtering Started")
+        log_statistics(initial_stats, "Enhanced Filtering Started")
         
-        # Apply comprehensive filtering (same as original script)
-        log_progress("🔍 Applying comprehensive filtering logic...")
-        filtered_df = apply_comprehensive_filters(df, paths['project_root'])
+        # Apply enhanced comprehensive filtering
+        log_progress("🔍 Applying enhanced comprehensive filtering logic...")
+        filtered_df = apply_enhanced_comprehensive_filters(df, paths['project_root'], target_date)
         
         if filtered_df.empty:
-            log_progress("⚠️ No articles remaining after comprehensive filtering.", "warning")
+            log_progress("⚠️ No articles remaining after enhanced filtering.", "warning")
             return 0
         
         # Separate articles with and without victims for better organization
@@ -520,9 +709,9 @@ def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, dat
         artigos_com_vitimas = filtered_df[has_victims_mask].to_dict('records')
         artigos_sem_vitimas = filtered_df[~has_victims_mask].to_dict('records')
         
-        # Calculate comprehensive statistics
+        # Enhanced statistics
         comprehensive_stats = {
-            "Articles After All Filters": len(filtered_df),
+            "Articles After Enhanced Filters": len(filtered_df),
             "Articles with Victims": len(artigos_com_vitimas),
             "Articles without Victims": len(artigos_sem_vitimas),
             "Total Fatalities": filtered_df['fatalities'].sum(),
@@ -530,24 +719,25 @@ def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, dat
             "Total Evacuated": filtered_df['evacuated'].sum(),
             "Total Displaced": filtered_df['displaced'].sum(),
             "Total Missing": filtered_df['missing'].sum(),
-            "Average Relevance Score": f"{filtered_df['relevance_score'].mean():.2f}" if 'relevance_score' in filtered_df.columns else "N/A"
+            "Average Relevance Score": f"{filtered_df['relevance_score'].mean():.2f}" if 'relevance_score' in filtered_df.columns else "N/A",
+            "Top Event Types": filtered_df['evento_nome'].value_counts().head(3).to_dict() if 'evento_nome' in filtered_df.columns else {}
         }
-        log_statistics(comprehensive_stats, "Comprehensive Filtering Results")
+        log_statistics(comprehensive_stats, "Enhanced Filtering Results")
         
         # Save filtered articles with controlled paths
-        log_progress("💾 Saving comprehensively filtered articles...")
+        log_progress("💾 Saving enhanced filtered articles...")
         guardar_csv_incremental_with_controlled_paths(paths, artigos_com_vitimas, artigos_sem_vitimas)
         
         final_stats = {
             "Articles with Victims": len(artigos_com_vitimas),
             "Articles without Victims": len(artigos_sem_vitimas),
             "Total Articles Processed": len(filtered_df),
-            "Filter Rate": f"{len(filtered_df)/len(df)*100:.1f}%" if len(df) > 0 else "0%",
+            "Enhanced Filter Rate": f"{len(filtered_df)/len(df)*100:.1f}%" if len(df) > 0 else "0%",
             "Victim Rate": f"{len(artigos_com_vitimas)/len(filtered_df)*100:.1f}%" if len(filtered_df) > 0 else "0%",
             "Main Output File": paths['output_csv'],
             "Statistics File": paths['stats_json']
         }
-        log_statistics(final_stats, "Comprehensive Filtering Completed Successfully")
+        log_statistics(final_stats, "Enhanced Filtering Completed Successfully")
         
         return len(artigos_com_vitimas)
         
@@ -555,7 +745,7 @@ def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, dat
         log_progress(f"❌ File not found error: {str(e)}", "error")
         return 0
     except Exception as e:
-        log_progress(f"❌ Error during filtering: {str(e)}", "error")
+        log_progress(f"❌ Error during enhanced filtering: {str(e)}", "error")
         import traceback
         log_progress(f"❌ Full traceback: {traceback.format_exc()}", "error")
         raise
