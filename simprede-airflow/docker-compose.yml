@@ -30,8 +30,15 @@ x-airflow-common: &airflow-common
     - ./config:/opt/airflow/config
     - ./scripts:/opt/airflow/scripts
     - ./requirements.txt:/opt/airflow/requirements.txt
-    # Add specific mapping for Google Scraper data
+    # Ensure all data subdirectories are mapped to host
+    - ./data/raw:/opt/airflow/data/raw
+    - ./data/structured:/opt/airflow/data/structured
+    - ./data/processed:/opt/airflow/data/processed
+    # Add specific mapping for Google Scraper data (backwards compatibility)
     - ./data:/opt/airflow/scripts/google_scraper/data
+    - ./data/raw:/opt/airflow/scripts/google_scraper/data/raw
+    - ./data/structured:/opt/airflow/scripts/google_scraper/data/structured
+    - ./data/processed:/opt/airflow/scripts/google_scraper/data/processed
     # Add timezone data
     - /etc/localtime:/etc/localtime:ro
   user: "${AIRFLOW_UID:-50000}:0"

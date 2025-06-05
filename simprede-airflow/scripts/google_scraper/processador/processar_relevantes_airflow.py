@@ -8,10 +8,10 @@ import time
 import re
 import hashlib
 import requests
+import pandas as pd
 from datetime import datetime, timedelta
 from collections import defaultdict
 from urllib.parse import urlparse
-import pandas as pd
 
 # Set unbuffered output at the very beginning - FIXED VERSION
 os.environ['PYTHONUNBUFFERED'] = '1'
@@ -126,8 +126,8 @@ def find_input_file(project_root, target_date):
     return None
 
 # Use date-specific filenames and setup paths
-def setup_paths_and_dates(target_date=None, dias=1):
-    """Setup all paths and dates for processing"""
+def setup_paths_and_dates(target_date=None, dias=1, input_file=None, output_dir=None, date_str=None):
+    """Setup all paths and dates for processing with controlled output paths"""
     if target_date:
         if isinstance(target_date, str):
             dt = datetime.strptime(target_date, "%Y-%m-%d")
@@ -140,7 +140,7 @@ def setup_paths_and_dates(target_date=None, dias=1):
     current_year = dt.strftime("%Y")
     current_month = dt.strftime("%m")
     current_day = dt.strftime("%d")
-    date_suffix = dt.strftime("%Y-%m-%d")  # Format for filename suffix
+    date_suffix = date_str if date_str else dt.strftime("%Y-%m-%d")  # Use provided date_str or default format
     
     # Get the directory where this script is located
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -148,27 +148,46 @@ def setup_paths_and_dates(target_date=None, dias=1):
     # /opt/airflow/scripts/google_scraper/processador -> /opt/airflow
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
     
-    # Create directory structure for raw data by year/month/day (match scraper output)
-    RAW_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw", current_year, current_month, current_day)
-    os.makedirs(RAW_DATA_DIR, exist_ok=True)
+    # Use controlled output directory if provided
+    if output_dir:
+        STRUCTURED_DIR = output_dir
+        RAW_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw", current_year, current_month, current_day)
+        log_progress(f"📁 Using controlled output directory: {STRUCTURED_DIR}")
+    else:
+        # Fallback to default structure
+        RAW_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw", current_year, current_month, current_day)
+        STRUCTURED_DIR = os.path.join(PROJECT_ROOT, "data", "structured", current_year, current_month, current_day)
     
-    # Create directory structure for structured data by year/month/day
-    STRUCTURED_DIR = os.path.join(PROJECT_ROOT, "data", "structured", current_year, current_month, current_day)
+    # Ensure directories exist
+    os.makedirs(RAW_DATA_DIR, exist_ok=True)
     os.makedirs(STRUCTURED_DIR, exist_ok=True)
     
-    # Find input file using the search function
-    INPUT_CSV = find_input_file(PROJECT_ROOT, dt)
+    # Use provided input file or search for it
+    if input_file and os.path.exists(input_file):
+        INPUT_CSV = input_file
+        log_progress(f"📁 Using provided input file: {INPUT_CSV}")
+    else:
+        # Find input file using the search function
+        INPUT_CSV = find_input_file(PROJECT_ROOT, dt)
+        if not INPUT_CSV and input_file:
+            log_progress(f"⚠️ Provided input file not found: {input_file}", "warning")
     
-    # Define output file paths with date suffix
+    # Define output file paths with controlled naming
     OUTPUT_CSV = os.path.join(RAW_DATA_DIR, f"artigos_google_municipios_pt_{date_suffix}.csv")
-    
-    # Standard output filename with date suffix in structured directory
     DEFAULT_OUTPUT_CSV = os.path.join(STRUCTURED_DIR, f"artigos_google_municipios_pt_{date_suffix}.csv")
+    
+    # Additional output files for better organization
+    IRRELEVANT_CSV = os.path.join(STRUCTURED_DIR, f"artigos_irrelevantes_{date_suffix}.csv")
+    PROCESSING_LOG = os.path.join(STRUCTURED_DIR, f"processing_log_{current_date}.log")
+    STATS_JSON = os.path.join(STRUCTURED_DIR, f"processing_stats_{current_date}.json")
     
     return {
         'input_csv': INPUT_CSV,
         'output_csv': OUTPUT_CSV,
         'default_output_csv': DEFAULT_OUTPUT_CSV,
+        'irrelevant_csv': IRRELEVANT_CSV,
+        'processing_log': PROCESSING_LOG,
+        'stats_json': STATS_JSON,
         'raw_data_dir': RAW_DATA_DIR,
         'structured_dir': STRUCTURED_DIR,
         'project_root': PROJECT_ROOT,
@@ -669,21 +688,58 @@ def guardar_csv_incremental_with_date(output_csv, default_output_csv, artigos):
     
     log_progress(f"✅ Files saved with year/month/day organization")
 
+def guardar_csv_incremental_with_controlled_paths(paths, artigos, irrelevant_articles=None):
+    """
+    Save to controlled output paths with better organization
+    """
+    # Save relevant articles to both raw and structured directories
+    if artigos:
+        guardar_csv_incremental(paths['output_csv'], artigos)
+        guardar_csv_incremental(paths['default_output_csv'], artigos)
+        log_progress(f"✅ Relevant articles saved: {len(artigos)} articles")
+    
+    # Save irrelevant articles separately if provided
+    if irrelevant_articles:
+        guardar_csv_incremental(paths['irrelevant_csv'], irrelevant_articles)
+        log_progress(f"✅ Irrelevant articles saved: {len(irrelevant_articles)} articles")
+    
+    # Save processing statistics
+    if artigos or irrelevant_articles:
+        stats = {
+            "processing_date": datetime.now().isoformat(),
+            "relevant_articles": len(artigos) if artigos else 0,
+            "irrelevant_articles": len(irrelevant_articles) if irrelevant_articles else 0,
+            "total_processed": (len(artigos) if artigos else 0) + (len(irrelevant_articles) if irrelevant_articles else 0),
+            "output_files": {
+                "relevant_raw": paths['output_csv'],
+                "relevant_structured": paths['default_output_csv'],
+                "irrelevant": paths['irrelevant_csv'] if irrelevant_articles else None
+            }
+        }
+        
+        try:
+            import json
+            with open(paths['stats_json'], 'w', encoding='utf-8') as f:
+                json.dump(stats, f, indent=2, ensure_ascii=False)
+            log_progress(f"✅ Processing statistics saved: {paths['stats_json']}")
+        except Exception as e:
+            log_progress(f"⚠️ Could not save statistics: {e}", "warning")
+
 # Add a progress callback function
 def progress_update(message):
     """Progress callback for article processing"""
     log_progress(f"🔄 {message}")
 
-def airflow_main(target_date=None, dias=1):
+def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, date_str=None):
     """
-    Main function optimized for Airflow execution
+    Main function optimized for Airflow execution with controlled paths
     Returns number of articles processed for Airflow compatibility
     """
     log_progress("🚀 A iniciar processar_relevantes_airflow")
     
-    # Setup paths and configuration
+    # Setup paths and configuration with controlled paths
     try:
-        paths = setup_paths_and_dates(target_date, dias)
+        paths = setup_paths_and_dates(target_date, dias, input_file, output_dir, date_str)
         if not paths['input_csv']:
             log_progress("❌ Nenhum ficheiro de entrada encontrado. Não é possível prosseguir.", "error")
             return 0
@@ -725,7 +781,8 @@ def airflow_main(target_date=None, dias=1):
         processing_stats = {
             "Total de Artigos para Processar": len(relevantes),
             "Ficheiro de Entrada": paths['input_csv'],
-            "Ficheiro de Saída": paths['output_csv'],
+            "Ficheiro de Saída Principal": paths['default_output_csv'],
+            "Diretoria de Saída": paths['structured_dir'],
             "Filtro de Dias": dias
         }
         log_statistics(processing_stats, "Processamento Iniciado")
@@ -820,7 +877,7 @@ def airflow_main(target_date=None, dias=1):
             # Save after each batch
             if batch_articles:
                 try:
-                    guardar_csv_incremental_with_date(paths['output_csv'], paths['default_output_csv'], batch_articles)
+                    guardar_csv_incremental_with_controlled_paths(paths, batch_articles)
                     artigos_final.extend(batch_articles)
                     log_progress(f"✅ Lote {batch_num} concluído: {len(batch_articles)} artigos (total: {len(artigos_final)})")
                     time.sleep(random.uniform(3, 5))  # Short break after each batch
@@ -828,19 +885,21 @@ def airflow_main(target_date=None, dias=1):
                     log_progress(f"❌ Erro ao guardar lote: {str(e)}", "error")
                     time.sleep(10)  # Wait a bit and try again
                     try:
-                        guardar_csv_incremental_with_date(paths['output_csv'], paths['default_output_csv'], batch_articles)
+                        guardar_csv_incremental_with_controlled_paths(paths, batch_articles)
                         log_progress("✅ Segunda tentativa de guardamento bem-sucedida.")
                     except:
                         log_progress("❌ Falha na segunda tentativa de guardamento.", "error")
 
         final_stats = {
             "Total de Artigos Processados": len(artigos_final),
-            "Ficheiros de Saída": f"{paths['output_csv']} e {paths['default_output_csv']}",
+            "Ficheiro de Saída Principal": paths['default_output_csv'],
+            "Ficheiro de Saída Raw": paths['output_csv'],
+            "Ficheiro de Estatísticas": paths['stats_json'],
             "Taxa de Sucesso": f"{len(artigos_final)/len(relevantes)*100:.1f}%" if len(relevantes) > 0 else "0%"
         }
         
         if artigos_final:
-            guardar_csv_incremental_with_date(paths['output_csv'], paths['default_output_csv'], artigos_final)
+            guardar_csv_incremental_with_controlled_paths(paths, artigos_final)
             log_statistics(final_stats, "Processamento Concluído com Sucesso")
             return len(artigos_final)
         else:
@@ -870,11 +929,14 @@ def airflow_main(target_date=None, dias=1):
                 return 0
 
 def main():
-    """Main function with argument parsing for CLI usage"""
+    """Main function with controlled output paths support"""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Process Google News articles (Airflow version)")
     parser.add_argument("--dias", type=int, default=1, help="Number of days to process")
     parser.add_argument("--date", type=str, help="Specific target date (YYYY-MM-DD)")
+    parser.add_argument("--input_file", type=str, help="Specific input file path")
+    parser.add_argument("--output_dir", type=str, help="Output directory for processed files")
+    parser.add_argument("--date_str", type=str, help="Date string for file naming")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     args = parser.parse_args()
     
@@ -885,9 +947,16 @@ def main():
     
     log_progress("Starting processar_relevantes_airflow")
     log_progress(f"Parameters: dias={args.dias}, date={args.date}")
+    log_progress(f"Paths: input_file={args.input_file}, output_dir={args.output_dir}, date_str={args.date_str}")
     
     try:
-        result = airflow_main(target_date=args.date, dias=args.dias)
+        result = airflow_main(
+            target_date=args.date, 
+            dias=args.dias,
+            input_file=args.input_file,
+            output_dir=args.output_dir,
+            date_str=args.date_str
+        )
         log_progress(f"✅ Processing completed. Processed {result} articles")
         return 0
     except Exception as e:

@@ -7,13 +7,21 @@ import psycopg2
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
+from collections import defaultdict
 
 # Set unbuffered output for Airflow compatibility
 os.environ['PYTHONUNBUFFERED'] = '1'
-if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(line_buffering=True)
-if hasattr(sys.stderr, 'reconfigure'):
-    sys.stderr.reconfigure(line_buffering=True)
+try:
+    # reconfigure method is only available in Python 3.7+
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(line_buffering=True)  # type: ignore
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(line_buffering=True)  # type: ignore
+except AttributeError:
+    # Fallback for older Python versions
+    import io
+    sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
+    sys.stderr = io.TextIOWrapper(open(sys.stderr.fileno(), 'wb', 0), write_through=True)
 
 # Configure logging for Airflow compatibility
 def setup_airflow_logging():
@@ -141,8 +149,12 @@ def get_database_config():
     log_progress(f"✅ Database config loaded: {db_config['host']}:{db_config['port']}/{db_config['database']}")
     return db_config
 
-def find_filtered_articles_file(target_date):
-    """Find the filtered articles file from the previous task"""
+def find_filtered_articles_file(target_date, input_file=None):
+    """Find the filtered articles file from the previous task with controlled path support"""
+    if input_file and os.path.exists(input_file):
+        log_progress(f"✅ Using provided input file: {input_file}")
+        return input_file
+    
     if isinstance(target_date, str):
         dt = datetime.strptime(target_date, "%Y-%m-%d")
     else:
@@ -152,50 +164,57 @@ def find_filtered_articles_file(target_date):
     month_str = dt.strftime('%m')
     day_str = dt.strftime('%d')
     date_suffix = dt.strftime('%Y-%m-%d')
+    date_compact = dt.strftime('%Y%m%d')
     
-    # Possible file locations in Airflow container
+    # Look for ANY filtered articles file from filtrar_vitimas task (both with and without victims)
     possible_paths = [
-        # Airflow data directories (preferred)
-        f"/opt/airflow/data/structured/{year_str}/{month_str}/{day_str}/artigos_vitimas_filtrados_{date_suffix}.csv",
-        f"/opt/airflow/data/structured/artigos_vitimas_filtrados.csv",
+        # Primary output from filtrar_vitimas task (articles WITH victims)
+        f"/opt/airflow/scripts/google_scraper/data/processed/{year_str}/{month_str}/{day_str}/artigos_vitimas_filtrados_{date_compact}.csv",
+        f"/opt/airflow/scripts/google_scraper/data/processed/{year_str}/{month_str}/{day_str}/artigos_vitimas_filtrados_{date_suffix}.csv",
         
-        # Script directories
-        f"/opt/airflow/scripts/google_scraper/data/structured/{year_str}/{month_str}/{day_str}/artigos_vitimas_filtrados_{date_suffix}.csv",
+        # Secondary output from filtrar_vitimas task (articles WITHOUT victims but still relevant)
+        f"/opt/airflow/scripts/google_scraper/data/processed/{year_str}/{month_str}/{day_str}/artigos_sem_vitimas_{date_compact}.csv",
+        f"/opt/airflow/scripts/google_scraper/data/processed/{year_str}/{month_str}/{day_str}/artigos_sem_vitimas_{date_suffix}.csv",
+        
+        # Fallback to processar_relevantes output (all relevant articles)
+        f"/opt/airflow/scripts/google_scraper/data/structured/{year_str}/{month_str}/{day_str}/artigos_google_municipios_pt_{date_suffix}.csv",
+        
+        # Legacy paths
+        f"/opt/airflow/scripts/google_scraper/data/processed/artigos_vitimas_filtrados_{date_suffix}.csv",
         f"/opt/airflow/scripts/google_scraper/data/structured/artigos_vitimas_filtrados.csv",
-        
-        # Legacy paths with different date format
-        f"/opt/airflow/scripts/google_scraper/data/structured/{year_str}/{month_str}/{day_str}/artigos_vitimas_filtrados_{dt.strftime('%Y%m%d')}.csv",
-        
-        # Any recent files in structured directories
-        f"/opt/airflow/scripts/google_scraper/data/structured/artigos_vitimas_filtrados_{date_suffix}.csv"
+        f"/opt/airflow/scripts/google_scraper/data/structured/artigos_google_municipios_pt.csv"
     ]
     
+    found_files = []
     for path in possible_paths:
         if os.path.exists(path):
-            log_progress(f"✅ Found filtered articles file: {path}")
-            return path
+            file_size = os.path.getsize(path)
+            log_progress(f"✅ Found file: {path} ({file_size} bytes)")
+            found_files.append((path, file_size))
     
-    log_progress(f"❌ No filtered articles file found. Searched:", "error")
-    for path in possible_paths:
-        log_progress(f"   - {path}", "error")
+    if not found_files:
+        log_progress(f"ℹ️ No filtered articles file found for {date_suffix}. This is normal when no disaster-related events were detected.")
+        return None
     
-    # Try to find any file with similar pattern
-    search_dirs = [
-        f"/opt/airflow/data/structured/{year_str}/{month_str}/{day_str}",
-        "/opt/airflow/data/structured",
-        f"/opt/airflow/scripts/google_scraper/data/structured/{year_str}/{month_str}/{day_str}",
-        "/opt/airflow/scripts/google_scraper/data/structured"
-    ]
+    # Prefer files with victims first, then without victims, then general relevant articles
+    # Sort by preference: vitimas_filtrados > sem_vitimas > municipios_pt
+    def file_priority(file_path):
+        if 'vitimas_filtrados' in file_path:
+            return 1
+        elif 'sem_vitimas' in file_path:
+            return 2
+        elif 'municipios_pt' in file_path:
+            return 3
+        else:
+            return 4
     
-    for search_dir in search_dirs:
-        if os.path.exists(search_dir):
-            files = [f for f in os.listdir(search_dir) if 'artigos_vitimas_filtrados' in f and f.endswith('.csv')]
-            if files:
-                found_file = os.path.join(search_dir, files[0])
-                log_progress(f"🔄 Found alternative file: {found_file}")
-                return found_file
+    # Sort by priority, then by file size (larger files first)
+    found_files.sort(key=lambda x: (file_priority(x[0]), -x[1]))
     
-    return None
+    selected_file = found_files[0][0]
+    log_progress(f"📋 Selected file for export: {selected_file}")
+    
+    return selected_file
 
 def create_table_if_not_exists(cursor, schema, table_name, df_columns):
     """Create the table if it doesn't exist with dynamic columns based on input data"""
@@ -383,32 +402,108 @@ def insert_articles(cursor, schema, table_name, articles_df):
     log_progress(f"✅ Inserted/updated {inserted_count} articles (failed: {error_count})")
     return inserted_count
 
-def export_to_supabase(target_date=None):
-    """Main export function"""
+def save_export_statistics(output_dir, date_str, stats):
+    """Save export statistics to controlled output paths"""
+    if not output_dir:
+        return
+    
+    try:
+        import json
+        stats_file = os.path.join(output_dir, f"export_stats_{date_str.replace('-', '')}.json")
+        
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Add timestamp and additional metadata
+        enhanced_stats = {
+            "export_timestamp": datetime.now().isoformat(),
+            "export_date": date_str,
+            **stats
+        }
+        
+        with open(stats_file, 'w', encoding='utf-8') as f:
+            json.dump(enhanced_stats, f, indent=2, ensure_ascii=False)
+        
+        log_progress(f"✅ Export statistics saved: {stats_file}")
+        
+        # Also save a backup CSV for manual inspection
+        if 'exported_count' in stats and stats['exported_count'] > 0:
+            backup_file = os.path.join(output_dir, f"export_backup_{date_str.replace('-', '')}.csv")
+            log_progress(f"📋 Export backup location prepared: {backup_file}")
+            
+    except Exception as e:
+        log_progress(f"⚠️ Could not save export statistics: {e}", "warning")
+
+def export_to_supabase(target_date=None, input_file=None, output_dir=None, date_str=None):
+    """Main export function with controlled paths support"""
     if not target_date:
         target_date = datetime.now().strftime('%Y-%m-%d')
     
-    # Generate table name with date (remove dashes for compact format)
-    date_compact = target_date.replace('-', '')
+    # Use provided date_str or generate from target_date
+    if not date_str:
+        date_str = target_date
+    
+    # Generate table name with compact date format: artigos_filtrados_20250605_staging
+    date_compact = date_str.replace('-', '')
     table_name = f"artigos_filtrados_{date_compact}_staging"
     
     log_progress(f"🚀 Starting export to Supabase for date: {target_date}")
     log_progress(f"📋 Target table: {table_name}")
     
-    # Find the filtered articles file
-    input_file = find_filtered_articles_file(target_date)
-    if not input_file:
-        log_progress("❌ No filtered articles file found. Cannot proceed.", "error")
-        return 0
+    if output_dir:
+        log_progress(f"📁 Using controlled output directory: {output_dir}")
+    
+    # Find the filtered articles file with controlled path support
+    input_file_path = find_filtered_articles_file(target_date, input_file)
+    if not input_file_path:
+        log_progress("ℹ️ No filtered articles file found. This typically means no disaster-related events were detected for this date.")
+        log_progress("✅ Export task completed successfully - no data to export.")
+        
+        # Save statistics indicating no data was available
+        if output_dir:
+            save_export_statistics(output_dir, date_str, {
+                "input_file": None,
+                "exported_count": 0,
+                "total_input_rows": 0,
+                "table_name": table_name,
+                "status": "no_data_available",
+                "message": "No disaster-related articles found for this date"
+            })
+        
+        return 0  # Return success (0) instead of raising an exception
     
     # Load articles
     try:
-        log_progress(f"📂 Loading articles from: {input_file}")
-        df = pd.read_csv(input_file)
+        log_progress(f"📂 Loading articles from: {input_file_path}")
+        df = pd.read_csv(input_file_path)
         log_progress(f"📊 Loaded {len(df)} articles with columns: {list(df.columns)}")
         
+        # Determine file type for logging
+        if 'vitimas_filtrados' in input_file_path:
+            file_type = "articles with victims"
+        elif 'sem_vitimas' in input_file_path:
+            file_type = "articles without victims (but disaster-related)"
+        elif 'municipios_pt' in input_file_path:
+            file_type = "all relevant disaster-related articles"
+        else:
+            file_type = "filtered articles"
+        
+        log_progress(f"📋 Processing {file_type}")
+        
         if df.empty:
-            log_progress("⚠️ No articles to export", "warning")
+            log_progress("ℹ️ Articles file is empty - no disaster-related events detected.")
+            log_progress("✅ Export task completed successfully - no data to export.")
+            # Save empty export statistics
+            if output_dir:
+                save_export_statistics(output_dir, date_str, {
+                    "input_file": input_file_path,
+                    "exported_count": 0,
+                    "total_input_rows": 0,
+                    "table_name": table_name,
+                    "file_type": file_type,
+                    "status": "no_data_empty_file",
+                    "message": "Input file was empty - no disaster-related articles found"
+                })
             return 0
         
     except Exception as e:
@@ -445,11 +540,49 @@ def export_to_supabase(target_date=None):
         # Insert articles
         inserted_count = insert_articles(cursor, db_config['schema'], table_name, df)
         
-        log_progress(f"✅ Export completed successfully. Inserted/updated {inserted_count} articles into {table_name}")
+        # Create backup CSV in output directory
+        backup_file = None
+        if output_dir:
+            try:
+                os.makedirs(output_dir, exist_ok=True)
+                backup_file = os.path.join(output_dir, f"export_backup_{date_str.replace('-', '')}.csv")
+                df.to_csv(backup_file, index=False)
+                log_progress(f"💾 Export backup saved: {backup_file}")
+            except Exception as e:
+                log_progress(f"⚠️ Could not save backup CSV: {e}", "warning")
+        
+        # Save export statistics to controlled paths
+        export_stats = {
+            "input_file": input_file_path,
+            "exported_count": inserted_count,
+            "total_input_rows": len(df),
+            "table_name": f"{db_config['schema']}.{table_name}",
+            "database_host": db_config['host'],
+            "file_type": file_type,
+            "backup_file": backup_file,
+            "columns": list(df.columns),
+            "status": "success"
+        }
+        
+        if output_dir:
+            save_export_statistics(output_dir, date_str, export_stats)
+        
+        log_progress(f"✅ Export completed successfully. Inserted/updated {inserted_count} {file_type} into table {table_name}")
         return inserted_count
         
     except Exception as e:
         log_progress(f"❌ Database operation failed: {e}", "error")
+        
+        # Save error statistics
+        if output_dir:
+            save_export_statistics(output_dir, date_str, {
+                "input_file": input_file_path if 'input_file_path' in locals() else input_file,
+                "exported_count": 0,
+                "table_name": table_name,
+                "error": str(e),
+                "status": "failed"
+            })
+        
         raise
     finally:
         if connection:
@@ -457,9 +590,12 @@ def export_to_supabase(target_date=None):
             log_progress("🔗 Database connection closed")
 
 def main():
-    """Main function with argument parsing"""
+    """Main function with controlled output paths support"""
     parser = argparse.ArgumentParser(description="Export filtered articles to Supabase (Airflow version)")
     parser.add_argument("--date", type=str, help="Target date (YYYY-MM-DD)")
+    parser.add_argument("--input_file", type=str, help="Specific input file path")
+    parser.add_argument("--output_dir", type=str, help="Output directory for export logs and statistics")
+    parser.add_argument("--date_str", type=str, help="Date string for file naming")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     args = parser.parse_args()
     
@@ -469,9 +605,15 @@ def main():
     
     log_progress("Starting export_to_supabase_airflow")
     log_progress(f"Parameters: date={args.date}")
+    log_progress(f"Paths: input_file={args.input_file}, output_dir={args.output_dir}, date_str={args.date_str}")
     
     try:
-        result = export_to_supabase(target_date=args.date)
+        result = export_to_supabase(
+            target_date=args.date,
+            input_file=args.input_file,
+            output_dir=args.output_dir,
+            date_str=args.date_str
+        )
         log_progress(f"✅ Export completed successfully. Processed {result} articles")
         return 0
     except Exception as e:
