@@ -115,6 +115,20 @@ RUN ARCH=$(uname -m) && \
     google-chrome --version || chromium --version || true && \
     chromedriver --version || true
 
+# Copy GCS initialization script and entrypoint (as root for permissions)
+COPY scripts/init_gcs.sh /opt/airflow/scripts/init_gcs.sh
+COPY scripts/docker-entrypoint.sh /opt/airflow/scripts/docker-entrypoint.sh
+RUN chmod +x /opt/airflow/scripts/init_gcs.sh && \
+    chmod +x /opt/airflow/scripts/docker-entrypoint.sh && \
+    chown airflow:root /opt/airflow/scripts/init_gcs.sh && \
+    chown airflow:root /opt/airflow/scripts/docker-entrypoint.sh
+
+# Fix user ID mapping issue for macOS compatibility
+# This ensures the container runs properly with mounted volumes
+RUN usermod -u 501 airflow && \
+    chown -R airflow:root /home/airflow && \
+    chown -R airflow:root /opt/airflow
+
 # Switch back to airflow user
 USER airflow
 
@@ -132,5 +146,8 @@ ENV PYTHONUNBUFFERED=1
 ENV SELENIUM_HEADLESS=1
 ENV DISPLAY=:99
 ENV PYTHONDONTWRITEBYTECODE=1
+
+# Set custom entrypoint
+ENTRYPOINT ["/opt/airflow/scripts/docker-entrypoint.sh"]
 
 # Define entry point and command from the base image

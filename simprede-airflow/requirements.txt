@@ -38,3 +38,5 @@ fake-useragent>=1.4.0
 # Optional dependencies for better performance
 aiohttp>=3.8.0
 asyncio-throttle>=1.0.0
+google-cloud-storage>=2.10.0
+google-auth>=2.23.0

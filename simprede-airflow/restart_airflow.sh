@@ -67,6 +67,38 @@ sleep 10
 print_success "Airflow reiniciado com sucesso!"
 echo -e "${GREEN}Interface Web:${NC} http://localhost:8080"
 
+# Display GCS status
+echo ""
+echo -e "${BLUE}================================================${NC}"
+print_info "GOOGLE CLOUD STORAGE STATUS"
+echo -e "${BLUE}================================================${NC}"
+
+if [ -f "./config/gcs-credentials.json" ]; then
+    echo -e "${GREEN}✅ Credenciais GCS:${NC} Configuradas"
+    
+    # Extract project info if possible
+    if command -v python3 > /dev/null 2>&1; then
+        PROJECT_ID=$(python3 -c "import json; data=json.load(open('./config/gcs-credentials.json')); print(data.get('project_id', 'N/A'))" 2>/dev/null || echo "N/A")
+        if [ "$PROJECT_ID" != "N/A" ]; then
+            echo -e "${GREEN}   Project ID:${NC} $PROJECT_ID"
+        fi
+    fi
+    
+    # Get GCS settings from .env
+    if [ -f ".env" ]; then
+        BUCKET_NAME=$(grep "^GCS_BUCKET_NAME=" .env | cut -d'=' -f2 2>/dev/null || echo "simprede-data-pipeline")
+        echo -e "${GREEN}   Bucket:${NC} $BUCKET_NAME"
+        echo -e "${GREEN}   Export GCS:${NC} ATIVO"
+    fi
+else
+    echo -e "${YELLOW}⚠️ Credenciais GCS:${NC} Não configuradas"
+    echo -e "${YELLOW}   Export GCS:${NC} INATIVO (credenciais necessárias)"
+    echo ""
+    print_info "Para ativar o GCS:"
+    print_info "1. Adicione suas credenciais: ./config/gcs-credentials.json"
+    print_info "2. Reinicie: ./restart_airflow.sh"
+fi
+
 # Extract the actual admin password
 print_info "Extracting admin credentials..."
 

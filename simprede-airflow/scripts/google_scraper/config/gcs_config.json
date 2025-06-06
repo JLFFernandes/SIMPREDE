@@ -1,0 +1,7 @@
+{
+  "project_id": "simprede-461309",
+  "bucket_name": "simprede-data-pipeline",
+  "credentials_path": "/opt/airflow/config/gcs-credentials.json",
+  "location": "EUROPE-WEST1",
+  "description": "Configuração de Lago de dados do Simprede no Google Cloud Storage"
+}
