@@ -1,5 +1,5 @@
 {
-  "export_timestamp": "2025-06-05T18:38:21.778260",
+  "export_timestamp": "2025-06-05T21:07:44.454108",
   "export_date": "2025-06-05",
   "input_file": "/opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv",
   "exported_count": 7,
