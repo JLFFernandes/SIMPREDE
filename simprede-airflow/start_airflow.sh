@@ -59,7 +59,7 @@ set_permissions() {
     print_info "Configuração de permissões dos diretórios..."
     
     # Create directories if they don't exist
-    mkdir -p logs dags plugins data config scripts
+    mkdir -p logs dags data scripts config
     
     # Set AIRFLOW_UID environment variable
     export AIRFLOW_UID=$(id -u)
@@ -87,6 +87,69 @@ set_permissions() {
     fi
     
     print_success "Permissões configuradas (AIRFLOW_UID=$AIRFLOW_UID)"
+}
+
+# Function to setup GCS configuration
+setup_gcs_config() {
+    print_info "Configuração do Google Cloud Storage..."
+    
+    # Create .env file from template if it doesn't exist
+    if [ ! -f ".env" ]; then
+        if [ -f ".env.template" ]; then
+            cp ".env.template" ".env"
+            print_success "Ficheiro .env criado a partir do template"
+        else
+            # Create basic .env with GCS defaults
+            cat > ".env" << EOF
+# SIMPREDE Airflow Environment Configuration
+AIRFLOW_UID=$(id -u)
+
+# GCS Configuration
+GCS_PROJECT_ID=simprede
+GCS_BUCKET_NAME=simprede-data-pipeline
+GCS_LOCATION=EUROPE-WEST1
+GOOGLE_APPLICATION_CREDENTIALS=./config/gcs-credentials.json
+GCS_DEBUG=false
+EOF
+            print_success "Ficheiro .env criado com configurações GCS padrão"
+        fi
+    fi
+    
+    # Ensure GCS environment variables are set in .env if missing
+    local gcs_vars=("GCS_PROJECT_ID=simprede-461309" "GCS_BUCKET_NAME=simprede-data-pipeline" "GCS_LOCATION=EUROPE-WEST1" "GCS_DEBUG=false")
+    
+    for var in "${gcs_vars[@]}"; do
+        local var_name=$(echo "$var" | cut -d'=' -f1)
+        if ! grep -q "^${var_name}=" .env; then
+            echo "$var" >> .env
+            print_info "Adicionado $var_name ao .env"
+        fi
+    done
+    
+    # Check for GCS credentials
+    if [ -f "./config/gcs-credentials.json" ]; then
+        print_success "Credenciais GCS encontradas: ./config/gcs-credentials.json"
+        # Validate JSON
+        if python3 -c "import json; json.load(open('./config/gcs-credentials.json'))" 2>/dev/null; then
+            print_success "Ficheiro de credenciais GCS é válido"
+        else
+            print_warning "Ficheiro de credenciais GCS tem formato inválido"
+        fi
+    else
+        print_info "Credenciais GCS não encontradas - usando Application Default Credentials"
+        print_info "O sistema tentará usar:"
+        print_info "1. Credenciais de utilizador (gcloud auth application-default login)"
+        print_info "2. Variáveis de ambiente GOOGLE_APPLICATION_CREDENTIALS"
+        print_info "3. Credenciais da máquina virtual (se executar no GCP)"
+        echo ""
+        print_info "Para usar credenciais explícitas (opcional):"
+        print_info "1. Vá ao Google Cloud Console (https://console.cloud.google.com/)"
+        print_info "2. Crie uma conta de serviço com roles Storage Admin"
+        print_info "3. Baixe o ficheiro JSON e salve como: ./config/gcs-credentials.json"
+        echo ""
+        print_success "O export GCS funcionará automaticamente com suas credenciais de utilizador!"
+        echo ""
+    fi
 }
 
 # Function to create necessary directories
@@ -272,13 +335,51 @@ display_commands() {
     echo "  $DOCKER_COMPOSE_CMD down"
     echo ""
     echo -e "${YELLOW}Restart services:${NC}"
-    echo "  $DOCKER_COMPOSE_CMD restart"
+    echo "  ./restart_airflow.sh"
     echo ""
     echo -e "${YELLOW}Access container shell:${NC}"
     echo "  $DOCKER_COMPOSE_CMD exec airflow-standalone bash"
     echo ""
+    echo -e "${YELLOW}Validate GCS setup:${NC}"
+    echo "  $DOCKER_COMPOSE_CMD exec airflow-standalone python3 /opt/airflow/scripts/google_scraper/exportador_gcs/validate_gcs_setup.py"
+    echo ""
     echo -e "${YELLOW}Force rebuild:${NC}"
     echo "  $DOCKER_COMPOSE_CMD down && $DOCKER_COMPOSE_CMD build --no-cache && $DOCKER_COMPOSE_CMD up -d"
+}
+
+# Function to display GCS status
+display_gcs_status() {
+    print_separator
+    print_info "GOOGLE CLOUD STORAGE STATUS"
+    print_separator
+    
+    if [ -f "./config/gcs-credentials.json" ]; then
+        print_success "✅ Credenciais GCS: Configuradas (Service Account)"
+        
+        # Extract project info if possible
+        if command -v python3 > /dev/null 2>&1; then
+            PROJECT_ID=$(python3 -c "import json; data=json.load(open('./config/gcs-credentials.json')); print(data.get('project_id', 'N/A'))" 2>/dev/null || echo "N/A")
+            if [ "$PROJECT_ID" != "N/A" ]; then
+                print_info "   Project ID: $PROJECT_ID"
+            fi
+        fi
+        
+        # Get GCS settings from .env
+        if [ -f ".env" ]; then
+            BUCKET_NAME=$(grep "^GCS_BUCKET_NAME=" .env | cut -d'=' -f2 || echo "simprede-data-pipeline")
+            print_info "   Bucket: $BUCKET_NAME"
+            print_success "   Export GCS: ATIVO (Service Account)"
+        fi
+    else
+        print_success "✅ Credenciais GCS: Application Default Credentials"
+        print_info "   Project ID: simprede-461309"
+        if [ -f ".env" ]; then
+            BUCKET_NAME=$(grep "^GCS_BUCKET_NAME=" .env | cut -d'=' -f2 || echo "simprede-data-pipeline")
+            print_info "   Bucket: $BUCKET_NAME"
+            print_success "   Export GCS: ATIVO (Credenciais de Utilizador)"
+        fi
+        print_info "   Usando: Suas credenciais GCP existentes"
+    fi
 }
 
 # Main execution
@@ -297,6 +398,7 @@ main() {
     
     # Setup
     set_permissions
+    setup_gcs_config
     create_directories
     
     # Ask user if they want to continue
@@ -319,6 +421,7 @@ main() {
     
     # Display information
     display_credentials
+    display_gcs_status
     display_status
     display_commands
     

@@ -965,6 +965,174 @@ def export_supabase_task(**context):
         print(f"❌ Unexpected error in export task: {str(e)}")
         raise
 
+def export_to_gcs_task(**context):
+    """Export all pipeline files to Google Cloud Storage maintaining directory structure"""
+    print("🔄 Starting export_to_gcs task")
+    
+    # Get parameters from DAG run configuration
+    dag_run = context.get('dag_run')
+    if dag_run and dag_run.conf:
+        dias = dag_run.conf.get('dias', 1)
+        date = dag_run.conf.get('date', '')
+        use_current_date = dag_run.conf.get('use_current_date', True)
+        gcs_project_id = dag_run.conf.get('gcs_project_id', None)
+        gcs_bucket_name = dag_run.conf.get('gcs_bucket_name', None)
+    else:
+        dias = 1
+        date = ''
+        use_current_date = True
+        gcs_project_id = None
+        gcs_bucket_name = None
+    
+    # Get paths configuration from previous task or create new one
+    try:
+        paths_config = context['task_instance'].xcom_pull(key='paths_config', task_ids='exportar_para_supabase')
+        if paths_config and 'execution_date' in paths_config:
+            print(f"📁 Using paths from export_supabase task: {paths_config['execution_date']}")
+            target_date = datetime.strptime(paths_config['execution_date'], '%Y-%m-%d')
+            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
+        else:
+            raise ValueError("No valid paths config from previous task")
+    except (TypeError, KeyError, ValueError):
+        # Fallback: use same date logic as previous tasks
+        if date:
+            target_date = datetime.strptime(date, '%Y-%m-%d')
+            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
+        else:
+            paths = GoogleScraperPaths(use_current_date=True)
+            target_date = paths.execution_date
+    
+    # Create directories if they don't exist
+    created_dirs = paths.create_all_directories()
+    print(f"📁 Ensured directories exist: {created_dirs}")
+    
+    print(f"📅 GCS Export Parameters:")
+    print(f"  - Days: {dias}")
+    print(f"  - Specific date: {date if date else 'None (use execution_date)'}")
+    print(f"  - Target date: {paths.date_iso}")
+    print(f"  - Base data directory: {paths.data_dir}")
+    print(f"  - GCS Project ID: {gcs_project_id or 'From config/environment'}")
+    print(f"  - GCS Bucket: {gcs_bucket_name or 'From config/environment'}")
+    
+    # Build command for GCS export
+    cmd = [
+        'python', '/opt/airflow/scripts/google_scraper/exportador_gcs/export_to_gcs_airflow.py',
+        '--date', target_date.strftime('%Y-%m-%d'),
+        '--base_data_dir', paths.data_dir,
+        '--output_dir', paths.processed_dir
+    ]
+    
+    # Add GCS configuration if provided
+    if gcs_project_id:
+        cmd.extend(['--gcs_project_id', gcs_project_id])
+    if gcs_bucket_name:
+        cmd.extend(['--gcs_bucket_name', gcs_bucket_name])
+    
+    print(f"🔄 Running GCS export command: {' '.join(cmd)}")
+    
+    # Set working directory and environment for real-time output
+    env = os.environ.copy()
+    env['PYTHONPATH'] = '/opt/airflow/scripts/google_scraper:' + env.get('PYTHONPATH', '')
+    env['PYTHONUNBUFFERED'] = '1'
+    
+    # Run with real-time output capture
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd='/opt/airflow/scripts/google_scraper/exportador_gcs',
+        env=env,
+        bufsize=1
+    )
+    
+    # Capture and print output in real-time
+    stdout_lines = []
+    stderr_lines = []
+    
+    # Function to read from a pipe and print/store output
+    def read_pipe(pipe, lines_list, prefix):
+        for line in iter(pipe.readline, ''):
+            if line:
+                print(f"{prefix} {line.rstrip()}")  # Print directly to Airflow logs
+                lines_list.append(line)
+        pipe.close()
+    
+    # Create threads to read stdout and stderr
+    stdout_thread = threading.Thread(
+        target=read_pipe, 
+        args=(process.stdout, stdout_lines, "📋")
+    )
+    stderr_thread = threading.Thread(
+        target=read_pipe, 
+        args=(process.stderr, stderr_lines, "⚠️")
+    )
+    
+    # Start threads and wait for them to finish
+    stdout_thread.start()
+    stderr_thread.start()
+    
+    # Wait for process to complete with timeout
+    try:
+        timeout = 900  # 15 minutes timeout for GCS upload
+        print(f"⏰ Waiting for GCS export completion with timeout: {timeout} seconds")
+        
+        exit_code = process.wait(timeout=timeout)
+        stdout_thread.join()
+        stderr_thread.join()
+        
+        stdout_content = ''.join(stdout_lines)
+        stderr_content = ''.join(stderr_lines)
+        
+        if exit_code != 0:
+            print(f"❌ GCS export failed with return code {exit_code}")
+            if stderr_content:
+                print(f"❌ Error details: {stderr_content}")
+            raise Exception(f"GCS export failed with return code {exit_code}: {stderr_content}")
+        
+        print("✅ GCS export completed successfully!")
+        
+        # Log export summary
+        if "export completed successfully" in stdout_content.lower():
+            # Extract statistics from stdout
+            import re
+            files_match = re.search(r'(\d+) files uploaded', stdout_content)
+            size_match = re.search(r'(\d+\.?\d*) MB', stdout_content)
+            bucket_match = re.search(r'gs://([^\s]+)', stdout_content)
+            
+            if files_match:
+                files_count = files_match.group(1)
+                print(f"📊 Successfully uploaded {files_count} files to GCS")
+            
+            if size_match:
+                size_mb = size_match.group(1)
+                print(f"📊 Total size uploaded: {size_mb} MB")
+            
+            if bucket_match:
+                bucket_name = bucket_match.group(1)
+                print(f"☁️ GCS bucket: gs://{bucket_name}")
+        
+        # Store output information in XCom
+        gcs_export_info = {
+            "target_date": paths.date_iso,
+            "base_data_dir": paths.data_dir,
+            "export_status": "success",
+            "export_log": stdout_content[:1000]  # Truncate for XCom storage
+        }
+        
+        context['task_instance'].xcom_push(key='gcs_export_info', value=gcs_export_info)
+        context['task_instance'].xcom_push(key='paths_config', value=paths.get_all_paths_summary())
+        
+        return stdout_content
+        
+    except subprocess.TimeoutExpired:
+        process.kill()
+        print(f"⏰ GCS export timed out after {timeout} seconds ({timeout/60:.1f} minutes)")
+        raise Exception(f"GCS export execution exceeded maximum time limit of {timeout} seconds")
+    except Exception as e:
+        print(f"❌ Unexpected error in GCS export task: {str(e)}")
+        raise
+
 # Create a task to check data directory and dependencies
 verificar_directorio_dados = BashOperator(
     task_id='verificar_directorio_dados',
@@ -1023,8 +1191,14 @@ exportar_para_supabase = PythonOperator(
     dag=dag,
 )
 
+exportar_para_gcs = PythonOperator(
+    task_id='exportar_para_gcs',
+    python_callable=export_to_gcs_task,
+    dag=dag,
+)
+
 # Set dependencies
-verificar_directorio_dados >> executar_scraper >> processar_relevantes >> filtrar_artigos_vitimas >> exportar_para_supabase
+verificar_directorio_dados >> executar_scraper >> processar_relevantes >> filtrar_artigos_vitimas >> exportar_para_supabase >> exportar_para_gcs
 
 # Pipeline documentation
 dag.doc_md = """
@@ -1098,6 +1272,15 @@ You can override this by providing a specific date in the DAG run configuration.
 - Outputs: Export logs, statistics, and backup CSV files
 - Location: `/opt/airflow/scripts/google_scraper/data/processed/YYYY/MM/DD/`
 
+### 5. **export_to_gcs**
+- Exports ALL pipeline files to Google Cloud Storage maintaining directory structure
+- Creates/ensures GCS bucket exists before upload
+- Uploads entire data directory structure: `raw/`, `structured/`, and `processed/`
+- Maintains original date-based folder structure in GCS
+- Supports configuration via environment variables or config file
+- Outputs: GCS export logs, statistics, and upload summaries
+- Location: `gs://{bucket_name}/data/YYYY/MM/DD/`
+
 ## Export Logic
 The export task intelligently selects input files in this priority order:
 1. **Articles with victims** (`artigos_vitimas_filtrados_{date}.csv`) - highest priority
@@ -1112,6 +1295,57 @@ The export task intelligently selects input files in this priority order:
 
 This ensures that all disaster-related content is captured in clean, date-specific staging tables ready for further processing or promotion to production tables.
 
+## GCS Configuration
+The GCS export task can be configured in multiple ways:
+
+### Environment Variables (Recommended)
+```bash
+export GCS_PROJECT_ID="your-gcp-project-id"
+export GCS_BUCKET_NAME="simprede-data-pipeline"
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
+```
+
+### Configuration File
+Create `/opt/airflow/scripts/google_scraper/config/gcs_config.json`:
+```json
+{
+  "project_id": "your-gcp-project-id",
+  "bucket_name": "simprede-data-pipeline",
+  "credentials_path": "/opt/airflow/config/gcs-credentials.json",
+  "location": "EUROPE-WEST1"
+}
+```
+
+### DAG Run Configuration
+Override GCS settings via DAG run configuration:
+```json
+{
+  "dias": 1,
+  "gcs_project_id": "your-project",
+  "gcs_bucket_name": "your-bucket"
+}
+```
+
+## Cloud Storage Structure
+Files are uploaded to GCS maintaining the original directory structure:
+```
+gs://your-bucket/
+└── data/
+    ├── raw/YYYY/MM/DD/
+    │   ├── intermediate_google_news_YYYYMMDD.csv
+    │   ├── google_news_articles_YYYYMMDD.csv
+    │   └── scraper_stats_YYYYMMDD.json
+    ├── structured/YYYY/MM/DD/
+    │   ├── artigos_google_municipios_pt_YYYY-MM-DD.csv
+    │   ├── artigos_irrelevantes_YYYY-MM-DD.csv
+    │   └── processing_stats_YYYYMMDD.json
+    └── processed/YYYY/MM/DD/
+        ├── artigos_vitimas_filtrados_YYYYMMDD.csv
+        ├── artigos_sem_vitimas_YYYYMMDD.csv
+        ├── export_stats_YYYYMMDD.json
+        └── gcs_export_stats_YYYYMMDD.json
+```
+
 ## Monitoring and Logging
 - All tasks log progress and errors in real-time to Airflow logs.
 - Key output files and directories are printed at each stage for verification.
@@ -1121,4 +1355,7 @@ This ensures that all disaster-related content is captured in clean, date-specif
 - If no articles are found, verify the keywords and region settings in `keywords.json` and `municipios_por_distrito.json`.
 - Check Airflow worker logs for detailed error messages and stack traces.
 - Ensure network access to Google News and Supabase from the Airflow environment.
+- For GCS export issues, verify that the service account has Storage Object Admin permissions.
+- If GCS bucket creation fails, ensure the bucket name is globally unique and the project has billing enabled.
+- Check that the Google Cloud Storage library is installed: `pip install google-cloud-storage`.
 """

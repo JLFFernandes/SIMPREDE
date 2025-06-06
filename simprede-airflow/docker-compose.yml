@@ -22,6 +22,13 @@ x-airflow-common: &airflow-common
     SELENIUM_HEADLESS: 1
     PYTHONUNBUFFERED: 1
     PYTHONDONTWRITEBYTECODE: 1
+    # GCS environment variables - Updated to use your actual credential file
+    GCS_PROJECT_ID: ${GCS_PROJECT_ID:-simprede-461309}
+    GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-simprede-data-pipeline}
+    GCS_LOCATION: ${GCS_LOCATION:-EUROPE-WEST1}
+    GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/config/gcs-credentials.json
+    # Google Cloud Project for client initialization
+    GOOGLE_CLOUD_PROJECT: ${GCS_PROJECT_ID:-simprede-461309}
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
@@ -41,7 +48,7 @@ x-airflow-common: &airflow-common
     - ./data/processed:/opt/airflow/scripts/google_scraper/data/processed
     # Add timezone data
     - /etc/localtime:/etc/localtime:ro
-  user: "${AIRFLOW_UID:-50000}:0"
+  user: "${AIRFLOW_UID:-501}:0"
   depends_on: &airflow-common-depends-on
     postgres:
       condition: service_healthy
@@ -119,6 +126,15 @@ services:
           echo "✓ ChromeDriver found: $$(chromedriver --version)"
         else
           echo "⚠ Warning: ChromeDriver not found"
+        fi
+        
+        # Initialize GCS configuration
+        echo "=== GCS Configuration Setup ==="
+        if [ -f "/opt/airflow/scripts/init_gcs.sh" ]; then
+          echo "Running GCS initialization script..."
+          /opt/airflow/scripts/init_gcs.sh || echo "⚠ GCS setup completed with warnings"
+        else
+          echo "⚠ GCS initialization script not found"
         fi
         
         # Initialize the database

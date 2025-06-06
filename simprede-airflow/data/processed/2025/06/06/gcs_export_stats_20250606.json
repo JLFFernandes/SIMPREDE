@@ -1,0 +1,29 @@
+{
+  "export_timestamp": "2025-06-06T15:26:57.741943",
+  "export_date": "2025-06-06",
+  "target_date": "2025-06-06",
+  "bucket_name": "simprede-data-pipeline",
+  "data_directories_found": 3,
+  "data_directories_exported": [
+    "/opt/airflow/scripts/google_scraper/data/raw/2025/06/06",
+    "/opt/airflow/scripts/google_scraper/data/structured/2025/06/06",
+    "/opt/airflow/scripts/google_scraper/data/processed/2025/06/06"
+  ],
+  "files_uploaded": 7,
+  "files_failed": 0,
+  "total_files": 7,
+  "airflow_logs_uploaded": 0,
+  "airflow_logs_failed": 0,
+  "total_size_mb": 0.15,
+  "upload_results": {
+    "/opt/airflow/scripts/google_scraper/data/raw/2025/06/06/google_news_articles_20250606.csv": true,
+    "/opt/airflow/scripts/google_scraper/data/raw/2025/06/06/artigos_google_municipios_pt_2025-06-06.csv": true,
+    "/opt/airflow/scripts/google_scraper/data/raw/2025/06/06/intermediate_google_news_20250606.csv": true,
+    "/opt/airflow/scripts/google_scraper/data/structured/2025/06/06/artigos_google_municipios_pt_2025-06-06.csv": true,
+    "/opt/airflow/scripts/google_scraper/data/structured/2025/06/06/processing_stats_20250606.json": true,
+    "/opt/airflow/scripts/google_scraper/data/processed/2025/06/06/export_stats_20250606.json": true,
+    "/opt/airflow/scripts/google_scraper/data/processed/2025/06/06/export_backup_20250606.csv": true
+  },
+  "included_airflow_logs": true,
+  "status": "success"
+}

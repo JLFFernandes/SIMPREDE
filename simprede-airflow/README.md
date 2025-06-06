@@ -11,24 +11,39 @@ This directory contains the necessary files to run Apache Airflow in a container
 
 ## Quick Start
 
-### 🚀 First Time Setup
+### 🚀 One-Command Setup
 ```bash
 ./start_airflow.sh
 ```
-This script will:
-- Check Docker prerequisites
-- Build the Docker images
-- Start all containers
-- Display admin credentials
-- Show useful commands
+This streamlined script handles everything:
+- ✅ Checks Docker prerequisites
+- ✅ Sets up GCS configuration with defaults
+- ✅ Creates `.env` file with optimal settings
+- ✅ Builds Docker images with GCS support
+- ✅ Starts all containers
+- ✅ Displays admin credentials and GCS status
+- ✅ Shows next steps for GCS activation
 
-### ⚡ Quick Operations
+### ☁️ Enable GCS Export (Optional)
+To activate automatic export to Google Cloud Storage:
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a service account with **Storage Admin** role
+3. Download the JSON key file and save as: `./config/gcs-credentials.json`
+4. Restart: `./restart_airflow.sh` (shows updated GCS status)
+
+### ⚡ Daily Operations
 ```bash
-# Restart containers (no rebuild)
+# Restart with GCS status check
 ./restart_airflow.sh
 
 # Stop all containers
 ./stop_airflow.sh
+
+# Troubleshooting validation
+./validate_setup.sh
+
+# Quick GCS validation
+docker compose exec airflow-standalone python3 /opt/airflow/scripts/google_scraper/exportador_gcs/validate_gcs_setup.py
 ```
 
 ### 🔑 Default Credentials
