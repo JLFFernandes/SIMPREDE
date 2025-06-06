@@ -13,6 +13,7 @@ import traceback
 from datetime import datetime
 from typing import Dict, List, Optional
 from pathlib import Path
+import shutil
 
 # Add the google_scraper directory to Python path for imports
 sys.path.insert(0, '/opt/airflow/scripts/google_scraper')
@@ -410,6 +411,115 @@ def export_airflow_logs_to_gcs(
     
     return results
 
+def cleanup_data_directory(directory_path: str, dry_run: bool = False) -> bool:
+    """
+    Delete a data directory after successful upload
+    
+    Args:
+        directory_path: Path to directory to delete
+        dry_run: If True, only log what would be deleted without actually deleting
+        
+    Returns:
+        True if deletion successful, False otherwise
+    """
+    try:
+        if not os.path.exists(directory_path):
+            log_progress(f"⚠️ Directory doesn't exist: {directory_path}", "warning")
+            return True  # Consider it "successful" since it's already gone
+        
+        if dry_run:
+            log_progress(f"🔍 DRY RUN: Would delete directory: {directory_path}")
+            return True
+        
+        # Calculate directory size before deletion
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(directory_path):
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                if os.path.exists(filepath):
+                    total_size += os.path.getsize(filepath)
+        
+        size_mb = total_size / (1024 * 1024)
+        
+        log_progress(f"🗑️ Deleting directory: {directory_path} ({size_mb:.2f} MB)")
+        shutil.rmtree(directory_path)
+        log_progress(f"✅ Successfully deleted directory: {directory_path}")
+        return True
+        
+    except Exception as e:
+        log_progress(f"❌ Failed to delete directory {directory_path}: {e}", "error")
+        return False
+
+def cleanup_exported_data(
+    directories_exported: List[str], 
+    all_results: Dict[str, bool],
+    cleanup_on_partial_success: bool = False,
+    dry_run: bool = False
+) -> Dict[str, bool]:
+    """
+    Clean up successfully exported data directories
+    
+    Args:
+        directories_exported: List of directories that were exported
+        all_results: Dictionary with file paths and upload status
+        cleanup_on_partial_success: Whether to cleanup even if some files failed
+        dry_run: If True, only log what would be deleted without actually deleting
+        
+    Returns:
+        Dictionary with directory paths and cleanup status
+    """
+    cleanup_results = {}
+    
+    if not directories_exported:
+        log_progress("ℹ️ No data directories to cleanup")
+        return cleanup_results
+    
+    log_progress(f"🧹 Starting cleanup of {len(directories_exported)} data directories")
+    
+    for directory in directories_exported:
+        try:
+            # Check if all files in this directory were uploaded successfully
+            directory_files = []
+            failed_files_in_dir = []
+            
+            # Find all files that belong to this directory
+            for file_path, success in all_results.items():
+                if file_path.startswith(directory):
+                    directory_files.append(file_path)
+                    if not success:
+                        failed_files_in_dir.append(file_path)
+            
+            # Decide whether to cleanup this directory
+            should_cleanup = False
+            
+            if len(failed_files_in_dir) == 0:
+                # All files uploaded successfully
+                should_cleanup = True
+                log_progress(f"✅ All files from {directory} uploaded successfully")
+            elif cleanup_on_partial_success:
+                # Some files failed but we're configured to cleanup anyway
+                should_cleanup = True
+                log_progress(f"⚠️ {len(failed_files_in_dir)} files failed from {directory}, but cleanup_on_partial_success=True")
+            else:
+                # Some files failed and we're not configured to cleanup
+                should_cleanup = False
+                log_progress(f"⚠️ Skipping cleanup of {directory} - {len(failed_files_in_dir)} files failed upload")
+            
+            if should_cleanup:
+                success = cleanup_data_directory(directory, dry_run)
+                cleanup_results[directory] = success
+            else:
+                cleanup_results[directory] = False
+                
+        except Exception as e:
+            log_progress(f"❌ Error during cleanup evaluation for {directory}: {e}", "error")
+            cleanup_results[directory] = False
+    
+    successful_cleanups = sum(1 for success in cleanup_results.values() if success)
+    log_progress(f"🧹 Cleanup completed: {successful_cleanups}/{len(directories_exported)} directories cleaned")
+    
+    return cleanup_results
+
 def export_to_gcs(
     target_date: str = None,
     base_data_dir: str = None,
@@ -418,7 +528,10 @@ def export_to_gcs(
     gcs_bucket_name: str = None,
     gcs_credentials_path: str = None,
     include_airflow_logs: bool = True,
-    airflow_logs_dir: str = "/opt/airflow/logs"
+    airflow_logs_dir: str = "/opt/airflow/logs",
+    cleanup_after_export: bool = True,
+    cleanup_on_partial_success: bool = False,
+    dry_run_cleanup: bool = False
 ) -> Dict[str, any]:
     """
     Main export function to upload files to GCS
@@ -432,6 +545,9 @@ def export_to_gcs(
         gcs_credentials_path: Path to GCS credentials file (optional)
         include_airflow_logs: Whether to include Airflow logs in export
         airflow_logs_dir: Base Airflow logs directory
+        cleanup_after_export: Whether to delete data directories after successful export
+        cleanup_on_partial_success: Whether to cleanup even if some files failed
+        dry_run_cleanup: If True, only log what would be deleted without actually deleting
         
     Returns:
         Dictionary with export statistics
@@ -446,6 +562,10 @@ def export_to_gcs(
     log_progress(f"🚀 Starting GCS export for date: {target_date}")
     log_progress(f"📁 Base data directory: {base_data_dir}")
     log_progress(f"📋 Include Airflow logs: {include_airflow_logs}")
+    log_progress(f"🧹 Cleanup after export: {cleanup_after_export}")
+    if cleanup_after_export:
+        log_progress(f"🧹 Cleanup on partial success: {cleanup_on_partial_success}")
+        log_progress(f"🧹 Dry run cleanup: {dry_run_cleanup}")
     
     # Get GCS configuration
     gcs_config = get_gcs_config()
@@ -542,6 +662,17 @@ def export_to_gcs(
     
     total_size_mb = total_size_bytes / (1024 * 1024)
     
+    # Cleanup data directories if requested
+    cleanup_results = {}
+    if cleanup_after_export and directories_to_export:
+        log_progress("🧹 Starting cleanup of exported data directories...")
+        cleanup_results = cleanup_exported_data(
+            directories_to_export, 
+            all_results, 
+            cleanup_on_partial_success,
+            dry_run_cleanup
+        )
+    
     export_stats = {
         "target_date": target_date,
         "bucket_name": gcs_config['bucket_name'],
@@ -554,6 +685,9 @@ def export_to_gcs(
         "airflow_logs_failed": airflow_logs_failed,
         "total_size_mb": round(total_size_mb, 2),
         "upload_results": all_results,
+        "cleanup_enabled": cleanup_after_export,
+        "cleanup_results": cleanup_results,
+        "directories_cleaned": sum(1 for success in cleanup_results.values() if success) if cleanup_results else 0,
         "included_airflow_logs": include_airflow_logs,
         "status": "success" if failed_uploads == 0 else "partial_success"
     }
@@ -565,6 +699,10 @@ def export_to_gcs(
     log_progress(f"  - Total files uploaded: {successful_uploads}/{total_files}")
     log_progress(f"  - Total size: {total_size_mb:.2f} MB")
     log_progress(f"  - Bucket: gs://{gcs_config['bucket_name']}")
+    
+    if cleanup_after_export:
+        directories_cleaned = sum(1 for success in cleanup_results.values() if success) if cleanup_results else 0
+        log_progress(f"  - Directories cleaned: {directories_cleaned}/{len(directories_to_export) if directories_to_export else 0}")
     
     # Save export statistics
     if output_dir:
@@ -602,6 +740,9 @@ def main():
     parser.add_argument("--gcs_credentials_path", type=str, help="Path to GCS credentials JSON file")
     parser.add_argument("--no_airflow_logs", action="store_true", help="Skip Airflow logs export")
     parser.add_argument("--airflow_logs_dir", type=str, default="/opt/airflow/logs", help="Airflow logs directory")
+    parser.add_argument("--no_cleanup", action="store_true", help="Skip cleanup of data directories after export")
+    parser.add_argument("--cleanup_on_partial_success", action="store_true", help="Cleanup directories even if some files failed")
+    parser.add_argument("--dry_run_cleanup", action="store_true", help="Only log what would be deleted without actually deleting")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     
     args = parser.parse_args()
@@ -615,6 +756,7 @@ def main():
     log_progress(f"Paths: base_data_dir={args.base_data_dir}, output_dir={args.output_dir}")
     log_progress(f"GCS: project_id={args.gcs_project_id}, bucket={args.gcs_bucket_name}")
     log_progress(f"Airflow logs: include={not args.no_airflow_logs}, dir={args.airflow_logs_dir}")
+    log_progress(f"Cleanup: enabled={not args.no_cleanup}, partial_success={args.cleanup_on_partial_success}, dry_run={args.dry_run_cleanup}")
     
     try:
         result = export_to_gcs(
@@ -625,11 +767,16 @@ def main():
             gcs_bucket_name=args.gcs_bucket_name,
             gcs_credentials_path=args.gcs_credentials_path,
             include_airflow_logs=not args.no_airflow_logs,
-            airflow_logs_dir=args.airflow_logs_dir
+            airflow_logs_dir=args.airflow_logs_dir,
+            cleanup_after_export=not args.no_cleanup,
+            cleanup_on_partial_success=args.cleanup_on_partial_success,
+            dry_run_cleanup=args.dry_run_cleanup
         )
         
         log_progress(f"✅ GCS export completed successfully")
         log_progress(f"📊 Summary: {result['files_uploaded']} files uploaded ({result['airflow_logs_uploaded']} logs), {result['total_size_mb']} MB")
+        if result.get('cleanup_enabled'):
+            log_progress(f"🧹 Cleanup: {result['directories_cleaned']} directories cleaned")
         return 0
         
     except Exception as e:
