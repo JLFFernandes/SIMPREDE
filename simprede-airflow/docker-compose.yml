@@ -1,0 +1,150 @@
+x-airflow-common: &airflow-common
+  # Use our custom built image with Chrome support
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 60
+    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+    AIRFLOW__WEBSERVER__AUTHENTICATE: 'true'
+    AIRFLOW__WEBSERVER__RBAC: 'true'
+    # Chrome/Selenium environment variables
+    CHROME_BIN: /usr/bin/chromium
+    CHROMEDRIVER_PATH: /usr/bin/chromedriver
+    DISPLAY: :99
+    SELENIUM_HEADLESS: 1
+    PYTHONUNBUFFERED: 1
+    PYTHONDONTWRITEBYTECODE: 1
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ./data:/opt/airflow/data
+    - ./config:/opt/airflow/config
+    - ./scripts:/opt/airflow/scripts
+    - ./requirements.txt:/opt/airflow/requirements.txt
+    # Ensure all data subdirectories are mapped to host
+    - ./data/raw:/opt/airflow/data/raw
+    - ./data/structured:/opt/airflow/data/structured
+    - ./data/processed:/opt/airflow/data/processed
+    # Add specific mapping for Google Scraper data (backwards compatibility)
+    - ./data:/opt/airflow/scripts/google_scraper/data
+    - ./data/raw:/opt/airflow/scripts/google_scraper/data/raw
+    - ./data/structured:/opt/airflow/scripts/google_scraper/data/structured
+    - ./data/processed:/opt/airflow/scripts/google_scraper/data/processed
+    # Add timezone data
+    - /etc/localtime:/etc/localtime:ro
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on: &airflow-common-depends-on
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: always
+    ports:
+      - "5432:5432"
+
+  # Use standalone mode for Airflow 3.0.1 - includes webserver, scheduler, and triggerer
+  airflow-standalone:
+    <<: *airflow-common
+    command: standalone
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: always
+    environment:
+      <<: *airflow-common-env
+      # Core configurations for Airflow 3.x
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        # Set up environment and verify Chrome/Chromium
+        export CHROME_BIN=$${CHROME_BIN:-/usr/bin/chromium}
+        export CHROMEDRIVER_PATH=$${CHROMEDRIVER_PATH:-/usr/bin/chromedriver}
+        export DISPLAY=$${DISPLAY:-:99}
+        export SELENIUM_HEADLESS=1
+        
+        echo "=== Airflow 3.0.1 Initialization ==="
+        
+        # Verify Chrome/Chromium installation
+        if command -v google-chrome >/dev/null 2>&1; then
+          echo "✓ Google Chrome found: $$(google-chrome --version)"
+          export CHROME_BIN=/usr/bin/google-chrome
+        elif command -v chromium >/dev/null 2>&1; then
+          echo "✓ Chromium found: $$(chromium --version)"
+          export CHROME_BIN=/usr/bin/chromium
+        else
+          echo "⚠ Warning: No Chrome/Chromium found"
+        fi
+        
+        # Verify ChromeDriver
+        if command -v chromedriver >/dev/null 2>&1; then
+          echo "✓ ChromeDriver found: $$(chromedriver --version)"
+        else
+          echo "⚠ Warning: ChromeDriver not found"
+        fi
+        
+        # Initialize the database
+        echo "Initializing Airflow database..."
+        airflow db migrate
+        
+        echo "=== Initialization Complete ==="
+        echo "Admin user will be created automatically by standalone mode"
+        exit 0
+
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+    user: "0:0"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./data:/opt/airflow/data
+      - ./config:/opt/airflow/config
+      - ./scripts:/opt/airflow/scripts
+      - ./requirements.txt:/opt/airflow/requirements.txt
+
+volumes:
+  postgres-db-volume:
+
+networks:
+  default:
+    name: airflow-network

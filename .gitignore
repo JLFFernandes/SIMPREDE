@@ -5,6 +5,8 @@
 #virtual environment
 .venv
 venv
+.env
+.venv*/
 
 #backups
 old_vs

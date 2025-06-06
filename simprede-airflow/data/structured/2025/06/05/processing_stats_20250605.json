@@ -1,0 +1,11 @@
+{
+  "processing_date": "2025-06-05T18:38:16.381075",
+  "relevant_articles": 4,
+  "irrelevant_articles": 0,
+  "total_processed": 4,
+  "output_files": {
+    "relevant_raw": "/opt/airflow/data/raw/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv",
+    "relevant_structured": "/opt/airflow/scripts/google_scraper/data/structured/2025/06/05/artigos_google_municipios_pt_2025-06-05.csv",
+    "irrelevant": null
+  }
+}
