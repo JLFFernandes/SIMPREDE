@@ -1,0 +1,17 @@
+{"timestamp":"2025-06-10T16:01:10.668729","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:01:10.670260","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:01:10.692996Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.698184Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.698348Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.738007Z","level":"info","event":"🔍 Debugging environment variables and connections...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.738166Z","level":"info","event":"📋 Found 0 Airflow connection environment variables:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.738252Z","level":"info","event":"❌ Target connection variable missing: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.738379Z","level":"info","event":"❌ No connection details found in XCom from setup task","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.738482Z","level":"info","event":"📋 Database credential environment variables:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.738690Z","level":"info","event":"  - DB_USER: postgres.kyrfsylobmsdjlrrpful","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.739132Z","level":"info","event":"  - DB_PASSWORD: ✅ Set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.739406Z","level":"info","event":"  - DB_HOST: aws-0-eu-west-3.pooler.supabase.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.739685Z","level":"info","event":"  - DB_PORT: 6543","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.739909Z","level":"info","event":"  - DB_NAME: postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.740463Z","level":"info","event":"✅ Environment debugging completed","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:10.738267","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

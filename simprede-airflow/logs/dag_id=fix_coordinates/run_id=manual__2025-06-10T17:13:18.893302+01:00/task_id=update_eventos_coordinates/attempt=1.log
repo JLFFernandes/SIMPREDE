@@ -1,0 +1,10 @@
+{"timestamp":"2025-06-10T16:13:20.309196","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:13:20.309724","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/fix_coordinates_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:13:20.338270Z","level":"info","event":"🔧 Updating eventos with coordinates...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:13:20.689693Z","level":"info","event":"📊 Initial status: 0/253 events have coordinates","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:13:20.772441Z","level":"info","event":"❌ Failed to update coordinates: column \"dicofreg\" is of type double precision but expression is of type character varying","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:13:20.774551Z","level":"info","event":"LINE 7:                         dicofreg = coord_data.best_dicofre,","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:13:20.774893Z","level":"info","event":"                                           ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:13:20.775076Z","level":"info","event":"HINT:  You will need to rewrite or cast the expression.","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:13:20.775216Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:13:20.773658","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

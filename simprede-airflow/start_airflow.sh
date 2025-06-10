@@ -45,13 +45,15 @@ check_docker() {
 check_docker_compose() {
     if command -v docker-compose > /dev/null 2>&1; then
         DOCKER_COMPOSE_CMD="docker-compose"
+        DOCKER_COMPOSE_VERSION=$(docker-compose --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
     elif docker compose version > /dev/null 2>&1; then
         DOCKER_COMPOSE_CMD="docker compose"
+        DOCKER_COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "2.0.0")
     else
         print_error "Neither 'docker-compose' nor 'docker compose' is available. Please install Docker Compose."
         exit 1
     fi
-    print_success "Found Docker Compose: $DOCKER_COMPOSE_CMD"
+    print_success "Found Docker Compose: $DOCKER_COMPOSE_CMD (version $DOCKER_COMPOSE_VERSION)"
 }
 
 # Function to set proper permissions
@@ -175,6 +177,17 @@ create_directories() {
 start_containers() {
     print_info "Construção e arranque dos contentores Airflow..."
     
+    # Check if we need to rebuild (when Dockerfile or requirements change)
+    REBUILD_NEEDED=false
+    if [ ! -f ".airflow_built" ] || [ "Dockerfile" -nt ".airflow_built" ] || [ "requirements.txt" -nt ".airflow_built" ]; then
+        print_warning "Detectadas alterações no Dockerfile ou requirements.txt"
+        read -p "Reconstruir imagem Docker? (recomendado) (Y/n): " -r
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            REBUILD_NEEDED=true
+            print_info "Imagem será reconstruída..."
+        fi
+    fi
+    
     # Set AIRFLOW_UID if not already set
     if [ -z "${AIRFLOW_UID}" ]; then
         export AIRFLOW_UID=$(id -u)
@@ -210,15 +223,33 @@ start_containers() {
         print_warning "Ficheiro .env não encontrado"
     fi
     
-    # Build and start containers
-    if command -v docker-compose > /dev/null 2>&1; then
-        docker-compose up --build -d
-    elif docker compose version > /dev/null 2>&1; then
-        docker compose up --build -d
+    # Build and start containers with rebuild if needed
+    if [ "$REBUILD_NEEDED" = true ]; then
+        print_info "Rebuilding Docker images..."
+        
+        # Use different commands based on docker-compose version and availability
+        if command -v docker-compose > /dev/null 2>&1; then
+            # For docker-compose, build separately then start
+            docker-compose build airflow-standalone
+            print_info "Starting containers with rebuilt image..."
+            docker-compose up -d
+        elif docker compose version > /dev/null 2>&1; then
+            # For docker compose, use --no-cache flag only if supported
+            if docker compose build --help 2>/dev/null | grep -q "\-\-no-cache"; then
+                docker compose build --no-cache airflow-standalone
+            else
+                docker compose build airflow-standalone
+            fi
+            print_info "Starting containers with rebuilt image..."
+            docker compose up -d
+        fi
     else
-        print_error "Neither 'docker-compose' nor 'docker compose' is available."
-        exit 1
+        print_info "Starting containers..."
+        $DOCKER_COMPOSE_CMD up -d
     fi
+    
+    # Mark as built
+    touch .airflow_built
     
     print_success "Containers started successfully"
 }
@@ -327,6 +358,12 @@ display_commands() {
     print_separator
     print_info "USEFUL COMMANDS"
     print_separator
+    echo -e "${YELLOW}Test database providers:${NC}"
+    echo "  chmod +x scripts/test_providers.sh && ./scripts/test_providers.sh"
+    echo ""
+    echo -e "${YELLOW}Install database providers:${NC}"
+    echo "  ./install_providers.sh"
+    echo ""
     echo -e "${YELLOW}View logs:${NC}"
     echo "  $DOCKER_COMPOSE_CMD logs airflow-standalone"
     echo "  $DOCKER_COMPOSE_CMD logs postgres"

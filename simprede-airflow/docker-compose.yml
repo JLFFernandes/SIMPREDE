@@ -29,6 +29,20 @@ x-airflow-common: &airflow-common
     GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/config/gcs-credentials.json
     # Google Cloud Project for client initialization
     GOOGLE_CLOUD_PROJECT: ${GCS_PROJECT_ID:-simprede-461309}
+    # Database credentials for Supabase
+    DB_USER: ${DB_USER}
+    DB_PASSWORD: ${DB_PASSWORD}
+    DB_HOST: ${DB_HOST}
+    DB_PORT: ${DB_PORT:-6543}
+    DB_NAME: ${DB_NAME:-postgres}
+    DB_SCHEMA: ${DB_SCHEMA:-google_scraper}
+    # Supabase API credentials
+    SUPABASE_URL: ${SUPABASE_URL}
+    SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+    # SQL Configuration
+    SQL_OUTPUT_PATH: ${SQL_OUTPUT_PATH:-/opt/airflow/data/sql_outputs}
+    SQL_DEFAULT_TIMEOUT: ${SQL_DEFAULT_TIMEOUT:-300}
+    SQL_MAX_RESULTS: ${SQL_MAX_RESULTS:-10000}
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
@@ -37,7 +51,9 @@ x-airflow-common: &airflow-common
     - ./config:/opt/airflow/config
     - ./scripts:/opt/airflow/scripts
     - ./requirements.txt:/opt/airflow/requirements.txt
-    - ./data:/opt/airflow/data
+    - ./scripts:/opt/airflow/scripts
+    - ./dags:/opt/airflow/dags
+    - ./plugins:/opt/airflow/plugins
     - /etc/localtime:/etc/localtime:ro
   user: "${AIRFLOW_UID:-501}:0"
   depends_on: &airflow-common-depends-on

@@ -27,8 +27,8 @@ class GoogleScraperPaths:
         
         # Base directories
         self.scripts_dir = os.path.join(base_dir, "scripts", "google_scraper")
-        # Fix: Put data directory inside scripts/google_scraper
-        self.data_dir = os.path.join(self.scripts_dir, "data")
+        # Fix: Use correct data directory path - mounted at /opt/airflow/data not /opt/airflow/scripts/google_scraper/data
+        self.data_dir = os.path.join(base_dir, "data")
         
         # Date-based structure
         self.year = self.execution_date.strftime("%Y")
@@ -360,21 +360,9 @@ def processar_relevantes_task(**context):
     
     if not input_file:
         print("❌ No input file found from scraper task")
-        # Try legacy paths as fallback
-        legacy_paths = [
-            f"/opt/airflow/scripts/google_scraper/data/raw/{paths.year}/{paths.month}/{paths.day}/intermediate_google_news_{paths.date_str}.csv",
-            "/opt/airflow/scripts/google_scraper/data/raw/intermediate_google_news.csv"
-        ]
-        
-        for legacy_path in legacy_paths:
-            print(f"🔍 Checking legacy path: {legacy_path}")
-            if os.path.exists(legacy_path):
-                input_file = legacy_path
-                print(f"✅ Found legacy input file: {input_file}")
-                break
         
         if not input_file:
-            raise Exception(f"No input file found. Checked: {input_files_to_check + legacy_paths}")
+            raise Exception(f"No input file found. Checked: {input_files_to_check}")
     
     print(f"📁 Output paths:")
     for key, path in processar_outputs.items():

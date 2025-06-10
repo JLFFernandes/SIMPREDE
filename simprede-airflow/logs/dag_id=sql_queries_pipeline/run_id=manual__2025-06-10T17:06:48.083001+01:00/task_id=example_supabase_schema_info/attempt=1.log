@@ -1,0 +1,14 @@
+{"timestamp":"2025-06-10T16:06:51.403708","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:06:51.404090","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:06:51.428696Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:06:51.435363Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:06:51.435526Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:06:51.479083Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:06:51.480559","level":"info","event":"Secrets backends loaded for worker","count":1,"backend_classes":["EnvironmentVariablesBackend"],"logger":"supervisor"}
+{"timestamp":"2025-06-10T16:06:51.481711","level":"warning","event":"empty cryptography key - values will not be stored encrypted.","logger":"airflow.models.crypto"}
+{"timestamp":"2025-06-10T16:06:51.482152","level":"info","event":"Connection Retrieved 'supabase_postgres'","logger":"airflow.hooks.base"}
+{"timestamp":"2025-06-10T16:06:51.482218","level":"warning","event":"This setter is for backward compatibility and should not be used.\nSince the introduction of connection property, the providers listed below breaks due to assigning value to self.connection in their __init__ method.\n* apache-airflow-providers-mysql<5.7.1\n* apache-airflow-providers-elasticsearch<5.5.1\n* apache-airflow-providers-postgres<5.13.0","logger":"airflow.task.hooks.airflow.providers.postgres.hooks.postgres.PostgresHook"}
+{"timestamp":"2025-06-10T16:06:51.482461Z","level":"info","event":"📋 Executing schema info query...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:06:51.483245Z","level":"info","event":"✅ PostgresHook created successfully - connection is available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:06:51.483330Z","level":"info","event":"✅ Schema info task completed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:06:51.482373","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

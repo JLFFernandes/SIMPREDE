@@ -1,0 +1,17 @@
+{"timestamp":"2025-06-10T16:01:13.467421","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:01:13.467727","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:01:13.483946Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.490855Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.490968Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.512361Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.513621","level":"info","event":"Secrets backends loaded for worker","count":1,"backend_classes":["EnvironmentVariablesBackend"],"logger":"supervisor"}
+{"timestamp":"2025-06-10T16:01:13.514019","level":"warning","event":"empty cryptography key - values will not be stored encrypted.","logger":"airflow.models.crypto"}
+{"timestamp":"2025-06-10T16:01:13.514249","level":"info","event":"Connection Retrieved 'supabase_postgres'","logger":"airflow.hooks.base"}
+{"timestamp":"2025-06-10T16:01:13.514295","level":"warning","event":"This setter is for backward compatibility and should not be used.\nSince the introduction of connection property, the providers listed below breaks due to assigning value to self.connection in their __init__ method.\n* apache-airflow-providers-mysql<5.7.1\n* apache-airflow-providers-elasticsearch<5.5.1\n* apache-airflow-providers-postgres<5.13.0","logger":"airflow.task.hooks.airflow.providers.postgres.hooks.postgres.PostgresHook"}
+{"timestamp":"2025-06-10T16:01:13.514416Z","level":"info","event":"📋 Processing articles from: artigos_filtrados_20250610_staging","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.514472Z","level":"info","event":"🚫 Excluding domains: ['.com.br', '.mx', '.ar', '.cl']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.514547Z","level":"info","event":"🧪 Dry run mode: False","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.514591Z","level":"info","event":"✅ PostgresHook created successfully - connection is available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.514630Z","level":"info","event":"📋 Article append operation prepared (simulated mode)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.514662","level":"info","event":"Done. Returned value was: 0","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T16:01:13.514750","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975a92-f585-71ec-bfaa-fe5ef3294717'), task_id='append_filtered_articles', dag_id='sql_queries_pipeline', run_id='manual__2025-06-10T17:01:09.962331+01:00', try_number=1, map_index=-1, hostname='aa05a188031b', context_carrier=None, task=<Task(PythonOperator): append_filtered_articles>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=1, start_date=datetime.datetime(2025, 6, 10, 16, 1, 13, 383122, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

@@ -1,0 +1,11 @@
+{"timestamp":"2025-06-10T10:21:53.321729","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T10:21:53.322038","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T10:21:53.333282Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:21:53.337178Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:21:53.337261Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:21:53.360547Z","level":"info","event":"🔍 Checking available database providers...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:21:53.360639Z","level":"info","event":"📋 Provider Status:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:21:53.360689Z","level":"info","event":"  - POSTGRES: ✅ Available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:21:53.360732Z","level":"info","event":"  - MYSQL: ✅ Available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:21:53.343841","level":"info","event":"Done. Returned value was: {'postgres': True, 'mysql': True}","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T10:21:53.343941","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975957-776b-770d-9748-4477849e8707'), task_id='check_providers', dag_id='sql_queries_pipeline', run_id='manual__2025-06-10T11:16:33.870211+01:00', try_number=1, map_index=-1, hostname='e583b5406efa', context_carrier=None, task=<Task(PythonOperator): check_providers>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=1, start_date=datetime.datetime(2025, 6, 10, 10, 21, 53, 273157, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

@@ -1,0 +1,36 @@
+{
+  "export_timestamp": "2025-06-10T00:09:48.691635",
+  "export_date": "2025-06-10",
+  "target_date": "2025-06-10",
+  "bucket_name": "simprede-data-pipeline",
+  "data_directories_found": 3,
+  "data_directories_exported": [
+    "/opt/airflow/data/raw/2025/06/10",
+    "/opt/airflow/data/structured/2025/06/10",
+    "/opt/airflow/data/processed/2025/06/10"
+  ],
+  "files_uploaded": 7,
+  "files_failed": 0,
+  "total_files": 7,
+  "airflow_logs_uploaded": 0,
+  "airflow_logs_failed": 0,
+  "total_size_mb": 0.41,
+  "upload_results": {
+    "/opt/airflow/data/raw/2025/06/10/google_news_articles_20250610.csv": true,
+    "/opt/airflow/data/raw/2025/06/10/artigos_google_municipios_pt_2025-06-10.csv": true,
+    "/opt/airflow/data/raw/2025/06/10/intermediate_google_news_20250610.csv": true,
+    "/opt/airflow/data/structured/2025/06/10/artigos_google_municipios_pt_2025-06-10.csv": true,
+    "/opt/airflow/data/structured/2025/06/10/processing_stats_20250610.json": true,
+    "/opt/airflow/data/processed/2025/06/10/export_backup_20250610.csv": true,
+    "/opt/airflow/data/processed/2025/06/10/export_stats_20250610.json": true
+  },
+  "cleanup_enabled": true,
+  "cleanup_results": {
+    "/opt/airflow/data/raw/2025/06/10": true,
+    "/opt/airflow/data/structured/2025/06/10": true,
+    "/opt/airflow/data/processed/2025/06/10": true
+  },
+  "directories_cleaned": 3,
+  "included_airflow_logs": true,
+  "status": "success"
+}
