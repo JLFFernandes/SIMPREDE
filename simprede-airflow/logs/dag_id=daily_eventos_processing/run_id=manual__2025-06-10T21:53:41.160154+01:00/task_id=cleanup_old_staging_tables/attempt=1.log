@@ -1,0 +1,9 @@
+{"timestamp":"2025-06-10T20:53:46.516058","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T20:53:46.516359","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/daily_eventos_processing_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T20:53:46.532843Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:53:46.549890Z","level":"info","event":"🧹 Cleaning up old staging tables...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:53:46.550237Z","level":"info","event":"🗓️ Cleaning staging tables older than: 20250603","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:53:46.885422Z","level":"info","event":"📋 Found 0 old staging tables to clean up","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:53:46.924222Z","level":"info","event":"🎉 Cleanup completed: 0 tables dropped","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:53:46.924358","level":"info","event":"Done. Returned value was: {'tables_dropped': 0}","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T20:53:46.924778","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975b9e-c4ce-7c1e-a959-bc61e6a081a3'), task_id='cleanup_old_staging_tables', dag_id='daily_eventos_processing', run_id='manual__2025-06-10T21:53:41.160154+01:00', try_number=1, map_index=-1, hostname='2ce8e97552d8', context_carrier=None, task=<Task(PythonOperator): cleanup_old_staging_tables>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=2, start_date=datetime.datetime(2025, 6, 10, 20, 53, 46, 474028, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

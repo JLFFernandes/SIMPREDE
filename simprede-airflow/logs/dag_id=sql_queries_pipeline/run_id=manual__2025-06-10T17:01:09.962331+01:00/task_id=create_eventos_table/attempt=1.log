@@ -1,0 +1,51 @@
+{"timestamp":"2025-06-10T16:01:12.860917","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:01:12.861450","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:01:12.946566Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:12.956574Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:12.957661Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.040729Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.043737Z","level":"info","event":"🔄 Creating google_scraper_eventos table with georeference data...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.044718Z","level":"info","event":"📋 Executing: create_eventos_table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.534175Z","level":"info","event":"✅ create_eventos_table: executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.534333Z","level":"info","event":"📋 Executing: check_centroids_table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.935044Z","level":"info","event":"✅ check_centroids_table: [(1,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.935210Z","level":"info","event":"✅ public.centroids table found","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.935297Z","level":"info","event":"📋 Executing: check_staging_table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.315066Z","level":"info","event":"✅ check_staging_table: [(1,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.315791Z","level":"info","event":"✅ Source table google_scraper.artigos_filtrados_staging found","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.316256Z","level":"info","event":"📋 Executing: check_source_columns","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.703636Z","level":"info","event":"✅ check_source_columns: [('ID', 'text'), ('type', 'text'), ('subtype', 'text'), ('date', 'text'), ('year', 'integer'), ('month', 'integer'), ('day', 'integer'), ('hour', 'text'), ('georef', 'text'), ('district', 'text'), ('municipali', 'text'), ('parish', 'text'), ('DICOFREG', 'double precision'), ('source', 'text'), ('sourcedate', 'text'), ('sourcetype', 'text'), ('page', 'text'), ('fatalities', 'integer'), ('injured', 'integer'), ('evacuated', 'integer'), ('displaced', 'integer'), ('missing', 'integer'), ('relevance_score', 'integer'), ('evento_nome', 'text')]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.704093Z","level":"info","event":"📋 Executing: check_centroids_columns","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.062175Z","level":"info","event":"✅ check_centroids_columns: [('id', 'integer'), ('latitude', 'double precision'), ('longitude', 'double precision'), ('name', 'character varying'), ('region', 'character varying'), ('distrito', 'character varying'), ('concelho', 'character varying'), ('freguesia', 'character varying'), ('dicofre', 'character varying'), ('area_ha', 'double precision'), ('cluster_id', 'integer'), ('centroid_type', 'character varying'), ('created_at', 'timestamp without time zone'), ('updated_at', 'timestamp without time zone')]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.062505Z","level":"info","event":"📋 Executing: check_source_data_count","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.400377Z","level":"info","event":"✅ check_source_data_count: [(253,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.401180Z","level":"info","event":"📊 Source table has 253 records","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.401677Z","level":"info","event":"✅ Ready to process 253 records","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.403315Z","level":"info","event":"📋 Executing: debug_source_table_content","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.773291Z","level":"info","event":"✅ debug_source_table_content: [(253, 253)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.773714Z","level":"info","event":"📋 Executing: debug_sample_source_data","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.150571Z","level":"info","event":"✅ debug_sample_source_data: [('4313c50be2f5aedf1c3c368cc60bfa91', 'Other', 'Other', '20/03/2025', 2025, 3, 20, '07:00', 'aveiro', 'Aveiro', 'Aveiro', 'aveiro', nan, 'noticiasdeaveiro', '2025-05-24', 'web', 'https://www.noticiasdeaveiro.pt/tempestade-martinho-trouxe-vento-forte-a-regiao-de-aveiro/', 0, 0, 0, 0, 0, 2, 'martinho'), ('5c75c49fc92a58f7175b71c31d153aae', 'Other', 'Other', '30/04/2025', 2025, 4, 30, '07:00', 'avis', 'Portalegre', 'Avis', 'avis', 120303.0, 'dnoticias', '2025-05-24', 'web', 'https://www.dnoticias.pt/2025/4/30/447061-madeira-com-chuva-neve-trovoada-e-vento-forte/', 0, 0, 0, 0, 0, 2, 'desconhecido'), ('8e09543eb9f3ac3a5769ea9ff579c0e7', 'Other', 'Other', '09/03/2025', 2025, 3, 9, '08:00', 'porto', 'Porto', 'Porto', 'porto', nan, 'dnoticias', '2025-05-24', 'web', 'https://www.dnoticias.pt/2025/3/9/441012-ceu-muito-nublado-aguaceiros-vento-forte-e-possibilidade-de-queda-de-neve-na-madeira/', 0, 0, 0, 0, 0, 1, 'desconhecido')]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.150874Z","level":"info","event":"📋 Executing: clear_existing_eventos","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.503622Z","level":"info","event":"✅ clear_existing_eventos: executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.504944Z","level":"info","event":"📋 Executing: populate_eventos_table_simple","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.891914Z","level":"info","event":"✅ populate_eventos_table_simple: executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.892769Z","level":"info","event":"📋 Executing: populate_eventos_table_with_georef","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.263663Z","level":"info","event":"❌ Direct SQL execution failed: COALESCE types character varying and double precision cannot be matched","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.264054Z","level":"info","event":"LINE 138:                                 ue.\"DICOFREG\"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.264278Z","level":"info","event":"                                          ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.264643Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.264834Z","level":"info","event":"❌ populate_eventos_table_with_georef failed: COALESCE types character varying and double precision cannot be matched","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.265069Z","level":"info","event":"LINE 138:                                 ue.\"DICOFREG\"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.265226Z","level":"info","event":"                                          ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.265410Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.265604Z","level":"info","event":"📋 Executing: verify_eventos_count","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.614900Z","level":"info","event":"✅ verify_eventos_count: [(253,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.615521Z","level":"info","event":"📋 Executing: sample_eventos_data","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.966097Z","level":"info","event":"✅ sample_eventos_data: [('445068a6975028726c52a341b510f745', 'Other', 'Other', 'Évora', 'Borba', None, None, 'borba', 0, 'radiocampanario', datetime.datetime(2025, 6, 10, 16, 1, 16, 866058)), ('7cfed55cd70b06bddebf125afaf38779', 'Other', 'Other', 'Aveiro', 'Estarreja', None, None, 'estarreja', 0, 'cmjornal', datetime.datetime(2025, 6, 10, 16, 1, 16, 866058)), ('0e0fae160166f756123193afdccf7c8b', 'Other', 'Other', 'Lisboa', 'Lisboa', None, None, 'lisboa', 0, 'dn', datetime.datetime(2025, 6, 10, 16, 1, 16, 866058)), ('51dff00e7adcabe4230ed38e28a1dcef', 'Other', 'Other', 'Portalegre', 'Avis', None, None, 'avis', 0, 'sicnoticias', datetime.datetime(2025, 6, 10, 16, 1, 16, 866058)), ('fe002a37cf23d7c497694dbbf9170888', 'Other', 'Other', 'Portalegre', 'Avis', None, None, 'avis', 0, 'dnoticias', datetime.datetime(2025, 6, 10, 16, 1, 16, 866058))]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.966382Z","level":"info","event":"📊 Eventos Table Creation Summary:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.966523Z","level":"info","event":"  - Centroids table available: ✅","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.966612Z","level":"info","event":"  - Staging table available: ✅","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.966709Z","level":"info","event":"  - Total eventos created: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.973181Z","level":"info","event":"🎉 google_scraper_eventos table creation completed!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.973279Z","level":"info","event":"👉 Check your Supabase dashboard to see the new table with georeference data","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:17.966606","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

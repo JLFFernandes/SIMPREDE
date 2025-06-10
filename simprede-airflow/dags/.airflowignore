@@ -36,4 +36,8 @@ __pycache__/
 **/data/
 **/logs/
 
+# Ignore any output directories for SQL queries
+**/sql_outputs/
+**/exports/
+
 # Only process Python files that are actual DAGs in the root dags directory

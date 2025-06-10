@@ -1,0 +1,19 @@
+{"timestamp":"2025-06-10T15:15:49.362188","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T15:15:49.362532","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T15:15:49.378373Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:49.382625Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:49.383743Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:49.399205Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:49.399299Z","level":"info","event":"✅ Using connection URI from setup task","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:49.399347Z","level":"info","event":"🔍 Executing 3 SQL queries...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:49.399419Z","level":"info","event":"📋 Executing query: schema_check","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:49.735236Z","level":"info","event":"✅ Query 'schema_check' returned 1 rows","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:49.736161Z","level":"info","event":"  Result: (13,)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:49.736457Z","level":"info","event":"📋 Executing query: articles_count","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:50.156648Z","level":"info","event":"✅ Query 'articles_count' returned 1 rows","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:50.156999Z","level":"info","event":"  Result: (8,)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:50.157603Z","level":"info","event":"📋 Executing query: insert_test_article","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:50.551063Z","level":"info","event":"✅ Query 'insert_test_article' executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:50.551729Z","level":"info","event":"✅ SQL query execution completed. Results stored in XCom.","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:15:50.551758","level":"info","event":"Done. Returned value was: {'schema_check': [(13,)], 'articles_count': [(8,)], 'insert_test_article': 'executed_successfully'}","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T15:15:50.552188","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975a69-5e6c-77a3-b326-0a249eb1e354'), task_id='execute_sql_queries', dag_id='sql_queries_pipeline', run_id='manual__2025-06-10T16:15:44.309272+01:00', try_number=1, map_index=-1, hostname='aa05a188031b', context_carrier=None, task=<Task(PythonOperator): execute_sql_queries>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=1, start_date=datetime.datetime(2025, 6, 10, 15, 15, 49, 314783, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

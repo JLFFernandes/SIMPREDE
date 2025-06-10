@@ -1,0 +1,33 @@
+{"timestamp":"2025-06-10T16:47:33.763504","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:47:33.763967","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:47:33.781733Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:33.785737Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:33.785831Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:33.805666Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:33.805788Z","level":"info","event":"🔧 Populating location_geom column with PostGIS geometry data...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.048182Z","level":"info","event":"📋 Step 1: Check PostGIS extension availability","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.125765Z","level":"info","event":"✅ PostGIS extension is available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.126706Z","level":"info","event":"📋 Step 2: Check events with coordinates","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.162843Z","level":"info","event":"📊 Current status:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.163036Z","level":"info","event":"  - Total events: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.163102Z","level":"info","event":"  - With coordinates: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.163153Z","level":"info","event":"  - With geometry: 0","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.163205Z","level":"info","event":"📋 Step 3: Updating location_geom column","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.163264Z","level":"info","event":"🔧 Using PostGIS POINT geometry format","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.288950Z","level":"info","event":"  ✅ Updated 253 events with location geometry","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.289109Z","level":"info","event":"📋 Step 4: Verify geometry population","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.371267Z","level":"info","event":"📊 Final status:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.371660Z","level":"info","event":"  - Total events: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.371851Z","level":"info","event":"  - With coordinates: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.371994Z","level":"info","event":"  - With geometry: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.372134Z","level":"info","event":"  - Complete geospatial data: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.372262Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.372390Z","level":"info","event":"📋 Sample location geometry data:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.409965Z","level":"info","event":"  - Aveiro/Ovar/ovar: (40.8779, -8.6184)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.410259Z","level":"info","event":"    Geometry: POINT(-8.618444241878478 40.87786861412894)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.410536Z","level":"info","event":"  - Beja/Beja/beja: (37.9625, -7.8559)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.410743Z","level":"info","event":"    Geometry: POINT(-7.855871787301851 37.96253982903255)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.410931Z","level":"info","event":"  - Portalegre/Avis/avis: (39.0715, -7.9030)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.411272Z","level":"info","event":"    Geometry: POINT(-7.903004506876113 39.071476843428286)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.411507Z","level":"info","event":"🎉 SUCCESS! All events with coordinates now have location geometry","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:47:34.447390","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

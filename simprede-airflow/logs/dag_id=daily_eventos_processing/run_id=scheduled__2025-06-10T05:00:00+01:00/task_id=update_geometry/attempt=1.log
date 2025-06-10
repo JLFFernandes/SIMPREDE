@@ -1,0 +1,9 @@
+{"timestamp":"2025-06-10T20:45:40.824002","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T20:45:40.824288","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/daily_eventos_processing_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T20:45:40.834031Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:40.850173Z","level":"info","event":"🔧 Updating location geometry for new eventos...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:41.208531Z","level":"info","event":"📊 Events without geometry: 26","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:41.249376Z","level":"info","event":"🔧 Using PostGIS POINT geometry format","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:41.341353Z","level":"info","event":"✅ Updated geometry for 26 events","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:41.343131","level":"info","event":"Done. Returned value was: {'events_updated': 26}","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T20:45:41.343655","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975b97-5993-7a79-914c-f79cfc7d364a'), task_id='update_geometry', dag_id='daily_eventos_processing', run_id='scheduled__2025-06-10T05:00:00+01:00', try_number=1, map_index=-1, hostname='2ce8e97552d8', context_carrier=None, task=<Task(PythonOperator): update_geometry>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=2, start_date=datetime.datetime(2025, 6, 10, 20, 45, 40, 783888, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

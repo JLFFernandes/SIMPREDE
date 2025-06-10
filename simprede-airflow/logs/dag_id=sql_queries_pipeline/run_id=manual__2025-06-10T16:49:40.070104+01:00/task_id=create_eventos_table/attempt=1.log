@@ -1,0 +1,41 @@
+{"timestamp":"2025-06-10T15:49:42.150795","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T15:49:42.151491","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T15:49:42.192216Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:42.202478Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:42.202759Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:42.277485Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:42.277863Z","level":"info","event":"🔄 Creating google_scraper_eventos table with georeference data...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:42.278050Z","level":"info","event":"📋 Executing: create_eventos_table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:42.670744Z","level":"info","event":"✅ create_eventos_table: executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:42.671036Z","level":"info","event":"📋 Executing: check_centroids_table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:43.039343Z","level":"info","event":"✅ check_centroids_table: [(1,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:43.040057Z","level":"info","event":"✅ public.centroids table found","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:43.040978Z","level":"info","event":"📋 Executing: check_staging_table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:43.443770Z","level":"info","event":"✅ check_staging_table: [(1,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:43.444230Z","level":"info","event":"✅ Source table google_scraper.artigos_filtrados_staging found","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:43.444437Z","level":"info","event":"📋 Executing: check_source_columns","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:43.890661Z","level":"info","event":"✅ check_source_columns: [('ID', 'text'), ('type', 'text'), ('subtype', 'text'), ('date', 'text'), ('year', 'integer'), ('month', 'integer'), ('day', 'integer'), ('hour', 'text'), ('georef', 'text'), ('district', 'text'), ('municipali', 'text'), ('parish', 'text'), ('DICOFREG', 'double precision'), ('source', 'text'), ('sourcedate', 'text'), ('sourcetype', 'text'), ('page', 'text'), ('fatalities', 'integer'), ('injured', 'integer'), ('evacuated', 'integer'), ('displaced', 'integer'), ('missing', 'integer'), ('relevance_score', 'integer'), ('evento_nome', 'text')]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:43.891468Z","level":"info","event":"📋 Executing: check_centroids_columns","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:44.273248Z","level":"info","event":"✅ check_centroids_columns: [('id', 'integer'), ('latitude', 'double precision'), ('longitude', 'double precision'), ('name', 'character varying'), ('region', 'character varying'), ('distrito', 'character varying'), ('concelho', 'character varying'), ('freguesia', 'character varying'), ('dicofre', 'character varying'), ('area_ha', 'double precision'), ('cluster_id', 'integer'), ('centroid_type', 'character varying'), ('created_at', 'timestamp without time zone'), ('updated_at', 'timestamp without time zone')]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:44.274294Z","level":"info","event":"📋 Executing: check_source_data_count","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:44.659733Z","level":"info","event":"✅ check_source_data_count: [(253,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:44.660197Z","level":"info","event":"📊 Source table has 253 records","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:44.660858Z","level":"info","event":"✅ Ready to process 253 records","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:44.661447Z","level":"info","event":"📋 Executing: clear_existing_eventos","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:45.058248Z","level":"info","event":"✅ clear_existing_eventos: executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:45.059234Z","level":"info","event":"📋 Executing: populate_eventos_table_with_georef","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:45.420589Z","level":"info","event":"❌ Direct SQL execution failed: record type has not been registered","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:45.420933Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:45.421277Z","level":"info","event":"❌ populate_eventos_table_with_georef failed: record type has not been registered","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:45.421422Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:45.421632Z","level":"info","event":"📋 Executing: verify_eventos_count","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:45.756661Z","level":"info","event":"✅ verify_eventos_count: [(0,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:45.757440Z","level":"info","event":"📋 Executing: sample_eventos_data","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:46.180060Z","level":"info","event":"✅ sample_eventos_data: executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:46.181100Z","level":"info","event":"📊 Eventos Table Creation Summary:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:46.181379Z","level":"info","event":"  - Centroids table available: ✅","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:46.181638Z","level":"info","event":"  - Staging table available: ✅","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:46.181892Z","level":"info","event":"  - Total eventos created: 0","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:46.202492Z","level":"info","event":"🎉 google_scraper_eventos table creation completed!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:46.202625Z","level":"info","event":"👉 Check your Supabase dashboard to see the new table with georeference data","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T15:49:46.183614","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
