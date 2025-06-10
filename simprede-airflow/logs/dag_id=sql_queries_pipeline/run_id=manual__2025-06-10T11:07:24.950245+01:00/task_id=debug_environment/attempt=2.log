@@ -1,0 +1,18 @@
+{"timestamp":"2025-06-10T10:11:38.485673","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T10:11:38.486006","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T10:11:38.515758Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.520909Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.521022Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.552725Z","level":"info","event":"🔍 Debugging environment variables and connections...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.553051Z","level":"info","event":"📋 Found 0 Airflow connection environment variables:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554336Z","level":"info","event":"❌ Target connection variable missing: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554428Z","level":"info","event":"📋 Database credential environment variables:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554486Z","level":"info","event":"  - DB_USER: postgres.kyrfsylobmsdjlrrpful","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554528Z","level":"info","event":"  - DB_PASSWORD: ✅ Set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554568Z","level":"info","event":"  - DB_HOST: aws-0-eu-west-3.pooler.supabase.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554616Z","level":"info","event":"  - DB_PORT: 6543","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554653Z","level":"info","event":"  - DB_NAME: postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554691Z","level":"info","event":"🔄 Attempting to query available connections...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554741Z","level":"info","event":"Note: Connection listing may not be available in this environment","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.554798Z","level":"info","event":"✅ Environment debugging completed","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T10:11:38.530519","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

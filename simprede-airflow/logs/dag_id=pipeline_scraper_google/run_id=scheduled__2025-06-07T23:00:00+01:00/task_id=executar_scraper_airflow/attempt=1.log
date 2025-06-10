@@ -1,0 +1,504 @@
+{"timestamp":"2025-06-08T09:22:44.412927","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-08T09:22:44.413400","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/google_scraper_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-08T09:22:44.443165Z","level":"info","event":"🚀 Starting Airflow-Optimized Google News Scraper","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.446548Z","level":"info","event":"📅 Using current date: 2025-06-08","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448037Z","level":"info","event":"📅 Using current date: 2025-06-08","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448152Z","level":"info","event":"📁 Ensured directories exist: ['/opt/airflow/scripts/google_scraper/data/raw/2025/06/08', '/opt/airflow/scripts/google_scraper/data/structured/2025/06/08', '/opt/airflow/scripts/google_scraper/data/processed/2025/06/08']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448233Z","level":"info","event":"📅 Scraper Parameters:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448298Z","level":"info","event":"  - Days: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448361Z","level":"info","event":"  - Specific date: None (use execution_date)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448423Z","level":"info","event":"  - Max execution time: 3600 seconds","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448484Z","level":"info","event":"  - Target date: 2025-06-08","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448544Z","level":"info","event":"📁 Output paths:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448604Z","level":"info","event":"  - intermediate_csv: /opt/airflow/scripts/google_scraper/data/raw/2025/06/08/intermediate_google_news_20250608.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448664Z","level":"info","event":"  - final_csv: /opt/airflow/scripts/google_scraper/data/raw/2025/06/08/google_news_articles_20250608.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448728Z","level":"info","event":"  - log_file: /opt/airflow/scripts/google_scraper/data/raw/2025/06/08/scraper_log_20250608.log","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448789Z","level":"info","event":"  - stats_json: /opt/airflow/scripts/google_scraper/data/raw/2025/06/08/scraper_stats_20250608.json","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448858Z","level":"info","event":"🔄 Running scraper command: python /opt/airflow/scripts/google_scraper/scraping/run_scraper_airflow.py --dias 1 --max_time 3600 --output_dir /opt/airflow/scripts/google_scraper/data/raw/2025/06/08 --date_str 20250608 --date 2025-06-08","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.448924Z","level":"info","event":"⏰ Waiting for scraper completion with timeout: 3600 seconds","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.951111Z","level":"info","event":"📋 A iniciar scraper do Google News (versão Airflow)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.951328Z","level":"info","event":"📋 Parâmetros: dias=1, date=2025-06-08, max_time=3600","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.951495Z","level":"info","event":"📋 Paths: output_dir=/opt/airflow/scripts/google_scraper/data/raw/2025/06/08, date_str=20250608","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.954730Z","level":"info","event":"📋 📁 A usar ficheiro de saída controlado: /opt/airflow/scripts/google_scraper/data/raw/2025/06/08/intermediate_google_news_20250608.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.954846Z","level":"info","event":"📋 ⏱️ Tempo máximo de execução: 3600 segundos","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.955135Z","level":"info","event":"📋 🚀 A iniciar função do scraper otimizada para Airflow","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.955219Z","level":"info","event":"📋 ⚙️  Parâmetros: days_back=1, search_date=2025-06-08, max_time=3600s","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.955305Z","level":"info","event":"📋 📁 Diretoria de saída: /opt/airflow/scripts/google_scraper/data/raw/2025/06/08","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.959020Z","level":"info","event":"📋 📅 String de data: 20250608","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.959328Z","level":"info","event":"📋 🚀 A iniciar o scraper do Google News...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.959401Z","level":"info","event":"📋 📅 Data: 2025-06-08, Dias anteriores: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.959489Z","level":"info","event":"📋 📁 Diretoria de saída controlada: /opt/airflow/scripts/google_scraper/data/raw/2025/06/08","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:44.959558Z","level":"info","event":"📋 📅 String de data: 20250608","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:45.144676Z","level":"info","event":"📋 📁 Diretoria do script: /opt/airflow/scripts/google_scraper/scraping","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:45.144945Z","level":"info","event":"📋 📁 Raiz do projeto: /opt/airflow","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:45.145045Z","level":"info","event":"📋 🔧 A carregar ficheiros de configuração...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.605488Z","level":"info","event":"📋 🔍 A procurar ficheiros de configuração em: ['/opt/airflow/config', '/opt/airflow/simprede-airflow/config', '/opt/airflow/scripts/google_scraper/scraping/../../../config', '/opt/airflow/scripts/google_scraper/scraping/../config', '/opt/airflow/scripts/google_scraper/scraping/config', '/opt/airflow/config', '/opt/airflow/simprede-airflow/config', 'config']","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.605985Z","level":"info","event":"📋 📁 A carregar palavras-chave de: /opt/airflow/scripts/google_scraper/scraping/../config/keywords.json","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.606686Z","level":"info","event":"📋 ✅ Carregadas 6 palavras-chave","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.606815Z","level":"info","event":"📋 📁 A carregar localizações de: /opt/airflow/scripts/google_scraper/scraping/../config/municipios_por_distrito.json","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.607788Z","level":"info","event":"📋 ✅ Carregadas 306 freguesias, 306 municípios, 29 distritos","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.607870Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.607947Z","level":"info","event":"📋 Configuração Carregada","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.608024Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.608118Z","level":"info","event":"📋   Palavras-chave: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.608188Z","level":"info","event":"📋   Total de Localizações: 641","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.608261Z","level":"info","event":"📋   Freguesias: 306","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.608328Z","level":"info","event":"📋   Municípios: 306","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.608394Z","level":"info","event":"📋   Distritos: 29","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.608459Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.639494Z","level":"info","event":"📋 🧹 Cache limpa","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.639718Z","level":"info","event":"📋 📅 A usar data específica: 2025-06-08","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.641068Z","level":"info","event":"📋 📁 Diretoria de saída: /opt/airflow/data/raw/2025/06/08","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.643071Z","level":"info","event":"📋 🔄 A gerar combinações palavra-chave-localização...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.643407Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.643825Z","level":"info","event":"📋 Combinações Geradas","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.643954Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644041Z","level":"info","event":"📋   Total de Combinações: 3846","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644116Z","level":"info","event":"📋   Palavras-chave: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644183Z","level":"info","event":"📋   Localizações: 641","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644253Z","level":"info","event":"📋   Palavras-chave Prioritárias: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644364Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644505Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644592Z","level":"info","event":"📋 Configuração de Processamento","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644714Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644815Z","level":"info","event":"📋   Total de Combinações: 3846","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.644955Z","level":"info","event":"📋   Tamanho do Lote: 300","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.645135Z","level":"info","event":"📋   Lotes Estimados: 13","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.645273Z","level":"info","event":"📋   Máx. Pedidos Concorrentes: 180","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.645360Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.645466Z","level":"info","event":"📋 🔗 A configurar sessão HTTP equilibrada...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:46.645565Z","level":"info","event":"📋 🔍 A verificar acesso ao feed RSS do Google News...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.281056Z","level":"info","event":"📋 ✅ Feed RSS do Google News está acessível","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.281224Z","level":"info","event":"📋 🚀 A iniciar processamento por lotes...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.281320Z","level":"info","event":"📋 ============================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.281397Z","level":"info","event":"📋 📦 LOTE 1/13 (0.0% completo)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.281469Z","level":"info","event":"📋 ⏱️  Tempo decorrido: 2.3s","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.281537Z","level":"info","event":"📋 📊 Combinações no lote: 290","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.281655Z","level":"info","event":"📋 ============================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.281726Z","level":"info","event":"📋 📢 Pausa (3.4s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.283838Z","level":"info","event":"📋 📢 Pausa (2.3s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.285825Z","level":"info","event":"📋 📢 Pausa (2.5s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.594401Z","level":"info","event":"📋 🔎 tempestade/machico: 39","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.689213Z","level":"info","event":"📋 🔎 granizo/Gouveia: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.702633Z","level":"info","event":"📋 🔎 tempestade/oleiros: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.725849Z","level":"info","event":"📋 🔎 inundação/torre de moncorvo: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.735692Z","level":"info","event":"📋 🔎 granizo/Mora: 7","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.739087Z","level":"info","event":"📋 🔎 granizo/Reguengos de Monsaraz: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.740258Z","level":"info","event":"📋 🔎 tempestade/murtosa: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.751025Z","level":"info","event":"📋 🔎 cheias/Felgueiras: 25","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.752861Z","level":"info","event":"📋 🔎 inundação/sátão: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.764827Z","level":"info","event":"📋 🔎 chuva/alfândega da fé: 30","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.788243Z","level":"info","event":"📋 🔎 tempestade/Vila Flor: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.794092Z","level":"info","event":"📋 🔎 inundação/Sesimbra: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.809737Z","level":"info","event":"📋 🔎 granizo/beja: 35","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.823365Z","level":"info","event":"📋 🔎 tempestade/abrantes: 33","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.849712Z","level":"info","event":"📋 🔎 chuva/Alcácer do Sal: 52","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.860719Z","level":"info","event":"📋 🔎 tempestade/Miranda do Corvo: 21","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.875862Z","level":"info","event":"📋 🔎 tempestade/mira: 37","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.885016Z","level":"info","event":"📋 🔎 chuva/Vila Nova de Poiares: 22","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.891078Z","level":"info","event":"📋 🔎 inundação/grândola: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.914749Z","level":"info","event":"📋 🔎 tempestade/guimarães: 55","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.937531Z","level":"info","event":"📋 🔎 cheias/paredes de coura: 46","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.964955Z","level":"info","event":"📋 🔎 tempestade/nordeste: 60","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.981979Z","level":"info","event":"📋 🔎 inundação/Odivelas: 40","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:47.998883Z","level":"info","event":"📋 🔎 inundação/loures: 43","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.021851Z","level":"info","event":"📋 🔎 chuva/Cascais: 61","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.051489Z","level":"info","event":"📋 🔎 inundação/Fronteira: 59","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.068671Z","level":"info","event":"📋 🔎 cheias/Tábua: 32","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.086675Z","level":"info","event":"📋 🔎 inundação/Beja: 39","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.095656Z","level":"info","event":"📋 🔎 tempestade/felgueiras: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.104386Z","level":"info","event":"📋 🔎 inundação/Palmela: 18","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.125566Z","level":"info","event":"📋 🔎 inundação/matosinhos: 47","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.156373Z","level":"info","event":"📋 🔎 neve/Porto: 70","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.185646Z","level":"info","event":"📋 🔎 cheias/Lagos: 68","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.205354Z","level":"info","event":"📋 🔎 cheias/moura: 45","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.229612Z","level":"info","event":"📋 🔎 inundação/Ilha Terceira: 63","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.235942Z","level":"info","event":"📋 🔎 chuva/alpiarça: 11","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.257537Z","level":"info","event":"📋 🔎 chuva/Ilha Graciosa: 57","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.296067Z","level":"info","event":"📋 🔎 chuva/Mafra: 100","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.324463Z","level":"info","event":"📋 🔎 cheias/Amadora: 73","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.350526Z","level":"info","event":"📋 🔎 chuva/Tomar: 69","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.372682Z","level":"info","event":"📋 🔎 chuva/Ponte de Sor: 57","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.391634Z","level":"info","event":"📋 🔎 inundação/albergaria-a-velha: 49","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.418050Z","level":"info","event":"📋 🔎 chuva/Moimenta da Beira: 59","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.427085Z","level":"info","event":"📋 🔎 chuva/Ourém: 21","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.438933Z","level":"info","event":"📋 🔎 cheias/oliveira do bairro: 29","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.466430Z","level":"info","event":"📋 🔎 chuva/évora: 68","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.488519Z","level":"info","event":"📋 🔎 tempestade/Setúbal: 52","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.500243Z","level":"info","event":"📋 🔎 granizo/portimão: 24","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.517163Z","level":"info","event":"📋 🔎 inundação/vila nova da barquinha: 45","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.523496Z","level":"info","event":"📋 🔎 neve/Silves: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.537269Z","level":"info","event":"📋 🔎 cheias/tavira: 36","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.688333Z","level":"info","event":"📋 🔎 chuva/são pedro do sul: 74","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.692990Z","level":"info","event":"📋 🔎 tempestade/Vimioso: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.695951Z","level":"info","event":"📋 🔎 granizo/anadia: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.712123Z","level":"info","event":"📋 🔎 inundação/ponte de lima: 43","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.718181Z","level":"info","event":"📋 🔎 tempestade/castro marim: 13","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.720381Z","level":"info","event":"📋 🔎 inundação/fornos de algodres: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.733722Z","level":"info","event":"📋 🔎 chuva/miranda do corvo: 36","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.744489Z","level":"info","event":"📋 🔎 tempestade/Horta: 27","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.746256Z","level":"info","event":"📋 🔎 inundação/Mangualde: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.857269Z","level":"info","event":"📋 🔎 tempestade/Santa Cruz: 52","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.874504Z","level":"info","event":"📋 🔎 inundação/tavira: 44","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.881627Z","level":"info","event":"📋 🔎 inundação/Ilha do Pico: 16","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.894418Z","level":"info","event":"📋 🔎 inundação/anadia: 34","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.911558Z","level":"info","event":"📋 🔎 inundação/Ponte da Barca: 43","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.944574Z","level":"info","event":"📋 🔎 tempestade/Porto: 88","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.992129Z","level":"info","event":"📋 🔎 inundação/boticas: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.994860Z","level":"info","event":"📋 🔎 inundação/barrancos: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:48.997121Z","level":"info","event":"📋 🔎 granizo/Santiago do Cacém: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.019799Z","level":"info","event":"📋 🔎 chuva/Crato: 60","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.026667Z","level":"info","event":"📋 🔎 neve/Celorico de Basto: 16","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.030948Z","level":"info","event":"📋 🔎 tempestade/vila nova de paiva: 9","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.051675Z","level":"info","event":"📋 🔎 chuva/Castro Marim: 55","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.055555Z","level":"info","event":"📋 🔎 chuva/vimioso: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.059136Z","level":"info","event":"📋 🔎 granizo/murça: 7","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.066349Z","level":"info","event":"📋 🔎 inundação/odemira: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.081477Z","level":"info","event":"📋 🔎 tempestade/soure: 41","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.099488Z","level":"info","event":"📋 🔎 chuva/Lousada: 46","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.105889Z","level":"info","event":"📋 🔎 tempestade/vila franca do campo: 14","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.127948Z","level":"info","event":"📋 🔎 tempestade/Valença: 52","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.136927Z","level":"info","event":"📋 🔎 inundação/condeixa-a-nova: 21","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.145489Z","level":"info","event":"📋 🔎 chuva/castro verde: 21","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.159600Z","level":"info","event":"📋 🔎 chuva/Vila Flor: 37","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.188037Z","level":"info","event":"📋 🔎 chuva/vila verde: 76","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:49.217913Z","level":"info","event":"📋 🔎 chuva/Gouveia: 79","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:50.222727Z","level":"info","event":"📋 🔎 neve/Vila Flor: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:50.574139Z","level":"info","event":"📋 🔎 cheias/Guarda: 77","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.204440Z","level":"info","event":"📋 🔎 neve/castelo branco: 43","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.254045Z","level":"info","event":"📋 📢 Pausa (1.7s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.257073Z","level":"info","event":"📋 📢 Pausa (2.3s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.257302Z","level":"info","event":"📋 📢 Pausa (3.2s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.257411Z","level":"info","event":"📋 📢 Pausa (3.5s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.625906Z","level":"info","event":"📋 🔎 inundação/carrazeda de ansiães: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.629323Z","level":"info","event":"📋 🔎 granizo/serpa: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.637773Z","level":"info","event":"📋 🔎 inundação/Cabeceiras de Basto: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.640222Z","level":"info","event":"📋 🔎 tempestade/Almodôvar: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.647103Z","level":"info","event":"📋 🔎 inundação/Arronches: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.650347Z","level":"info","event":"📋 🔎 granizo/Alfândega da Fé: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.656464Z","level":"info","event":"📋 🔎 neve/Mortágua: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.801771Z","level":"info","event":"📋 🔎 inundação/gouveia: 25","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.815720Z","level":"info","event":"📋 🔎 tempestade/Moimenta da Beira: 27","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.825460Z","level":"info","event":"📋 🔎 cheias/terras de bouro: 20","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.836776Z","level":"info","event":"📋 🔎 tempestade/moimenta da beira: 27","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.853121Z","level":"info","event":"📋 🔎 inundação/vila do conde: 39","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.856659Z","level":"info","event":"📋 🔎 cheias/ansião: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.858846Z","level":"info","event":"📋 🔎 granizo/Estremoz: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.863255Z","level":"info","event":"📋 🔎 neve/Mangualde: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.875740Z","level":"info","event":"📋 🔎 granizo/Torres Vedras: 20","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.889874Z","level":"info","event":"📋 🔎 tempestade/ovar: 36","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.910545Z","level":"info","event":"📋 🔎 inundação/valença: 53","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.916589Z","level":"info","event":"📋 🔎 cheias/Monforte: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.918989Z","level":"info","event":"📋 🔎 chuva/Alvaiázere: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.928391Z","level":"info","event":"📋 🔎 neve/Paredes de Coura: 24","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.946269Z","level":"info","event":"📋 🔎 chuva/Tavira: 47","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.963206Z","level":"info","event":"📋 🔎 cheias/Ponta Delgada: 44","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.988121Z","level":"info","event":"📋 🔎 tempestade/Guarda: 63","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:51.997880Z","level":"info","event":"📋 🔎 cheias/avis: 22","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.002666Z","level":"info","event":"📋 🔎 granizo/odivelas: 9","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.018716Z","level":"info","event":"📋 🔎 neve/Olhão: 41","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.036990Z","level":"info","event":"📋 🔎 cheias/figueira da foz: 48","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.047489Z","level":"info","event":"📋 🔎 tempestade/vila nova de famalicão: 25","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.051073Z","level":"info","event":"📋 🔎 granizo/Ilha do Faial: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.054884Z","level":"info","event":"📋 🔎 inundação/góis: 7","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.061981Z","level":"info","event":"📋 🔎 neve/Mirandela: 15","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.078059Z","level":"info","event":"📋 🔎 inundação/Albergaria-a-Velha: 41","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.103971Z","level":"info","event":"📋 🔎 chuva/albergaria-a-velha: 62","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.125216Z","level":"info","event":"📋 🔎 tempestade/Santarém: 48","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.134851Z","level":"info","event":"📋 🔎 chuva/Aguiar da Beira: 24","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.152864Z","level":"info","event":"📋 🔎 chuva/Palmela: 42","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.166294Z","level":"info","event":"📋 🔎 cheias/santana: 33","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.237952Z","level":"info","event":"📋 🔎 granizo/aljustrel: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.282970Z","level":"info","event":"📋 🔎 chuva/vila nova de famalicão: 58","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.291943Z","level":"info","event":"📋 🔎 neve/Ilha do Faial: 19","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.437744Z","level":"info","event":"📋 🔎 chuva/Oliveira de Azeméis: 50","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.466713Z","level":"info","event":"📋 🔎 neve/nordeste: 64","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.469856Z","level":"info","event":"📋 🔎 inundação/Vouzela: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.471981Z","level":"info","event":"📋 🔎 inundação/celorico de basto: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.476357Z","level":"info","event":"📋 🔎 tempestade/Vila Nova de Paiva: 9","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.483831Z","level":"info","event":"📋 🔎 chuva/Ílhavo: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.488887Z","level":"info","event":"📋 🔎 tempestade/redondo: 10","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.601475Z","level":"info","event":"📋 🔎 tempestade/Lousã: 19","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.617584Z","level":"info","event":"📋 🔎 granizo/Portalegre: 39","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.620817Z","level":"info","event":"📋 🔎 inundação/mortágua: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.639364Z","level":"info","event":"📋 🔎 cheias/águeda: 48","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.644793Z","level":"info","event":"📋 🔎 chuva/oleiros: 10","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.650024Z","level":"info","event":"📋 🔎 neve/oliveira de frades: 11","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.653659Z","level":"info","event":"📋 🔎 inundação/Paredes de Coura: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.656838Z","level":"info","event":"📋 🔎 tempestade/vila nova de foz côa: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.680023Z","level":"info","event":"📋 🔎 chuva/abrantes: 62","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.683797Z","level":"info","event":"📋 🔎 inundação/Sabrosa: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.776083Z","level":"info","event":"📋 🔎 inundação/Velas: 10","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.781867Z","level":"info","event":"📋 🔎 chuva/Cadaval: 11","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.785270Z","level":"info","event":"📋 🔎 inundação/moimenta da beira: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.803534Z","level":"info","event":"📋 🔎 tempestade/Montemor-o-Novo: 32","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.823761Z","level":"info","event":"📋 🔎 inundação/Portalegre: 49","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.842555Z","level":"info","event":"📋 🔎 granizo/coimbra: 47","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.847452Z","level":"info","event":"📋 🔎 inundação/Santa Comba Dão: 7","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.852150Z","level":"info","event":"📋 🔎 inundação/Ourique: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.859474Z","level":"info","event":"📋 🔎 inundação/borba: 15","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.868199Z","level":"info","event":"📋 🔎 neve/Baião: 20","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.871804Z","level":"info","event":"📋 🔎 inundação/Moimenta da Beira: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.880482Z","level":"info","event":"📋 🔎 inundação/serpa: 20","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.891568Z","level":"info","event":"📋 🔎 cheias/silves: 26","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.905162Z","level":"info","event":"📋 🔎 cheias/Ovar: 35","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.928542Z","level":"info","event":"📋 🔎 tempestade/Olhão: 62","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.948462Z","level":"info","event":"📋 🔎 inundação/Coruche: 50","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.963272Z","level":"info","event":"📋 🔎 cheias/Castelo de Vide: 37","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.979336Z","level":"info","event":"📋 🔎 granizo/portalegre: 39","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:52.995930Z","level":"info","event":"📋 🔎 neve/Rio Maior: 42","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:53.015771Z","level":"info","event":"📋 🔎 neve/Oeiras: 53","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:53.038595Z","level":"info","event":"📋 🔎 chuva/Setúbal: 58","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:53.048103Z","level":"info","event":"📋 🔎 chuva/portel: 21","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:53.071482Z","level":"info","event":"📋 🔎 chuva/Beja: 61","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:53.077493Z","level":"info","event":"📋 🔎 granizo/Mirandela: 11","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:53.668451Z","level":"info","event":"📋 🔎 chuva/alcoutim: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:54.022563Z","level":"info","event":"📋 🔎 tempestade/Coruche: 16","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:54.715318Z","level":"info","event":"📋 🔎 granizo/Castro Daire: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.080318Z","level":"info","event":"📋 🔎 tempestade/almada: 31","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.103745Z","level":"info","event":"📋 📢 Pausa (3.2s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.109287Z","level":"info","event":"📋 📢 Pausa (2.2s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.388861Z","level":"info","event":"📋 🔎 tempestade/Estarreja: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.400420Z","level":"info","event":"📋 🔎 tempestade/chamusca: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.423035Z","level":"info","event":"📋 🔎 inundação/mértola: 10","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.431111Z","level":"info","event":"📋 🔎 cheias/Castro Daire: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.440370Z","level":"info","event":"📋 🔎 chuva/ílhavo: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.453713Z","level":"info","event":"📋 🔎 neve/Miranda do Douro: 28","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.467126Z","level":"info","event":"📋 🔎 inundação/porto de mós: 31","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.483693Z","level":"info","event":"📋 🔎 neve/Proença-a-Nova: 31","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.492164Z","level":"info","event":"📋 🔎 chuva/castanheira de pêra: 16","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.500125Z","level":"info","event":"📋 🔎 granizo/ferreira do zêzere: 15","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.507777Z","level":"info","event":"📋 🔎 tempestade/Trofa: 15","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.520165Z","level":"info","event":"📋 🔎 cheias/mira: 28","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.541667Z","level":"info","event":"📋 🔎 chuva/Alcobaça: 49","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.547480Z","level":"info","event":"📋 🔎 chuva/alcochete: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.552729Z","level":"info","event":"📋 🔎 cheias/oliveira de frades: 9","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.562317Z","level":"info","event":"📋 🔎 tempestade/Monção: 21","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.577409Z","level":"info","event":"📋 🔎 granizo/Ilha de Porto Santo: 28","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.605167Z","level":"info","event":"📋 🔎 tempestade/Mora: 54","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.615461Z","level":"info","event":"📋 🔎 cheias/Ilha das Flores: 19","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.636616Z","level":"info","event":"📋 🔎 chuva/Óbidos: 52","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.639893Z","level":"info","event":"📋 🔎 inundação/freixo de espada à cinta: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.645565Z","level":"info","event":"📋 🔎 tempestade/aljezur: 11","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.652425Z","level":"info","event":"📋 🔎 inundação/Santiago do Cacém: 14","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.673833Z","level":"info","event":"📋 🔎 chuva/Ponta do Sol: 58","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.696621Z","level":"info","event":"📋 🔎 inundação/Tomar: 59","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.716032Z","level":"info","event":"📋 🔎 chuva/Salvaterra de Magos: 41","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.728221Z","level":"info","event":"📋 🔎 tempestade/Pombal: 38","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.734884Z","level":"info","event":"📋 🔎 cheias/Crato: 13","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.762959Z","level":"info","event":"📋 🔎 chuva/São João da Madeira: 77","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.786195Z","level":"info","event":"📋 🔎 tempestade/Faro: 56","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.810122Z","level":"info","event":"📋 🔎 inundação/santa cruz: 60","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.833007Z","level":"info","event":"📋 🔎 tempestade/Faro: 56","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.854739Z","level":"info","event":"📋 🔎 chuva/Castelo de Vide: 55","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.873747Z","level":"info","event":"📋 🔎 inundação/Aveiro: 49","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.904730Z","level":"info","event":"📋 🔎 cheias/nordeste: 77","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.934060Z","level":"info","event":"📋 🔎 chuva/Porto Moniz: 79","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.954102Z","level":"info","event":"📋 🔎 inundação/Cascais: 42","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:55.971017Z","level":"info","event":"📋 🔎 chuva/redondo: 38","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.005036Z","level":"info","event":"📋 🔎 tempestade/Rio Maior: 76","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.023033Z","level":"info","event":"📋 🔎 cheias/Mêda: 42","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.036271Z","level":"info","event":"📋 🔎 tempestade/Sesimbra: 28","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.057243Z","level":"info","event":"📋 🔎 tempestade/maia: 52","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.077831Z","level":"info","event":"📋 🔎 chuva/Monchique: 45","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.096569Z","level":"info","event":"📋 🔎 tempestade/Mira: 48","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.115290Z","level":"info","event":"📋 🔎 chuva/Miranda do Douro: 48","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.118703Z","level":"info","event":"📋 🔎 granizo/vila do bispo: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.131611Z","level":"info","event":"📋 🔎 inundação/Alcácer do Sal: 31","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.138849Z","level":"info","event":"📋 🔎 tempestade/Lousada: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.153445Z","level":"info","event":"📋 🔎 inundação/pedrógão grande: 27","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.156909Z","level":"info","event":"📋 🔎 granizo/Pampilhosa da Serra: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.161178Z","level":"info","event":"📋 🔎 chuva/sernancelhe: 7","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.199649Z","level":"info","event":"📋 🔎 tempestade/Setúbal: 52","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.309469Z","level":"info","event":"📋 🔎 tempestade/Vouzela: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.317817Z","level":"info","event":"📋 🔎 chuva/Arraiolos: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.332207Z","level":"info","event":"📋 🔎 neve/Povoação: 9","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.355035Z","level":"info","event":"📋 🔎 tempestade/Albergaria-a-Velha: 40","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.367339Z","level":"info","event":"📋 🔎 cheias/Gondomar: 30","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.372740Z","level":"info","event":"📋 🔎 cheias/aguiar da beira: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.381891Z","level":"info","event":"📋 🔎 tempestade/resende: 18","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.384782Z","level":"info","event":"📋 🔎 tempestade/sátão: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.389032Z","level":"info","event":"📋 🔎 granizo/vale de cambra: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.403658Z","level":"info","event":"📋 🔎 granizo/Ponta Delgada: 32","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.423450Z","level":"info","event":"📋 🔎 chuva/Montijo: 40","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.444704Z","level":"info","event":"📋 🔎 inundação/albufeira: 48","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.451191Z","level":"info","event":"📋 🔎 tempestade/tarouca: 10","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.457539Z","level":"info","event":"📋 🔎 tempestade/Valongo: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.477011Z","level":"info","event":"📋 🔎 chuva/tavira: 47","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.496049Z","level":"info","event":"📋 🔎 tempestade/Sines: 43","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.502877Z","level":"info","event":"📋 🔎 tempestade/alcobaça: 13","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.527594Z","level":"info","event":"📋 🔎 neve/Braga: 64","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.548390Z","level":"info","event":"📋 🔎 tempestade/vila nova de gaia: 48","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.571196Z","level":"info","event":"📋 🔎 chuva/castro marim: 55","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.593448Z","level":"info","event":"📋 🔎 neve/Castelo Branco: 43","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.599410Z","level":"info","event":"📋 🔎 cheias/Cabeceiras de Basto: 9","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.623835Z","level":"info","event":"📋 🔎 chuva/Torres Novas: 64","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.643476Z","level":"info","event":"📋 🔎 chuva/gondomar: 48","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.664624Z","level":"info","event":"📋 🔎 inundação/Lagos: 54","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.689565Z","level":"info","event":"📋 🔎 chuva/Loures: 63","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.698730Z","level":"info","event":"📋 🔎 cheias/Fafe: 19","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.707406Z","level":"info","event":"📋 🔎 granizo/tomar: 18","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.717313Z","level":"info","event":"📋 🔎 cheias/vila velha de ródão: 21","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.741464Z","level":"info","event":"📋 🔎 tempestade/são vicente: 58","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.758627Z","level":"info","event":"📋 🔎 neve/Vila Pouca de Aguiar: 41","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.788170Z","level":"info","event":"📋 🔎 chuva/são joão da madeira: 77","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:22:56.795807Z","level":"info","event":"📋 🔎 inundação/baião: 13","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:26.835454Z","level":"info","event":"📋 📢 Pausa (2.6s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:27.567905Z","level":"info","event":"📋 📢 Pausa (2.9s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:27.712005Z","level":"info","event":"📋 🔎 chuva/ovar: 64","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:27.736028Z","level":"info","event":"📋 🔎 chuva/Paços de Ferreira: 62","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.545896Z","level":"info","event":"📋 🔎 tempestade/Moura: 18","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.635511Z","level":"info","event":"📋 🔎 neve/Murtosa: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.663954Z","level":"info","event":"📋 🔎 cheias/Leiria: 45","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.668923Z","level":"info","event":"📋 🔎 cheias/são roque do pico: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.687266Z","level":"info","event":"📋 🔎 granizo/câmara de lobos: 20","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.695443Z","level":"info","event":"📋 🔎 granizo/Ponte de Lima: 11","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.699542Z","level":"info","event":"📋 🔎 neve/Chamusca: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.747162Z","level":"info","event":"📋 🔎 chuva/Vila da Praia da Vitória: 20","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.764785Z","level":"info","event":"📋 🔎 cheias/mafra: 34","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.862955Z","level":"info","event":"📋 🔎 tempestade/monforte: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.929659Z","level":"info","event":"📋 🔎 chuva/Fundão: 78","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:30.957562Z","level":"info","event":"📋 🔎 inundação/maia: 56","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:31.030411Z","level":"info","event":"📋 🔎 chuva/trofa: 75","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:34.641673Z","level":"info","event":"📋   Lote: 2 artigos","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.498031Z","level":"info","event":"📋 ✅ Guardados 2 artigos em /opt/airflow/data/raw/2025/06/08/intermediate_google_news_20250608.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.498237Z","level":"info","event":"📋 ✅ Ficheiro final criado: /opt/airflow/data/raw/2025/06/08/google_news_articles_20250608.csv","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.498382Z","level":"info","event":"📋 ✅ Guardados 2 artigos do lote 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.498492Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.498595Z","level":"info","event":"📋 Resultados do Lote 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.498692Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.498785Z","level":"info","event":"📋   Artigos Encontrados: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.498878Z","level":"info","event":"📋   Tempo de Processamento: 947.4s","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.498968Z","level":"info","event":"📋   Total de Artigos Até Agora: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499056Z","level":"info","event":"📋   Média por Combinação: 0.01","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499143Z","level":"info","event":"📋 ==================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499232Z","level":"info","event":"📋 ⏳ 0.3s | Tempo restante estimado: 189m32s","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499319Z","level":"info","event":"📋 ============================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499405Z","level":"info","event":"📋 📦 LOTE 2/13 (7.8% completo)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499492Z","level":"info","event":"📋 ⏱️  Tempo decorrido: 950.0s","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499645Z","level":"info","event":"📋 📊 Combinações no lote: 307","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499761Z","level":"info","event":"📋 ============================================================","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499879Z","level":"info","event":"📋 📢 Pausa (2.3s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.499966Z","level":"info","event":"📋 📢 Pausa (3.8s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.500054Z","level":"info","event":"📋 📢 Pausa (3.4s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.500141Z","level":"info","event":"📋 📢 Pausa (3.8s)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.500228Z","level":"info","event":"📋 🔎 cheias/cabeceiras de basto: 9","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.500313Z","level":"info","event":"📋 🔎 granizo/avis: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.500413Z","level":"info","event":"📋 🔎 neve/Bombarral: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.500508Z","level":"info","event":"📋 🔎 cheias/bombarral: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.500598Z","level":"info","event":"📋 🔎 neve/trofa: 28","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.500687Z","level":"info","event":"📋 🔎 granizo/Ilha de São Miguel: 23","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.500774Z","level":"info","event":"📋 🔎 neve/Moura: 20","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.570666Z","level":"info","event":"📋 🔎 cheias/Torres Vedras: 41","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.575921Z","level":"info","event":"📋 🔎 neve/Salvaterra de Magos: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.600878Z","level":"info","event":"📋 🔎 neve/corvo: 62","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.607548Z","level":"info","event":"📋 🔎 granizo/Almeirim: 10","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.629606Z","level":"info","event":"📋 🔎 neve/cascais: 51","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.660049Z","level":"info","event":"📋 🔎 cheias/Braga: 75","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.688601Z","level":"info","event":"📋 🔎 neve/Fundão: 66","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.696038Z","level":"info","event":"📋 🔎 granizo/Fundão: 10","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.700271Z","level":"info","event":"📋 🔎 neve/valongo: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.708985Z","level":"info","event":"📋 🔎 neve/Mourão: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.713001Z","level":"info","event":"📋 🔎 cheias/vidigueira: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.718944Z","level":"info","event":"📋 🔎 cheias/ribeira de pena: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.724903Z","level":"info","event":"📋 🔎 cheias/Murça: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.743787Z","level":"info","event":"📋 🔎 neve/faro: 43","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.755739Z","level":"info","event":"📋 🔎 cheias/Ourique: 21","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.761018Z","level":"info","event":"📋 🔎 cheias/penela: 7","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.764167Z","level":"info","event":"📋 🔎 neve/grândola: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.787536Z","level":"info","event":"📋 🔎 cheias/Aveiro: 58","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.793298Z","level":"info","event":"📋 🔎 cheias/tarouca: 7","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.796283Z","level":"info","event":"📋 🔎 neve/Grândola: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.807728Z","level":"info","event":"📋 🔎 granizo/Valença: 19","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.817264Z","level":"info","event":"📋 🔎 neve/arganil: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.822561Z","level":"info","event":"📋 🔎 granizo/campo maior: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.842847Z","level":"info","event":"📋 🔎 cheias/évora: 50","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.862939Z","level":"info","event":"📋 🔎 neve/Évora: 48","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.867637Z","level":"info","event":"📋 🔎 granizo/castanheira de pêra: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.876751Z","level":"info","event":"📋 🔎 cheias/arronches: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.888393Z","level":"info","event":"📋 🔎 cheias/Golegã: 26","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.898224Z","level":"info","event":"📋 🔎 cheias/azambuja: 20","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.924065Z","level":"info","event":"📋 🔎 cheias/setúbal: 60","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.932999Z","level":"info","event":"📋 🔎 neve/Valença: 18","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.938603Z","level":"info","event":"📋 🔎 neve/silves: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.961371Z","level":"info","event":"📋 🔎 cheias/Aveiro: 58","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.965983Z","level":"info","event":"📋 🔎 granizo/estremoz: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.984483Z","level":"info","event":"📋 🔎 cheias/vila nova da barquinha: 40","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.987851Z","level":"info","event":"📋 🔎 granizo/Oliveira de Azeméis: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.991508Z","level":"info","event":"📋 🔎 granizo/Vizela: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:35.995395Z","level":"info","event":"📋 🔎 neve/Alter do Chão: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.004070Z","level":"info","event":"📋 🔎 neve/seixal: 18","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.011594Z","level":"info","event":"📋 🔎 granizo/vila nova de gaia: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.022979Z","level":"info","event":"📋 🔎 granizo/rio maior: 25","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.044150Z","level":"info","event":"📋 🔎 cheias/Condeixa-a-Nova: 47","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.048883Z","level":"info","event":"📋 🔎 neve/Alvaiázere: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.052204Z","level":"info","event":"📋 🔎 granizo/penafiel: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.068419Z","level":"info","event":"📋 🔎 neve/vila real de santo antónio: 36","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.075833Z","level":"info","event":"📋 🔎 cheias/Alfândega da Fé: 11","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.077550Z","level":"info","event":"📋 2025-06-08 10:38:36,077 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.077787Z","level":"info","event":"📋 2025-06-08 10:38:36,077 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.081287Z","level":"info","event":"📋 2025-06-08 10:38:36,077 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.081412Z","level":"info","event":"📋 2025-06-08 10:38:36,077 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.086183Z","level":"info","event":"📋 🔎 neve/cadaval: 16","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.087242Z","level":"info","event":"📋 2025-06-08 10:38:36,087 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.097911Z","level":"info","event":"📋 2025-06-08 10:38:36,097 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.124336Z","level":"info","event":"📋 2025-06-08 10:38:36,124 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.140389Z","level":"info","event":"📋 2025-06-08 10:38:36,140 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.144934Z","level":"info","event":"📋 2025-06-08 10:38:36,144 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.165113Z","level":"info","event":"📋 🔎 neve/vouzela: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.170336Z","level":"info","event":"📋 🔎 neve/sernancelhe: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.178156Z","level":"info","event":"📋 🔎 granizo/Crato: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.187336Z","level":"info","event":"📋 🔎 granizo/Melgaço: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.191209Z","level":"info","event":"📋 🔎 granizo/Paredes de Coura: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.198909Z","level":"info","event":"📋 2025-06-08 10:38:36,198 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.205830Z","level":"info","event":"📋 🔎 granizo/vinhais: 10","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.208787Z","level":"info","event":"📋 2025-06-08 10:38:36,208 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.240656Z","level":"info","event":"📋 🔎 neve/Aveiro: 46","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.244892Z","level":"info","event":"📋 🔎 neve/alandroal: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.249512Z","level":"info","event":"📋 🔎 cheias/penamacor: 2","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.261956Z","level":"info","event":"📋 🔎 cheias/Ferreira do Zêzere: 27","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.274477Z","level":"info","event":"📋 🔎 cheias/vila flor: 27","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.283085Z","level":"info","event":"📋 🔎 cheias/vila de rei: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.292158Z","level":"info","event":"📋 🔎 neve/almada: 18","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.292534Z","level":"info","event":"📋 2025-06-08 10:38:36,292 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.297019Z","level":"info","event":"📋 🔎 cheias/mesão frio: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.297288Z","level":"info","event":"📋 2025-06-08 10:38:36,297 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.301427Z","level":"info","event":"📋 🔎 cheias/Aguiar da Beira: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.308286Z","level":"info","event":"📋 🔎 cheias/Lajes das Flores: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.315396Z","level":"info","event":"📋 🔎 cheias/trancoso: 13","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.338437Z","level":"info","event":"📋 🔎 neve/melgaço: 50","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.339466Z","level":"info","event":"📋 2025-06-08 10:38:36,338 - run_scraper_airflow - WARNING - Limite de taxa detetado para news.google.com","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.351321Z","level":"info","event":"📋 🔎 cheias/vila do bispo: 30","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.369598Z","level":"info","event":"📋 🔎 granizo/bragança: 41","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.374933Z","level":"info","event":"📋 🔎 cheias/Belmonte: 3","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.380199Z","level":"info","event":"📋 🔎 cheias/sardoal: 7","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.397264Z","level":"info","event":"📋 🔎 granizo/Évora: 40","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.403426Z","level":"info","event":"📋 🔎 granizo/monção: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.425393Z","level":"info","event":"📋 🔎 cheias/Ilha de Porto Santo: 57","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.432018Z","level":"info","event":"📋 🔎 neve/Sernancelhe: 8","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.436175Z","level":"info","event":"📋 🔎 granizo/vila viçosa: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.465531Z","level":"info","event":"📋 🔎 cheias/Vila Real: 74","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.475572Z","level":"info","event":"📋 🔎 cheias/Pampilhosa da Serra: 19","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.479595Z","level":"info","event":"📋 🔎 granizo/Castanheira de Pêra: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.484414Z","level":"info","event":"📋 🔎 granizo/Ponte de Sor: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.500860Z","level":"info","event":"📋 🔎 cheias/Benavente: 38","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.505913Z","level":"info","event":"📋 🔎 neve/Tábua: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.526937Z","level":"info","event":"📋 🔎 neve/Fronteira: 51","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:36.541597Z","level":"info","event":"📋 🔎 neve/marco de canaveses: 26","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:37.522250Z","level":"info","event":"📋 🔎 granizo/Miranda do Douro: 5","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:38.790053Z","level":"info","event":"📋 🔎 neve/sabrosa: 4","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.107322Z","level":"info","event":"📋 🔎 cheias/Vila Nova de Poiares: 6","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.138623Z","level":"info","event":"📋 🔎 neve/mafra: 45","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.169502Z","level":"info","event":"📋 🔎 neve/mogadouro: 17","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.251394Z","level":"info","event":"📋 🔎 neve/Peso da Régua: 11","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.320738Z","level":"info","event":"📋 🔎 cheias/Alpiarça: 24","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.388404Z","level":"info","event":"📋 🔎 neve/Manteigas: 46","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.553674Z","level":"info","event":"📋 🔎 neve/Vila Nova de Paiva: 21","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.611279Z","level":"info","event":"📋 🔎 neve/batalha: 49","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.614949Z","level":"info","event":"📋 🔎 neve/ansião: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:39.866358Z","level":"info","event":"📋 🔎 neve/Sabugal: 12","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:40.591437Z","level":"info","event":"📋 🔎 granizo/macedo de cavaleiros: 9","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:40.591611Z","level":"info","event":"📋 🔎 neve/santana: 56","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:40.591728Z","level":"info","event":"📋 🔎 granizo/Vieira do Minho: 24","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:40.591851Z","level":"info","event":"📋 🔎 granizo/corvo: 11","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-08T09:38:40.591958Z","level":"info","event":"📋 🔎 cheias/alpiarça: 24","chan":"stdout","logger":"task"}

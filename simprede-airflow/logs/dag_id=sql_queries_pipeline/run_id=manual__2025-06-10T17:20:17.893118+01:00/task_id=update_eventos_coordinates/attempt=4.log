@@ -1,0 +1,28 @@
+{"timestamp":"2025-06-10T16:35:52.365780","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:35:52.366364","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:35:52.394332Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:35:52.400012Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:35:52.400166Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:35:52.434417Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:35:52.434705Z","level":"info","event":"🔧 Final coordinate update for eventos table...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:35:52.747107Z","level":"info","event":"📋 Step 1: Check current coordinate status","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:35:52.836869Z","level":"info","event":"📊 Initial status: 0/253 events have coordinates","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:35:52.837693Z","level":"info","event":"📋 Step 2: Verify centroids table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:35:52.880392Z","level":"info","event":"✅ Found 3551 centroids with valid coordinates","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:35:52.880684Z","level":"info","event":"📋 Step 3: Updating coordinates","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.073377Z","level":"info","event":"  ✅ Updated 253 events with coordinates","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.073704Z","level":"info","event":"📋 Step 4: Final coordinate status","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.156687Z","level":"info","event":"📊 Final status:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.157446Z","level":"info","event":"  - Total eventos: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.157729Z","level":"info","event":"  - With coordinates: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.157936Z","level":"info","event":"  - Without coordinates: 0","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.158179Z","level":"info","event":"  - Improvement: +253 coordinates added","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.158381Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.158565Z","level":"info","event":"📋 Sample events with coordinates:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.199693Z","level":"info","event":"  - Porto/Porto/porto: (41.1617, -8.6208) [concelho]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.200985Z","level":"info","event":"  - Aveiro/Aveiro/aveiro: (40.6315, -8.6092) [concelho]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.201595Z","level":"info","event":"  - Aveiro/Aveiro/aveiro: (40.6315, -8.6092) [concelho]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.201996Z","level":"info","event":"  - Évora/Mourão/mourão: (38.3660, -7.2961) [freguesia]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.202227Z","level":"info","event":"  - Beja/Moura/moura: (38.1334, -7.2875) [concelho]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.202616Z","level":"info","event":"🎉 SUCCESS! Added coordinates to 253 events","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:36:00.244618","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

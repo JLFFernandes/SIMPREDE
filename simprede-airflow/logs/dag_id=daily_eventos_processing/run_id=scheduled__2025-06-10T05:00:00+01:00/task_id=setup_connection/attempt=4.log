@@ -1,0 +1,13 @@
+{"timestamp":"2025-06-10T20:45:35.644169","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T20:45:35.644591","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/daily_eventos_processing_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T20:45:35.658039Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:35.696402Z","level":"info","event":"🔧 Setting up database connection for daily eventos processing...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:35.696503Z","level":"info","event":"🔍 Environment variables status:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:35.696549Z","level":"info","event":"  - DB_USER: ✅ Set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:35.696589Z","level":"info","event":"  - DB_PASSWORD: ✅ Set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:35.696628Z","level":"info","event":"  - DB_HOST: ✅ Set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:35.696666Z","level":"info","event":"  - DB_PORT: 6543","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:35.696704Z","level":"info","event":"  - DB_NAME: postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:35.696742Z","level":"info","event":"✅ Set up connection: supabase_postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:35.676507","level":"info","event":"Done. Returned value was: postgresql://postgres.kyrfsylobmsdjlrrpful:HXU3tLVVXRa1jtjo@aws-0-eu-west-3.pooler.supabase.com:6543/postgres?sslmode=require","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T20:45:35.676587","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975b97-5994-7a4c-9fed-b325c432f571'), task_id='setup_connection', dag_id='daily_eventos_processing', run_id='scheduled__2025-06-10T05:00:00+01:00', try_number=4, map_index=-1, hostname='2ce8e97552d8', context_carrier=None, task=<Task(PythonOperator): setup_connection>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=5, start_date=datetime.datetime(2025, 6, 10, 20, 45, 35, 583168, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

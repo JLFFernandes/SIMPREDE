@@ -1,0 +1,15 @@
+{"timestamp":"2025-06-10T16:27:57.909198","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:27:57.909780","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:27:57.926758Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:27:57.933618Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:27:57.933881Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:27:57.954457Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:27:57.954631Z","level":"info","event":"🔧 Final coordinate update for eventos table...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:27:58.202858Z","level":"info","event":"📋 Step 1: Check current coordinate status","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:27:58.282572Z","level":"info","event":"📊 Initial status: 0/253 events have coordinates","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:27:58.283498Z","level":"info","event":"📋 Step 2: Verify centroids table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:27:58.323328Z","level":"info","event":"✅ Found 3551 centroids with valid coordinates","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:27:58.324763Z","level":"info","event":"📋 Step 3: Updating coordinates","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:28:02.393828Z","level":"info","event":"❌ Coordinate update failed: invalid input syntax for type double precision: \"0302FA\"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:28:02.394939Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:28:02.394821","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

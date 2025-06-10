@@ -1,0 +1,19 @@
+{"timestamp":"2025-06-10T20:45:27.214537","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T20:45:27.215041","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/daily_eventos_processing_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T20:45:27.229870Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.250201Z","level":"info","event":"🔄 Appending staging data to eventos table...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.253222Z","level":"info","event":"📋 Processing 26 rows from google_scraper.artigos_filtrados_20250610_staging","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.611153Z","level":"info","event":"📊 Initial eventos count: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.657756Z","level":"info","event":"📋 Available columns in staging table: created_at, date, day, dicofreg, displaced, district, evacuated, fatalities, georef, hour, id, injured, missing, month, municipali, page, parish, source, sourcedate, sourcetype, subtype, type, updated_at, year","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.700777Z","level":"info","event":"📋 Date column type: date","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.742533Z","level":"info","event":"🔧 Set PostgreSQL datestyle to DMY (DD/MM/YYYY)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.743126Z","level":"info","event":"🔧 Using direct date column (already date type)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.904265Z","level":"info","event":"✅ Inserted 26 new records from staging","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.987122Z","level":"info","event":"📊 Processing Summary:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.987968Z","level":"info","event":"  - Staging rows processed: 26","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.988251Z","level":"info","event":"  - New records inserted: 26","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.988440Z","level":"info","event":"  - Duplicate records skipped: 0","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.988612Z","level":"info","event":"  - Total eventos before: 253","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:27.988822Z","level":"info","event":"  - Total eventos after: 279","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T20:45:28.030729","level":"info","event":"Done. Returned value was: {'staging_table': 'google_scraper.artigos_filtrados_20250610_staging', 'staging_rows': 26, 'inserted_rows': 26, 'skipped_duplicates': 0, 'initial_count': 253, 'final_count': 279}","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T20:45:28.031274","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975b97-365f-72b5-97a8-70dd453f3013'), task_id='append_staging_to_eventos', dag_id='daily_eventos_processing', run_id='scheduled__2025-06-10T05:00:00+01:00', try_number=23, map_index=-1, hostname='2ce8e97552d8', context_carrier=None, task=<Task(PythonOperator): append_staging_to_eventos>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=24, start_date=datetime.datetime(2025, 6, 10, 20, 45, 27, 119740, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

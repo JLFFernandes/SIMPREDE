@@ -1,0 +1,32 @@
+{"timestamp":"2025-06-10T14:48:26.608596","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T14:48:26.609028","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T14:48:26.642251Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:26.648114Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:26.648330Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:26.674839Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:26.675552Z","level":"info","event":"✅ Using connection URI from setup task","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:26.675812Z","level":"info","event":"🔍 Executing 3 SQL queries...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:26.676679Z","level":"info","event":"📋 Executing query: schema_check","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.078570Z","level":"info","event":"✅ Query 'schema_check' returned 1 rows","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.078947Z","level":"info","event":"  Result: (11,)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.079200Z","level":"info","event":"📋 Executing query: articles_count","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.461739Z","level":"info","event":"❌ Direct SQL execution failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.462035Z","level":"info","event":"LINE 1: SELECT COUNT(*) as total_articles FROM google_scraper.artigo...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.462245Z","level":"info","event":"                                               ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.462467Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.462621Z","level":"info","event":"❌ Query 'articles_count' failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.462791Z","level":"info","event":"LINE 1: SELECT COUNT(*) as total_articles FROM google_scraper.artigo...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.463084Z","level":"info","event":"                                               ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.463366Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.463493Z","level":"info","event":"📋 Executing query: insert_test_article","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.837487Z","level":"info","event":"❌ Direct SQL execution failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.841219Z","level":"info","event":"LINE 2:                     INSERT INTO google_scraper.artigos_filtr...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.842178Z","level":"info","event":"                                        ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.844133Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.844381Z","level":"info","event":"❌ Query 'insert_test_article' failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.844495Z","level":"info","event":"LINE 2:                     INSERT INTO google_scraper.artigos_filtr...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.844685Z","level":"info","event":"                                        ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.844818Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.845127Z","level":"info","event":"✅ SQL query execution completed. Results stored in XCom.","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:48:27.838503","level":"info","event":"Done. Returned value was: {'schema_check': [(11,)], 'articles_count': 'error: relation \"google_scraper.artigos_filtrados\" does not exist\\nLINE 1: SELECT COUNT(*) as total_articles FROM google_scraper.artigo...\\n                                               ^\\n', 'insert_test_article': 'error: relation \"google_scraper.artigos_filtrados\" does not exist\\nLINE 2:                     INSERT INTO google_scraper.artigos_filtr...\\n                                        ^\\n'}","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T14:48:27.839019","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975a4e-11b2-786b-82f8-37cf3fbe9178'), task_id='execute_sql_queries', dag_id='sql_queries_pipeline', run_id='manual__2025-06-10T15:45:55.205034+01:00', try_number=1, map_index=-1, hostname='aa05a188031b', context_carrier=None, task=<Task(PythonOperator): execute_sql_queries>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=1, start_date=datetime.datetime(2025, 6, 10, 14, 48, 26, 538533, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

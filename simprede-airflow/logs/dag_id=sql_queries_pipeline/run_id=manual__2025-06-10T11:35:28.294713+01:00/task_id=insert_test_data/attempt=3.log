@@ -1,0 +1,48 @@
+{"timestamp":"2025-06-10T14:49:29.025887","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T14:49:29.026429","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T14:49:29.064375Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.069116Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.069254Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.095575Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.095774Z","level":"info","event":"🔄 Inserting test data using direct connection...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.095889Z","level":"info","event":"📋 Executing: check_table_exists","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.476567Z","level":"info","event":"✅ check_table_exists: [(0,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.477525Z","level":"info","event":"📋 Executing: current_article_count","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.860837Z","level":"info","event":"❌ Direct SQL execution failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.862384Z","level":"info","event":"LINE 1: SELECT COUNT(*) FROM google_scraper.artigos_filtrados","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.862785Z","level":"info","event":"                             ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.863153Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.863456Z","level":"info","event":"❌ current_article_count failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.864370Z","level":"info","event":"LINE 1: SELECT COUNT(*) FROM google_scraper.artigos_filtrados","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.864687Z","level":"info","event":"                             ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.864873Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:29.865243Z","level":"info","event":"📋 Executing: insert_test_article","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.209442Z","level":"info","event":"❌ Direct SQL execution failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.210023Z","level":"info","event":"LINE 2:                     INSERT INTO google_scraper.artigos_filtr...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.210436Z","level":"info","event":"                                        ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.210692Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.210845Z","level":"info","event":"❌ insert_test_article failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.210984Z","level":"info","event":"LINE 2:                     INSERT INTO google_scraper.artigos_filtr...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.211107Z","level":"info","event":"                                        ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.211228Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.211379Z","level":"info","event":"📋 Executing: verify_insertion","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.601160Z","level":"info","event":"❌ Direct SQL execution failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.602252Z","level":"info","event":"LINE 1: SELECT COUNT(*) FROM google_scraper.artigos_filtrados WHERE ...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.602946Z","level":"info","event":"                             ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.604070Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.604681Z","level":"info","event":"❌ verify_insertion failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.605145Z","level":"info","event":"LINE 1: SELECT COUNT(*) FROM google_scraper.artigos_filtrados WHERE ...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.605361Z","level":"info","event":"                             ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.605567Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.606078Z","level":"info","event":"📋 Executing: latest_articles","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.963739Z","level":"info","event":"❌ Direct SQL execution failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.967596Z","level":"info","event":"LINE 1: SELECT id, titulo, municipio, data_ingestao FROM google_scra...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.968441Z","level":"info","event":"                                                         ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.969655Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.970294Z","level":"info","event":"❌ latest_articles failed: relation \"google_scraper.artigos_filtrados\" does not exist","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.971011Z","level":"info","event":"LINE 1: SELECT id, titulo, municipio, data_ingestao FROM google_scra...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.972329Z","level":"info","event":"                                                         ^","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.972586Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.972892Z","level":"info","event":"🎉 Test data insertion completed!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.973168Z","level":"info","event":"👉 Check your Supabase dashboard to see the inserted test article","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T14:49:30.964289","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

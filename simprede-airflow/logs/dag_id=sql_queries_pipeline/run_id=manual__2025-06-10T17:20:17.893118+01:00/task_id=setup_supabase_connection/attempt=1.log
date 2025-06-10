@@ -1,0 +1,32 @@
+{"timestamp":"2025-06-10T16:20:20.072996","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:20:20.073862","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:20:20.105611Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.119070Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.119300Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.197202Z","level":"info","event":"🔧 Setting up Supabase connection...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.197498Z","level":"info","event":"🔍 Environment variables status:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.197731Z","level":"info","event":"  - DB_USER: ✅ Set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.197906Z","level":"info","event":"  - DB_PASSWORD: ✅ Set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.198057Z","level":"info","event":"  - DB_HOST: ✅ Set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.198221Z","level":"info","event":"  - DB_PORT: 6543","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.198406Z","level":"info","event":"  - DB_NAME: postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.198544Z","level":"info","event":"🔄 Setting up connection for Airflow 3.0...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.198671Z","level":"info","event":"✅ Set up environment variable for connection: supabase_postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.198801Z","level":"info","event":"🔍 Environment variable name: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.198923Z","level":"info","event":"🔍 Environment variable value length: 125 characters","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.199043Z","level":"info","event":"✅ Environment variable successfully set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.199158Z","level":"info","event":"🔍 Stored value matches: True","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.199295Z","level":"info","event":"🔍 Current Airflow connection env vars: 1","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.199409Z","level":"info","event":"  - AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.199521Z","level":"info","event":"🔄 Attempting to create PostgresHook...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.199633Z","level":"info","event":"🔄 Testing connection with simple query...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.199743Z","level":"info","event":"✅ PostgresHook created successfully!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.199852Z","level":"info","event":"✅ Supabase connection environment variable is set!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.199962Z","level":"info","event":"📋 Connection setup completed for Airflow 3.0","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.200075Z","level":"info","event":"💡 Connection is now available as environment variable","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.200183Z","level":"info","event":"  AIRFLOW_CONN_SUPABASE_POSTGRES is set","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:20:20.138639","level":"info","event":"Secrets backends loaded for worker","count":1,"backend_classes":["EnvironmentVariablesBackend"],"logger":"supervisor"}
+{"timestamp":"2025-06-10T16:20:20.146119","level":"warning","event":"empty cryptography key - values will not be stored encrypted.","logger":"airflow.models.crypto"}
+{"timestamp":"2025-06-10T16:20:20.147740","level":"info","event":"Connection Retrieved 'supabase_postgres'","logger":"airflow.hooks.base"}
+{"timestamp":"2025-06-10T16:20:20.147915","level":"warning","event":"This setter is for backward compatibility and should not be used.\nSince the introduction of connection property, the providers listed below breaks due to assigning value to self.connection in their __init__ method.\n* apache-airflow-providers-mysql<5.7.1\n* apache-airflow-providers-elasticsearch<5.5.1\n* apache-airflow-providers-postgres<5.13.0","logger":"airflow.task.hooks.airflow.providers.postgres.hooks.postgres.PostgresHook"}
+{"timestamp":"2025-06-10T16:20:20.149174","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
