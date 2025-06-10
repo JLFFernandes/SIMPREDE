@@ -563,3 +563,7 @@
 {"timestamp":"2025-06-10T21:00:37.723652","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/fix_coordinates_dag.py","logger":"airflow.models.dagbag.DagBag"}
 {"timestamp":"2025-06-10T21:01:08.638511","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/fix_coordinates_dag.py","logger":"airflow.models.dagbag.DagBag"}
 {"timestamp":"2025-06-10T21:01:39.560343","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/fix_coordinates_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T21:02:10.469669","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/fix_coordinates_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T21:02:41.207064","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/fix_coordinates_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T21:03:12.004212","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/fix_coordinates_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T21:03:42.835681","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/fix_coordinates_dag.py","logger":"airflow.models.dagbag.DagBag"}

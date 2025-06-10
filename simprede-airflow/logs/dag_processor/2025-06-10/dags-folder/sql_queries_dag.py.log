@@ -9646,3 +9646,19 @@
 {"timestamp":"2025-06-10T21:01:38.431812Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"processor"}
 {"timestamp":"2025-06-10T21:01:38.439402Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"processor"}
 {"timestamp":"2025-06-10T21:01:38.439516Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:02:09.257605","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T21:02:09.352190Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:02:09.361116Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:02:09.361234Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:02:40.055734","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T21:02:40.083673Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:02:40.092349Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:02:40.092471Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:03:10.879663","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T21:03:10.899901Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:03:10.907705Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:03:10.907791Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:03:41.674742","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T21:03:41.701004Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:03:41.707101Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"processor"}
+{"timestamp":"2025-06-10T21:03:41.708652Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"processor"}
