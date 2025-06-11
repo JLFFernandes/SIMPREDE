@@ -13,7 +13,7 @@ old_vs
 
 news_scraper_mz
 
-config/gcs-credentials.json
+gcs-credentials.json
 
 # Airflow logs
 logs/
