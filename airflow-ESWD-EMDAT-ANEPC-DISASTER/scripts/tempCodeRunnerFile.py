@@ -1,1 +1,0 @@
-DOWNLOAD_PATH = '/usr/local/airflow/include/emdat_download.xlsx'
