@@ -12,17 +12,47 @@ from newspaper import Article, Config
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import csv
 import logging
+import os
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
-def resolve_google_news_url(url, driver_path="/usr/bin/chromedriver", max_wait_time=10):
+def get_chrome_options():
+    """Configure Chrome options for Docker environment"""
     options = Options()
     options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-web-security")
+    options.add_argument("--allow-running-insecure-content")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--disable-background-timer-throttling")
+    options.add_argument("--disable-backgrounding-occluded-windows")
+    options.add_argument("--disable-renderer-backgrounding")
+    options.add_argument("--window-size=1920,1080")
+    
+    # Set the binary location to chromium
+    options.binary_location = "/usr/bin/chromium"
+    
+    return options
 
-    service = Service(driver_path)
+def get_webdriver():
+    """Create and return a configured WebDriver instance"""
+    options = get_chrome_options()
+    service = Service("/usr/bin/chromedriver")
+    
+    try:
+        driver = webdriver.Chrome(service=service, options=options)
+        return driver
+    except Exception as e:
+        logger.error(f"Failed to create WebDriver: {e}")
+        raise
+
+def resolve_google_news_url(url, driver_path=None, max_wait_time=10):
+    options = get_chrome_options()
+    service = Service("/usr/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=options)
 
     try:
@@ -163,12 +193,7 @@ def fetch_and_extract_article_text_dynamic(url: str) -> str:
 
     try:
         logger.info(f"🌐 Fetching URL dynamically: {url}")
-        options = Options()
-        options.add_argument("--headless")  # Run in headless mode
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        service = Service("/path/to/chromedriver")  # Update with the path to your ChromeDriver
-        driver = webdriver.Chrome(service=service, options=options)
+        driver = get_webdriver()
 
         driver.get(url)
 
@@ -191,8 +216,8 @@ def fetch_and_extract_article_text_dynamic(url: str) -> str:
             soup.find('article'),
             soup.find('main'),
             soup.find('div', class_='article-body'),
-            soup.find('div', class_="story"),  # Fixed syntax error
-            soup.find('div', 'content'),
+            soup.find('div', class_="story"),
+            soup.find('div', class_='content'),
             soup.find('body')
         ]
         for container in containers:
@@ -241,14 +266,8 @@ def extract_article_text(soup):
 
 
 def get_real_url_with_newspaper(link, driver_path="/usr/bin/chromedriver", max_wait_time=10):
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
+    driver = get_webdriver()
 
-    service = Service(driver_path)
-    driver = webdriver.Chrome(service=service, options=options)
-#SEE NOTES:
     try:
         logger.info(f"🌐 A aceder ao link: {link}")
         driver.get(link)
@@ -276,8 +295,6 @@ def get_real_url_with_newspaper(link, driver_path="/usr/bin/chromedriver", max_w
             except Exception as e:
                 logger.error("❌ Não consegui aceitar o consentimento:", e)
 
-
-
         # Espera que o URL final mude e a página de destino carregue
         wait.until(lambda d: not d.current_url.startswith("https://consent.google.com"))
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
@@ -291,7 +308,6 @@ def get_real_url_with_newspaper(link, driver_path="/usr/bin/chromedriver", max_w
         return None
     finally:
         driver.quit()
-
 
 def extract_article_content(url):
     """Extract article content using newspaper3k."""
@@ -367,14 +383,7 @@ def get_real_url_and_content(link, driver_path="/usr/bin/chromedriver", max_wait
     """
     Retrieves the original URL and the content of the news article.
     """
-    options = Options()
-    options.add_argument("--headless")  # Run in headless mode
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-
-    service = Service(driver_path)
-    driver = webdriver.Chrome(service=service, options=options)
-
+    driver = get_webdriver()
     page_data = {"source_url": None, "article_content": None}
 
     try:

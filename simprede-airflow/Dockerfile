@@ -20,8 +20,15 @@ RUN apt-get update && apt-get install -y \
     libxss1 \
     libappindicator1 \
     libasound2-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    zlib1g-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+
+# Instalar Chromium (compatível com ARM64 e funciona com Selenium)
+RUN apt-get update && apt-get install -y chromium chromium-driver
 
 # Copy scripts
 COPY scripts/init_gcs.sh /opt/airflow/scripts/init_gcs.sh

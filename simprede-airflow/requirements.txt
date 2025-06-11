@@ -18,6 +18,8 @@ requests>=2.32.0
 # Web scraping dependencies
 beautifulsoup4==4.12.2
 lxml>=4.9.3
+lxml_html_clean>=0.1.0
+lxml[html_clean]>=4.9.3
 selenium>=4.15.0
 
 # Data processing

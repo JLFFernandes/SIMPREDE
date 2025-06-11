@@ -1,8 +1,0 @@
-{"timestamp":"2025-06-10T09:01:43.492713","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
-{"timestamp":"2025-06-10T09:01:43.493558","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
-{"timestamp":"2025-06-10T09:01:43.521020Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
-{"timestamp":"2025-06-10T09:01:43.521631Z","level":"info","event":"⚠️ PostgresOperator not available: No module named 'airflow.providers.postgres.operators'","chan":"stdout","logger":"task"}
-{"timestamp":"2025-06-10T09:01:43.521740Z","level":"info","event":"⚠️ PostgreSQL provider partially or not available","chan":"stdout","logger":"task"}
-{"timestamp":"2025-06-10T09:01:43.522069Z","level":"info","event":"⚠️ MySQL provider not available","chan":"stdout","logger":"task"}
-{"timestamp":"2025-06-10T09:01:43.560792Z","level":"info","event":"Create artigos_filtrados_table stub executed.","chan":"stdout","logger":"task"}
-{"timestamp":"2025-06-10T09:01:43.541514","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
