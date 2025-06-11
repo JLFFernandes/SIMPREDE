@@ -1,0 +1,35 @@
+{"timestamp":"2025-06-11T14:25:26.444648","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-11T14:25:26.444982","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/daily_eventos_processing_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-11T14:25:26.456723Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.475268Z","level":"info","event":"📋 Copying eventos data to public schema...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.745510Z","level":"info","event":"📋 Step 1: Check source table status","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.828898Z","level":"info","event":"📊 Source table status:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.829790Z","level":"info","event":"  - Total eventos: 300","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.830231Z","level":"info","event":"  - With coordinates: 300","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.830441Z","level":"info","event":"  - With geometry: 300","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.830617Z","level":"info","event":"📋 Step 2: Drop existing public table if it exists","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.893253Z","level":"info","event":"✅ Dropped existing public.google_scraper_ocorrencias table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.894177Z","level":"info","event":"📋 Step 3: Create new table structure in public schema","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.979799Z","level":"info","event":"✅ Created public.google_scraper_ocorrencias table with complete structure","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:26.981625Z","level":"info","event":"📋 Step 4: Copy all data from source table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.113385Z","level":"info","event":"✅ Copied 300 rows to public.google_scraper_ocorrencias","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.113876Z","level":"info","event":"📋 Step 5: Verify copy operation","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.200554Z","level":"info","event":"📊 Final verification:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.200795Z","level":"info","event":"  - Source table rows: 300","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.200947Z","level":"info","event":"  - Copied rows: 300","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.201183Z","level":"info","event":"  - Final public table rows: 300","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.201306Z","level":"info","event":"🎉 SUCCESS! All eventos successfully copied to public schema","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.201425Z","level":"info","event":"📋 Step 6: Adding indexes for better query performance","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.436561Z","level":"info","event":"✅ Added performance indexes to public table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.437162Z","level":"info","event":"📋 Step 7: Sample data from public table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.523528Z","level":"info","event":"📋 Latest eventos in public table:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.524126Z","level":"info","event":"  - f9e6d6843dc811a271c7f1a2bb878002: Other on 31/03/2025 in Lisboa/Oeiras [coords: Yes] (0 fatalities, 0 injured)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.524316Z","level":"info","event":"  - a22481c0ec5bbbc4a1ecc7fe267cdf68: Other on 31/03/2025 in Coimbra/Coimbra [coords: Yes] (0 fatalities, 0 injured)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.524526Z","level":"info","event":"  - 1069626ef35d9111a3d11a81e2589119: Other on 31/01/2025 in Portalegre/Avis [coords: Yes] (0 fatalities, 0 injured)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.524855Z","level":"info","event":"  - 5c75c49fc92a58f7175b71c31d153aae: Other on 30/04/2025 in Portalegre/Avis [coords: Yes] (0 fatalities, 0 injured)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.524999Z","level":"info","event":"  - 5728e3b5307083c1a6fbe722a0f1357b: Other on 30/03/2025 in Lisboa/Lisboa [coords: Yes] (0 fatalities, 0 injured)","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.525099Z","level":"info","event":"🎉 Public schema copy operation completed!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.525194Z","level":"info","event":"👉 Data is now available at: public.google_scraper_ocorrencias","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.525321Z","level":"info","event":"👉 This table can be easily queried and accessed by other applications","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-11T14:25:27.565256","level":"info","event":"Done. Returned value was: {'copied_rows': 300, 'final_count': 300}","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-11T14:25:27.565647","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975f61-8926-76be-9a9f-bb6d77b73058'), task_id='copy_to_public_schema', dag_id='daily_eventos_processing', run_id='manual__2025-06-11T15:25:17.070503+01:00', try_number=1, map_index=-1, hostname='de20cda29541', context_carrier=None, task=<Task(PythonOperator): copy_to_public_schema>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=2, start_date=datetime.datetime(2025, 6, 11, 14, 25, 26, 377531, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}
