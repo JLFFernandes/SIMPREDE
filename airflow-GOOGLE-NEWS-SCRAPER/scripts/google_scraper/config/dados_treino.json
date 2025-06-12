@@ -1,0 +1,1652 @@
+[
+  {
+    "text": "53 mortes foram confirmadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "90 óbitos ocorreram no local.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Faleceram 35 civis após o desastre.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Morreram 57 pessoas no acidente.",
+    "entities": [
+      {
+        "start": 9,
+        "end": 11,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Faleceram 62 civis após o desastre.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Faleceram 20 civis após o desastre.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "83 mortes foram confirmadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "87 mortes foram confirmadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Faleceram 64 civis após o desastre.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "10 mortes foram confirmadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Morreram 24 pessoas no acidente.",
+    "entities": [
+      {
+        "start": 9,
+        "end": 11,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "40 vítimas mortais registadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Faleceram 56 civis após o desastre.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "44 vítimas mortais registadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "38 mortes foram confirmadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Morreram 46 pessoas no acidente.",
+    "entities": [
+      {
+        "start": 9,
+        "end": 11,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Faleceram 45 civis após o desastre.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "99 óbitos ocorreram no local.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "6 vítimas mortais registadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 1,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "57 vítimas mortais registadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Morreram 14 pessoas no acidente.",
+    "entities": [
+      {
+        "start": 9,
+        "end": 11,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Morreram 63 pessoas no acidente.",
+    "entities": [
+      {
+        "start": 9,
+        "end": 11,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "38 mortes foram confirmadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "85 mortes foram confirmadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "76 vítimas mortais registadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Faleceram 48 civis após o desastre.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "78 óbitos ocorreram no local.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "42 vítimas mortais registadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "8 óbitos ocorreram no local.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 1,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "44 mortes foram confirmadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "64 cidadãos sofreram ferimentos leves.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 65 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Foram reportados 2 feridos.",
+    "entities": [
+      {
+        "start": 17,
+        "end": 18,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 96 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 6 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 20,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Foram reportados 96 feridos.",
+    "entities": [
+      {
+        "start": 17,
+        "end": 19,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 18 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "91 pessoas ficaram feridas no incidente.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "As autoridades confirmaram 62 pessoas feridas.",
+    "entities": [
+      {
+        "start": 27,
+        "end": 29,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 51 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Foram reportados 46 feridos.",
+    "entities": [
+      {
+        "start": 17,
+        "end": 19,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "12 pessoas ficaram feridas no incidente.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "58 cidadãos sofreram ferimentos leves.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 48 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "9 cidadãos sofreram ferimentos leves.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 1,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "As autoridades confirmaram 9 pessoas feridas.",
+    "entities": [
+      {
+        "start": 27,
+        "end": 28,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Foram reportados 82 feridos.",
+    "entities": [
+      {
+        "start": 17,
+        "end": 19,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Foram reportados 38 feridos.",
+    "entities": [
+      {
+        "start": 17,
+        "end": 19,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Foram reportados 5 feridos.",
+    "entities": [
+      {
+        "start": 17,
+        "end": 18,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 63 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Foram reportados 17 feridos.",
+    "entities": [
+      {
+        "start": 17,
+        "end": 19,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "17 cidadãos sofreram ferimentos leves.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "36 pessoas ficaram feridas no incidente.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "57 pessoas ficaram feridas no incidente.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 43 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "7 cidadãos sofreram ferimentos leves.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 1,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "49 pessoas ficaram feridas no incidente.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 1 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 20,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 57 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "O hospital recebeu 33 indivíduos com ferimentos.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Autoridades ordenaram a evacuação de 96 casas.",
+    "entities": [
+      {
+        "start": 37,
+        "end": 39,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "61 residentes foram retirados das casas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Autoridades ordenaram a evacuação de 87 casas.",
+    "entities": [
+      {
+        "start": 37,
+        "end": 39,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Evacuaram 82 famílias da zona de risco.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "17 residentes foram retirados das casas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Evacuaram 35 famílias da zona de risco.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "A proteção civil evacuou 9 edifícios.",
+    "entities": [
+      {
+        "start": 25,
+        "end": 26,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "A proteção civil evacuou 73 edifícios.",
+    "entities": [
+      {
+        "start": 25,
+        "end": 27,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Autoridades ordenaram a evacuação de 49 casas.",
+    "entities": [
+      {
+        "start": 37,
+        "end": 39,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Evacuaram 52 famílias da zona de risco.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "17 residentes foram retirados das casas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Evacuaram 59 famílias da zona de risco.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "A proteção civil evacuou 39 edifícios.",
+    "entities": [
+      {
+        "start": 25,
+        "end": 27,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Autoridades ordenaram a evacuação de 97 casas.",
+    "entities": [
+      {
+        "start": 37,
+        "end": 39,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "66 residentes foram retirados das casas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "69 residentes foram retirados das casas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "46 habitantes foram evacuados com urgência.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "46 habitantes foram evacuados com urgência.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "86 residentes foram retirados das casas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "A proteção civil evacuou 58 edifícios.",
+    "entities": [
+      {
+        "start": 25,
+        "end": 27,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Evacuaram 23 famílias da zona de risco.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Evacuaram 82 famílias da zona de risco.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Evacuaram 86 famílias da zona de risco.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "46 habitantes foram evacuados com urgência.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "55 residentes foram retirados das casas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Evacuaram 40 famílias da zona de risco.",
+    "entities": [
+      {
+        "start": 10,
+        "end": 12,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "A proteção civil evacuou 60 edifícios.",
+    "entities": [
+      {
+        "start": 25,
+        "end": 27,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Autoridades ordenaram a evacuação de 59 casas.",
+    "entities": [
+      {
+        "start": 37,
+        "end": 39,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Autoridades ordenaram a evacuação de 47 casas.",
+    "entities": [
+      {
+        "start": 37,
+        "end": 39,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "A proteção civil evacuou 65 edifícios.",
+    "entities": [
+      {
+        "start": 25,
+        "end": 27,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "79 pessoas ficaram desalojadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "59 residentes estão desabrigados.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "As chuvas deixaram 90 deslocados.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "72 moradores perderam as habitações.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "95 moradores perderam as habitações.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "Devido às cheias, 30 famílias estão sem casa.",
+    "entities": [
+      {
+        "start": 18,
+        "end": 20,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "89 pessoas ficaram desalojadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "Devido às cheias, 64 famílias estão sem casa.",
+    "entities": [
+      {
+        "start": 18,
+        "end": 20,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "25 residentes estão desabrigados.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "Devido às cheias, 92 famílias estão sem casa.",
+    "entities": [
+      {
+        "start": 18,
+        "end": 20,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "70 residentes estão desabrigados.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "86 moradores perderam as habitações.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "6 pessoas ficaram desalojadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 1,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "As chuvas deixaram 97 deslocados.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "As chuvas deixaram 40 deslocados.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "59 moradores perderam as habitações.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "96 residentes estão desabrigados.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "As chuvas deixaram 90 deslocados.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "58 pessoas ficaram desalojadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "93 pessoas ficaram desalojadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "As chuvas deixaram 75 deslocados.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "1 residentes estão desabrigados.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 1,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "35 residentes estão desabrigados.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "48 pessoas ficaram desalojadas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "Devido às cheias, 38 famílias estão sem casa.",
+    "entities": [
+      {
+        "start": 18,
+        "end": 20,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "44 residentes estão desabrigados.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "84 residentes estão desabrigados.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "36 residentes estão desabrigados.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "As chuvas deixaram 42 deslocados.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "As chuvas deixaram 11 deslocados.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 21,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "Há 14 pessoas dadas como desaparecidas.",
+    "entities": [
+      {
+        "start": 3,
+        "end": 5,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Não se sabe o paradeiro de 86 indivíduos.",
+    "entities": [
+      {
+        "start": 27,
+        "end": 29,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Há 43 pessoas dadas como desaparecidas.",
+    "entities": [
+      {
+        "start": 3,
+        "end": 5,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Buscas seguem por 55 desaparecidos.",
+    "entities": [
+      {
+        "start": 18,
+        "end": 20,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "2 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 1,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Procura-se por 34 cidadãos em falta.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 17,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Não se sabe o paradeiro de 38 indivíduos.",
+    "entities": [
+      {
+        "start": 27,
+        "end": 29,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Buscas seguem por 97 desaparecidos.",
+    "entities": [
+      {
+        "start": 18,
+        "end": 20,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Há 5 pessoas dadas como desaparecidas.",
+    "entities": [
+      {
+        "start": 3,
+        "end": 4,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "89 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "49 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Buscas seguem por 49 desaparecidos.",
+    "entities": [
+      {
+        "start": 18,
+        "end": 20,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Há 83 pessoas dadas como desaparecidas.",
+    "entities": [
+      {
+        "start": 3,
+        "end": 5,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "45 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "1 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 1,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Não se sabe o paradeiro de 5 indivíduos.",
+    "entities": [
+      {
+        "start": 27,
+        "end": 28,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Buscas seguem por 14 desaparecidos.",
+    "entities": [
+      {
+        "start": 18,
+        "end": 20,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Há 29 pessoas dadas como desaparecidas.",
+    "entities": [
+      {
+        "start": 3,
+        "end": 5,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Procura-se por 65 cidadãos em falta.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 17,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "29 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Procura-se por 28 cidadãos em falta.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 17,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Procura-se por 35 cidadãos em falta.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 17,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Procura-se por 25 cidadãos em falta.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 17,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "57 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Procura-se por 83 cidadãos em falta.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 17,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Procura-se por 7 cidadãos em falta.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 16,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "78 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "34 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Procura-se por 52 cidadãos em falta.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 17,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "64 pessoas continuam desaparecidas.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Confirmaram-se 123 vítimas mortais.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 18,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "O número de mortos subiu para 154.",
+    "entities": [
+      {
+        "start": 25,
+        "end": 28,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Autoridades reportam 187 feridos graves.",
+    "entities": [
+      {
+        "start": 20,
+        "end": 23,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Um total de 167 pessoas foram hospitalizadas.",
+    "entities": [
+      {
+        "start": 12,
+        "end": 15,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Foram evacuadas 145 pessoas da área afetada.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 18,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Bombeiros evacuaram 178 moradores.",
+    "entities": [
+      {
+        "start": 19,
+        "end": 22,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "Cerca de 134 pessoas perderam suas casas.",
+    "entities": [
+      {
+        "start": 9,
+        "end": 12,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "189 famílias estão em abrigos temporários.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 3,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "Equipes de resgate procuram por 143 desaparecidos.",
+    "entities": [
+      {
+        "start": 27,
+        "end": 30,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Autoridades não conseguem localizar 165 pessoas.",
+    "entities": [
+      {
+        "start": 35,
+        "end": 38,
+        "label": "MISSING"
+      }
+    ]
+  },
+  {
+    "text": "Tragédia deixou 198 vítimas fatais.",
+    "entities": [
+      {
+        "start": 14,
+        "end": 17,
+        "label": "FATALITIES"
+      }
+    ]
+  },
+  {
+    "text": "Hospital atende 176 pessoas com ferimentos.",
+    "entities": [
+      {
+        "start": 15,
+        "end": 18,
+        "label": "INJURED"
+      }
+    ]
+  },
+  {
+    "text": "Defesa Civil remove 156 residentes.",
+    "entities": [
+      {
+        "start": 17,
+        "end": 20,
+        "label": "EVACUATED"
+      }
+    ]
+  },
+  {
+    "text": "132 moradores precisaram deixar suas residências.",
+    "entities": [
+      {
+        "start": 0,
+        "end": 3,
+        "label": "DISPLACED"
+      }
+    ]
+  },
+  {
+    "text": "Continuam as buscas por 167 desaparecidos.",
+    "entities": [
+      {
+        "start": 21,
+        "end": 24,
+        "label": "MISSING"
+      }
+    ]
+  }
+]
