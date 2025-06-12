@@ -18,6 +18,7 @@ if hasattr(sys.stderr, 'reconfigure'):
 # Add the missing imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from utils.helpers import guardar_csv_incremental
+from .ml_enhanced_filter import MLEnhancedFilter
 
 # Configure logging for Airflow compatibility with immediate flushing
 def setup_airflow_logging():
@@ -568,9 +569,13 @@ def calculate_enhanced_relevance_score(row):
     return total_score, matched_categories
 
 def apply_enhanced_comprehensive_filters(df, project_root, target_date=None):
-    """Apply enhanced comprehensive filtering logic"""
+    """Apply enhanced comprehensive filtering logic with ML integration"""
     log_progress("🔧 Loading configuration data for enhanced filtering...")
     distritos_validos, paroquias_validas, eventos_climaticos = load_config_data(project_root)
+    
+    # Initialize ML filter
+    ml_filter = MLEnhancedFilter()
+    ml_loaded = ml_filter.load_models()
     
     log_progress(f"📊 Starting enhanced comprehensive filtering with {len(df)} articles")
     
@@ -578,7 +583,26 @@ def apply_enhanced_comprehensive_filters(df, project_root, target_date=None):
     numeric_columns = ['fatalities', 'injured', 'evacuated', 'displaced', 'missing', 'year']
     df = safe_numeric_conversion(df, numeric_columns)
     
-    # Enhanced geographic filter
+    # Apply ML-enhanced filtering first (if models are available)
+    if ml_loaded:
+        log_progress("🤖 Applying ML-enhanced filtering...")
+        ml_mask, ml_scores = ml_filter.enhanced_filter(
+            df, 
+            ml_threshold=0.6,  # Adjust threshold as needed
+            combine_with_rules=True
+        )
+        
+        initial_count = len(df)
+        df = df[ml_mask].copy()
+        
+        # Add ML scores for analysis
+        df['ml_relevance_score'] = ml_scores[ml_mask]
+        
+        log_progress(f"   After ML filtering: {len(df)} articles (removed {initial_count - len(df)})")
+    else:
+        log_progress("⚠️ ML models not available, using rule-based filtering only")
+    
+    # Continue with existing filters...
     log_progress("🇵🇹 Applying enhanced geographic filter...")
     initial_count = len(df)
     df = df[df.apply(lambda row: enhanced_geographic_filter(row, distritos_validos, paroquias_validas), axis=1)]
@@ -760,6 +784,8 @@ def main():
     parser.add_argument("--output_dir", type=str, help="Output directory for filtered files")
     parser.add_argument("--date_str", type=str, help="Date string for file naming")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument('--ml_threshold', type=float, default=0.6, help='ML relevance threshold')
+    parser.add_argument('--use_ml_filtering', type=str, default='true', help='Enable ML filtering')
     args = parser.parse_args()
     
     # Configure logging level
@@ -770,6 +796,12 @@ def main():
     log_progress("Starting filtrar_artigos_vitimas_airflow")
     log_progress(f"Parameters: dias={args.dias}, date={args.date}")
     log_progress(f"Paths: input_file={args.input_file}, output_dir={args.output_dir}, date_str={args.date_str}")
+    
+    # Convert string to boolean for ML filtering
+    use_ml = args.use_ml_filtering.lower() == 'true'
+    
+    # Set global ML parameters (you might need to modify the filtering functions to accept these)
+    # Or pass them to the main filtering function
     
     try:
         result = airflow_main(
@@ -786,4 +818,24 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Filter articles with victim information')
+    parser.add_argument('--dias', type=int, default=1, help='Number of days to process')
+    parser.add_argument('--input_file', type=str, help='Input CSV file path')
+    parser.add_argument('--output_dir', type=str, help='Output directory path')
+    parser.add_argument('--date_str', type=str, help='Date string for file naming')
+    parser.add_argument('--date', type=str, help='Target date (YYYY-MM-DD)')
+    parser.add_argument('--ml_threshold', type=float, default=0.6, help='ML relevance threshold')
+    parser.add_argument('--use_ml_filtering', type=str, default='true', help='Enable ML filtering')
+    
+    args = parser.parse_args()
+    
+    # Convert string to boolean for ML filtering
+    use_ml = args.use_ml_filtering.lower() == 'true'
+    
+    # Set global ML parameters (you might need to modify the filtering functions to accept these)
+    # Or pass them to the main filtering function
+    
+    # Call the main function with your existing logic
+    # airflow_main(...)

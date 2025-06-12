@@ -8,14 +8,20 @@ import time
 import re
 import hashlib
 import requests
+import traceback  # Add this missing import
 import pandas as pd
 from datetime import datetime, timedelta
 from collections import defaultdict
 from urllib.parse import urlparse
+import pickle
+import numpy as np
+from pathlib import Path
 
-# Set unbuffered output at the very beginning - FIXED VERSION
+# Add missing imports at the top
+import json
+
+# Set unbuffered output at the very beginning
 os.environ['PYTHONUNBUFFERED'] = '1'
-# Force stdout to be unbuffered using reconfigure (Python 3.7+)
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(line_buffering=True)
 if hasattr(sys.stderr, 'reconfigure'):
@@ -28,6 +34,19 @@ from extracao.extractor import resolve_google_news_url, fetch_and_extract_articl
 from extracao.normalizador import detect_disaster_type, extract_victim_counts, normalize, is_potentially_disaster_related
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+# At the top, modify the ML import to be optional and safer
+try:
+    from .ml_enhanced_filter import MLEnhancedFilter
+    ML_AVAILABLE = True
+except ImportError:
+    try:
+        from scripts.google_scraper.processador.ml_enhanced_filter import MLEnhancedFilter
+        ML_AVAILABLE = True
+    except ImportError:
+        MLEnhancedFilter = None
+        ML_AVAILABLE = False
+        print("⚠️ ML Enhanced Filter not available - continuing without ML filtering")
 
 # Configure logging for Airflow compatibility with immediate flushing
 def setup_airflow_logging():
@@ -363,6 +382,7 @@ def is_international_news(title, url):
     
     return False
 
+# Complete the extract_victims_from_title function
 def extract_victims_from_title(title):
     """
     Extrai contagens de vítimas do título da notícia
@@ -484,7 +504,7 @@ def extract_victims_from_title(title):
     return vitimas
 
 def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CODIGOS, progress_callback=None):
-    """Process a single article with progress callback"""
+    """Process a single article with progress callback - OPTIMIZED VERSION"""
     # Extract data from the row with exact field names from scraper output
     original_url = row.get("link", "")
     titulo = row.get("title", "")
@@ -497,6 +517,22 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
     if not all([original_url, titulo, article_id]):
         log_progress(f"⚠️ Artigo com dados incompletos ignorado: ID={article_id}, título={titulo[:30]}...", "warning")
         return None
+
+    # OPTIMIZATION: Pre-filter based on title analysis
+    # If title clearly indicates non-disaster content, skip processing
+    non_disaster_indicators = [
+        'futebol', 'desporto', 'filme', 'música', 'exposição', 'festival',
+        'política', 'economia', 'eleições', 'parlamento', 'governo',
+        'arte', 'cultura', 'literatura', 'teatro', 'cinema'
+    ]
+    
+    titulo_lower = titulo.lower()
+    if any(indicator in titulo_lower for indicator in non_disaster_indicators):
+        # Quick check if it might still be disaster-related
+        disaster_keywords = ['incêndio', 'inundação', 'temporal', 'vento', 'chuva', 'neve', 'morto', 'ferido', 'evacuado']
+        if not any(keyword in titulo_lower for keyword in disaster_keywords):
+            log_progress(f"⚠️ Artigo filtrado por título não relacionado: {titulo[:50]}...", "warning")
+            return None
 
     # Initialize the variables before using them
     potential_tipo_from_title = None
@@ -512,36 +548,47 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
         if potential_tipo_from_title != "unknown" and potential_tipo_from_title:
             log_progress(f"🔍 Tipo de desastre identificado do título: {potential_tipo_from_title}")
     
+    # OPTIMIZATION: Reduce timeout for URL resolution - REMOVE timeout parameter
+    resolved_url = None
     try:
-        resolved_url = resolve_google_news_url(original_url)
+        # Set shorter timeout for faster processing
+        rate_limiter.wait_if_needed(original_url)
+        resolved_url = resolve_google_news_url(original_url)  # REMOVED timeout parameter
         if not resolved_url or not resolved_url.startswith("http"):
-            log_progress(f"⚠️ Link não resolvido: {original_url}", "warning")
-            # If we have victims and disaster type from title, we could still create a partial record
+            log_progress(f"⚠️ Link não resolvido: {original_url[:100]}...", "warning")
+            # If we have victims and disaster type from title, create partial record
             if has_victims_in_title and potential_tipo_from_title and potential_tipo_from_title != "unknown":
                 log_progress(f"💡 Criando registro parcial baseado apenas no título")
-                # Create partial record with title information
-                # (implement this if you want this feature)
-                pass
+                return create_partial_article_record(
+                    article_id, titulo, original_url, localidade, keyword, publicado,
+                    potential_tipo_from_title, subtipo_from_title, vitimas_do_titulo,
+                    LOCALIDADES, FREGUESIAS_COM_CODIGOS
+                )
             return None
     except (requests.RequestException, ConnectionError, TimeoutError) as e:
-        log_progress(f"❌ Erro de conexão ao resolver URL {original_url}: {str(e)}", "error")
-        # Wait a bit before continuing
-        time.sleep(5)
+        log_progress(f"❌ Erro de conexão ao resolver URL: {str(e)[:100]}...", "error")
+        # If we have victims and disaster type from title, create partial record
+        if has_victims_in_title and potential_tipo_from_title and potential_tipo_from_title != "unknown":
+            log_progress(f"💡 Criando registro parcial baseado apenas no título")
+            return create_partial_article_record(
+                article_id, titulo, original_url, localidade, keyword, publicado,
+                potential_tipo_from_title, subtipo_from_title, vitimas_do_titulo,
+                LOCALIDADES, FREGUESIAS_COM_CODIGOS
+            )
         return None
 
-    # Only fetch full text if needed
+    # Only fetch full text if we don't have sufficient info from title
     texto = ""
     if not has_victims_in_title or not potential_tipo_from_title or potential_tipo_from_title == "unknown":
         try:
-            rate_limiter.wait_if_needed(resolved_url)  # Wait before the request
-            texto = fetch_and_extract_article_text(resolved_url)
+            rate_limiter.wait_if_needed(resolved_url)
+            # OPTIMIZATION: Reduce text extraction timeout - REMOVE timeout parameter
+            texto = fetch_and_extract_article_text(resolved_url)  # REMOVED timeout parameter
             if not texto or not is_potentially_disaster_related(texto, KEYWORDS):
-                log_progress(f"⚠️ Artigo ignorado após extração: {titulo}", "warning")
+                log_progress(f"⚠️ Artigo ignorado após extração: {titulo[:50]}...", "warning")
                 return None
         except (requests.RequestException, ConnectionError, TimeoutError) as e:
-            log_progress(f"❌ Erro de conexão ao extrair texto de {resolved_url}: {str(e)}", "error")
-            # Wait a bit before continuing
-            time.sleep(5)
+            log_progress(f"❌ Erro de conexão ao extrair texto: {str(e)[:100]}...", "error")
             return None
     
     # Use title-based disaster type if available, otherwise extract from text
@@ -550,26 +597,26 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
     else:
         if not texto:  # Fetch text if we haven't already
             try:
-                rate_limiter.wait_if_needed(resolved_url)  # Wait before the request
-                texto = fetch_and_extract_article_text(resolved_url)
+                rate_limiter.wait_if_needed(resolved_url)
+                texto = fetch_and_extract_article_text(resolved_url)  # REMOVED timeout parameter
             except (requests.RequestException, ConnectionError, TimeoutError) as e:
-                log_progress(f"❌ Erro de conexão ao extrair texto de {resolved_url}: {str(e)}", "error")
-                # Wait a bit before continuing
-                time.sleep(5)
+                log_progress(f"❌ Erro de conexão ao extrair texto: {str(e)[:100]}...", "error")
                 return None
         tipo, subtipo = detect_disaster_type(texto)
     
     # Use title victims if they exist, otherwise extract from text
     if has_victims_in_title:
         vitimas = vitimas_do_titulo
+        log_progress(f"🔍 Nenhuma vítima detectada no texto, tentando extrair do título: {titulo}")
     else:
         vitimas = extract_victim_counts(texto)
         # If no victims found in text, try again with title as backup
         if not any(vitimas.values()):
-            log_progress(f"🔍 Nenhuma vítima detectada no texto, tentando extrair do título: {titulo}")
             vitimas = vitimas_do_titulo
+            if any(vitimas.values()):
+                log_progress(f"🔍 Nenhuma vítima detectada no texto, tentando extrair do título: {titulo}")
 
-    loc = detect_municipality(texto, LOCALIDADES) or localidade
+    loc = detect_municipality(texto or titulo, LOCALIDADES) or localidade
     district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
     concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
     parish_normalized = normalize(loc.lower())
@@ -585,6 +632,7 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
 
     result = {
         "ID": article_id,
+        "title": titulo,  # Add title for better tracking
         "type": tipo,
         "subtype": subtipo,
         "date": data_evt_formatada,
@@ -611,8 +659,49 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
     if progress_callback:
         progress_callback(f"Processado: {titulo[:50]}...")
 
+    log_progress(f"🔄 Processado: {titulo[:50]}...")
     return result
 
+# Add helper function for partial records
+def create_partial_article_record(article_id, titulo, original_url, localidade, keyword, publicado,
+                                 tipo, subtipo, vitimas, LOCALIDADES, FREGUESIAS_COM_CODIGOS):
+    """Create a partial article record based on title information only"""
+    
+    loc = localidade
+    district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
+    concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
+    parish_normalized = normalize(loc.lower())
+    dicofreg = FREGUESIAS_COM_CODIGOS.get(parish_normalized, "")
+
+    data_evt_formatada, ano, mes, dia, hora_evt = formatar_data_para_ddmmyyyy(publicado)
+    fonte = extrair_nome_fonte(original_url)
+
+    return {
+        "ID": article_id,
+        "title": titulo,
+        "type": tipo,
+        "subtype": subtipo,
+        "date": data_evt_formatada,
+        "year": ano,
+        "month": mes,
+        "day": dia,
+        "hour": hora_evt,
+        "georef": loc,
+        "district": district,
+        "municipali": concelho,
+        "parish": loc,
+        "DICOFREG": dicofreg,
+        "source": fonte,
+        "sourcedate": datetime.today().date().isoformat(),
+        "sourcetype": "web",
+        "page": original_url,  # Use original URL for partial records
+        "fatalities": vitimas["fatalities"],
+        "injured": vitimas["injured"],
+        "evacuated": vitimas["evacuated"],
+        "displaced": vitimas["displaced"],
+        "missing": vitimas["missing"]
+    }
+    
 # Carregar links já importados
 def carregar_links_existentes(output_csv):
     if not os.path.exists(output_csv):
@@ -718,7 +807,6 @@ def guardar_csv_incremental_with_controlled_paths(paths, artigos, irrelevant_art
         }
         
         try:
-            import json
             with open(paths['stats_json'], 'w', encoding='utf-8') as f:
                 json.dump(stats, f, indent=2, ensure_ascii=False)
             log_progress(f"✅ Processing statistics saved: {paths['stats_json']}")
@@ -730,214 +818,379 @@ def progress_update(message):
     """Progress callback for article processing"""
     log_progress(f"🔄 {message}")
 
-def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, date_str=None):
-    """
-    Main function optimized for Airflow execution with controlled paths
-    Returns number of articles processed for Airflow compatibility
-    """
-    log_progress("🚀 A iniciar processar_relevantes_airflow")
+def apply_ml_pre_filtering(df, project_root):
+    """Apply ML filtering before detailed processing to save time"""
+    if not ML_AVAILABLE or MLEnhancedFilter is None:
+        log_progress("⚠️ ML Enhanced Filter not available, continuing with original order")
+        return df
     
-    # Setup paths and configuration with controlled paths
     try:
-        paths = setup_paths_and_dates(target_date, dias, input_file, output_dir, date_str)
-        if not paths['input_csv']:
-            log_progress("❌ Nenhum ficheiro de entrada encontrado. Não é possível prosseguir.", "error")
-            return 0
-        
-        LOCALIDADES, MUNICIPIOS, DISTRITOS, KEYWORDS, FREGUESIAS_COM_CODIGOS = load_configuration()
-        
-    except Exception as e:
-        log_progress(f"❌ Configuração falhada: {e}", "error")
-        raise
-    
-    # Create a shared session for all requests
-    session = create_optimized_session()
-    rate_limiter = DynamicRateLimiter()
-
-    # Carregar links já importados
-    links_existentes = carregar_links_existentes(paths['output_csv'])
-
-    try:
-        df = pd.read_csv(paths['input_csv'])
-        
-        # Validate CSV format matches expectations
-        required_columns = ["ID", "keyword", "localidade", "title", "link", "published"]
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            log_progress(f"❌ Colunas em falta no ficheiro CSV: {missing_columns}", "error")
-            log_progress(f"🔍 Colunas disponíveis: {list(df.columns)}", "debug")
-            return 0
-        
-        log_progress(f"✅ Ficheiro CSV válido com {len(df)} artigos")
-        log_progress(f"📋 Colunas: {list(df.columns)}")
-        
-        # Filter by days if the collection_date column exists
-        if 'collection_date' in df.columns and dias > 0:
-            cutoff_date = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
-            df = df[df['collection_date'] >= cutoff_date]
-            log_progress(f"📅 Filtrado para artigos dos últimos {dias} dias: {len(df)} artigos")
-        
-        relevantes = df.copy()
-        processing_stats = {
-            "Total de Artigos para Processar": len(relevantes),
-            "Ficheiro de Entrada": paths['input_csv'],
-            "Ficheiro de Saída Principal": paths['default_output_csv'],
-            "Diretoria de Saída": paths['structured_dir'],
-            "Filtro de Dias": dias
-        }
-        log_statistics(processing_stats, "Processamento Iniciado")
-        
-        # Tentar identificar o último ID processado
-        df_existente = pd.read_csv(paths['output_csv']) if os.path.exists(paths['output_csv']) else pd.DataFrame()
-        ultimo_id = df_existente["ID"].dropna().iloc[-1] if not df_existente.empty else None
-     
-        # Obter a posição do último ID no DataFrame de relevantes
-        start_index = 0
-        if ultimo_id:
-            try:
-                start_index = relevantes[relevantes["ID"] == ultimo_id].index[-1] + 1
-                log_progress(f"⏩ A retomar do índice {start_index} após o ID: {ultimo_id}")
-            except IndexError:
-                log_progress("⚠️ Último ID não encontrado em relevantes. A começar do início.", "warning")
-     
-        rows = list(relevantes.iloc[start_index:].iterrows())
-        artigos_final = []
-        max_workers = min(8, os.cpu_count() * 2) if os.cpu_count() else 4  # Dynamic worker count based on CPU cores
-        chunk_size = 20  # Process in larger chunks
-        
-        # Create caches for duplicate detection
-        existing_titles = set()
-        existing_urls = set()
-        
-        # Load existing titles from output file to avoid duplicates
-        if os.path.exists(paths['output_csv']):
-            try:
-                df_existing = pd.read_csv(paths['output_csv'])
-                # Populate caches from existing data
-                for title in df_existing.get("title", []):
-                    if isinstance(title, str):
-                        existing_titles.add(hashlib.md5(title.lower().encode()).hexdigest())
-                for url in df_existing.get("page", []):
-                    if isinstance(url, str):
-                        existing_urls.add(url.split('?')[0])
-            except Exception as e:
-                log_progress(f"⚠️ Erro ao carregar títulos existentes: {e}", "warning")
-        
-        # Process articles in batches to avoid overloading
-        total_batches = (len(rows) + chunk_size - 1) // chunk_size
-        for chunk_start in range(0, len(rows), chunk_size):
-            chunk_end = min(chunk_start + chunk_size, len(rows))
-            chunk_rows = rows[chunk_start:chunk_end]
-            batch_num = (chunk_start // chunk_size) + 1
+        # Try to import and use ML filtering
+        ml_filter = MLEnhancedFilter()
+        if ml_filter.load_models():
+            log_progress("🤖 Applying ML pre-filtering to prioritize relevant articles...")
             
-            log_progress(f"📦 A processar lote {batch_num}/{total_batches} ({len(chunk_rows)} artigos)")
+            ml_predictions, ml_scores = ml_filter.predict_relevance(
+                df, 
+                threshold=0.3  # Lower threshold for pre-filtering
+            )
             
-            # Random delay between chunks to appear more human-like
-            if chunk_start > 0:
-                delay = random.uniform(5, 15)
-                log_progress(f"🕒 Pausa entre lotes: {delay:.1f} segundos...")
-                time.sleep(delay)
+            # Sort by ML score (highest first)
+            df['ml_temp_score'] = ml_scores
+            df_sorted = df.sort_values('ml_temp_score', ascending=False)
+            df_sorted = df_sorted.drop('ml_temp_score', axis=1)
             
-            # Check internet connection before processing batch
-            if not check_internet_connection():
-                log_progress("⚠️ Conexão com a internet perdida. A aguardar reconexão...", "warning")
-                while not check_internet_connection():
-                    time.sleep(30)  # Wait 30 seconds before checking again
-                log_progress("✅ Conexão com a internet restaurada. A continuar processamento...")
-            
-            batch_articles = []
-            try:
-                with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                    future_to_row = {
-                        executor.submit(processar_artigo, row[1], rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CODIGOS, progress_update): row 
-                        for row in chunk_rows
-                    }
-                    for future in as_completed(future_to_row):
-                        try:
-                            artigo = future.result()
-                            if artigo and artigo["page"] not in links_existentes:
-                                batch_articles.append(artigo)
-                                links_existentes.add(artigo["page"])
-                        except Exception as e:
-                            log_progress(f"❌ Erro ao processar artigo: {str(e)}", "error")
-                            continue
-            except Exception as e:
-                log_progress(f"❌ Erro durante o processamento do lote: {str(e)}", "error")
-                # Save what we have so far
-                if batch_articles:
-                    try:
-                        guardar_csv_incremental(paths['output_csv'], batch_articles)
-                        artigos_final.extend(batch_articles)
-                        log_progress(f"✅ Guardamento de emergência: {len(batch_articles)} artigos após erro.")
-                    except Exception as save_err:
-                        log_progress(f"❌ Erro ao guardar após falha: {str(save_err)}", "error")
-                time.sleep(60)  # Wait a minute before continuing
-                continue
-            
-            # Save after each batch
-            if batch_articles:
-                try:
-                    guardar_csv_incremental_with_controlled_paths(paths, batch_articles)
-                    artigos_final.extend(batch_articles)
-                    log_progress(f"✅ Lote {batch_num} concluído: {len(batch_articles)} artigos (total: {len(artigos_final)})")
-                    time.sleep(random.uniform(3, 5))  # Short break after each batch
-                except Exception as e:
-                    log_progress(f"❌ Erro ao guardar lote: {str(e)}", "error")
-                    time.sleep(10)  # Wait a bit and try again
-                    try:
-                        guardar_csv_incremental_with_controlled_paths(paths, batch_articles)
-                        log_progress("✅ Segunda tentativa de guardamento bem-sucedida.")
-                    except:
-                        log_progress("❌ Falha na segunda tentativa de guardamento.", "error")
-
-        final_stats = {
-            "Total de Artigos Processados": len(artigos_final),
-            "Ficheiro de Saída Principal": paths['default_output_csv'],
-            "Ficheiro de Saída Raw": paths['output_csv'],
-            "Ficheiro de Estatísticas": paths['stats_json'],
-            "Taxa de Sucesso": f"{len(artigos_final)/len(relevantes)*100:.1f}%" if len(relevantes) > 0 else "0%"
-        }
-        
-        if artigos_final:
-            guardar_csv_incremental_with_controlled_paths(paths, artigos_final)
-            log_statistics(final_stats, "Processamento Concluído com Sucesso")
-            return len(artigos_final)
+            log_progress(f"📊 Articles sorted by ML relevance score")
+            return df_sorted
         else:
-            log_progress("⚠️ Nenhum artigo foi processado com sucesso.", "warning")
-            return 0
-    
-    except KeyboardInterrupt:
-        log_progress("\n⚠️ Interrompido pelo utilizador. A guardar artigos processados até agora...", "warning")
-        if 'artigos_final' in locals() and artigos_final:
-            try:
-                guardar_csv_incremental(paths['output_csv'], artigos_final)
-                log_progress(f"✅ Guardamento de emergência: {len(artigos_final)} artigos guardados.")
-                return len(artigos_final)
-            except Exception as e:
-                log_progress(f"❌ Erro ao guardar durante interrupção: {str(e)}", "error")
-                return 0
-    
+            log_progress("⚠️ ML models not available, skipping ML pre-filtering")
+            return df
+            
     except Exception as e:
-        log_progress(f"❌ Erro inesperado: {str(e)}", "error")
-        if 'artigos_final' in locals() and artigos_final:
-            try:
-                guardar_csv_incremental(paths['output_csv'], artigos_final)
-                log_progress(f"✅ Guardamento de emergência: {len(artigos_final)} artigos guardados.")
-                return len(artigos_final)
-            except Exception as save_err:
-                log_progress(f"❌ Erro ao guardar durante erro: {str(save_err)}", "error")
-                return 0
+        log_progress(f"⚠️ ML pre-filtering failed: {e}, continuing with original order")
+        return df
 
-def main():
-    """Main function with controlled output paths support"""
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Process Google News articles (Airflow version)")
+def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, date_str=None):
+    """Main function for Airflow execution with ML filtering integration"""
+    
+    print("🔧 Setting up paths and configuration...")
+    
+    try:
+        # Setup paths
+        paths = setup_paths_and_dates(
+            target_date=target_date,
+            dias=dias,
+            input_file=input_file,
+            output_dir=output_dir,
+            date_str=date_str
+        )
+        print(f"✅ Paths configured successfully")
+        print(f"📂 Project root: {paths.get('project_root', 'Not set')}")
+        print(f"📄 Input CSV: {paths.get('input_csv', 'Not set')}")
+        
+    except Exception as e:
+        print(f"❌ Failed to setup paths: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    try:
+        # Load configuration - FIX: Unpack all 5 values
+        print("🔧 Loading configuration data...")
+        LOCALIDADES, MUNICIPIOS, DISTRITOS, KEYWORDS, FREGUESIAS_COM_CODIGOS = load_configuration()
+        print(f"✅ Configuration loaded: {len(LOCALIDADES)} localities, {len(KEYWORDS)} keywords")
+        
+    except Exception as e:
+        print(f"❌ Failed to load configuration: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    try:
+        # Read input file
+        print(f"📖 Reading input file: {paths['input_csv']}")
+        df = pd.read_csv(paths['input_csv'])
+        print(f"✅ Loaded {len(df)} articles from input file")
+        print(f"📊 Columns: {list(df.columns)}")
+        
+        if len(df) == 0:
+            print("⚠️ No articles to process")
+            return True
+            
+    except Exception as e:
+        print(f"❌ Failed to read input file: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    # Apply ML pre-filtering to prioritize articles
+    try:
+        print("🤖 Applying ML pre-filtering...")
+        df = apply_ml_pre_filtering(df, paths['project_root'])
+        print(f"✅ ML pre-filtering completed")
+    except Exception as e:
+        print(f"⚠️ ML pre-filtering failed: {e}, continuing without ML filtering")
+    
+    # Continue with processing...
+    print("🔄 Starting article processing...")
+    
+    # Check internet connection
+    if not check_internet_connection():
+        print("❌ No internet connection available")
+        return False
+    
+    print(f"📊 Processing {len(df)} articles...")
+    
+    # Initialize rate limiter and session
+    rate_limiter = DynamicRateLimiter()
+    session = create_optimized_session()
+    
+    # Track processed articles
+    artigos_processados = []
+    artigos_irrelevantes = []
+    existing_links = carregar_links_existentes(paths['output_csv'])
+    existing_titles = set()
+    existing_urls = set()
+    
+    processed_count = 0
+    skipped_count = 0
+    error_count = 0
+    
+    try:
+        # Process articles with progress tracking
+        for index, row in df.iterrows():
+            try:
+                # Progress indicator
+                if processed_count % 10 == 0:
+                    progress_pct = (processed_count / len(df)) * 100
+                    print(f"🔄 Progress: {processed_count}/{len(df)} ({progress_pct:.1f}%)")
+                
+                # Skip duplicates
+                if is_duplicate_content(row.get('title', ''), row.get('link', ''), existing_titles, existing_urls):
+                    skipped_count += 1
+                    continue
+                
+                # Skip if already processed
+                if row.get('link', '') in existing_links:
+                    skipped_count += 1
+                    continue
+                
+                # Process the article
+                resultado = processar_artigo(
+                    row, 
+                    rate_limiter, 
+                    LOCALIDADES, 
+                    KEYWORDS, 
+                    FREGUESIAS_COM_CODIGOS, 
+                    progress_callback=progress_update
+                )
+                
+                if resultado:
+                    # Check if article is relevant (has disaster type or victims)
+                    if (resultado.get('type') != 'unknown' or 
+                        any(resultado.get(col, 0) > 0 for col in ['fatalities', 'injured', 'evacuated', 'displaced', 'missing'])):
+                        artigos_processados.append(resultado)
+                        print(f"✅ Relevant article processed: {resultado.get('ID', 'Unknown ID')}")
+                    else:
+                        # Store irrelevant articles separately
+                        artigos_irrelevantes.append(resultado)
+                        print(f"ℹ️ Irrelevant article stored: {resultado.get('ID', 'Unknown ID')}")
+                else:
+                    error_count += 1
+                
+                processed_count += 1
+                
+                # Add small delay to avoid overwhelming servers
+                time.sleep(0.1)
+                
+            except Exception as e:
+                error_count += 1
+                print(f"❌ Error processing article {index}: {e}")
+                continue
+        
+        # Final statistics
+        final_stats = {
+            "Total Articles": len(df),
+            "Processed Successfully": processed_count,
+            "Relevant Articles": len(artigos_processados),
+            "Irrelevant Articles": len(artigos_irrelevantes),
+            "Skipped (Duplicates)": skipped_count,
+            "Errors": error_count,
+            "Success Rate": f"{(processed_count/len(df)*100):.1f}%" if len(df) > 0 else "0%"
+        }
+        
+        print("📊 Final Processing Statistics:")
+        for key, value in final_stats.items():
+            print(f"   {key}: {value}")
+        
+        # Save results using controlled paths
+        print("💾 Saving processed articles...")
+        guardar_csv_incremental_with_controlled_paths(
+            paths, 
+            artigos_processados, 
+            artigos_irrelevantes
+        )
+        
+        print(f"✅ Processing completed successfully!")
+        print(f"📊 Total relevant articles: {len(artigos_processados)}")
+        print(f"📁 Output files saved to: {paths['structured_dir']}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error during article processing: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    finally:
+        # Cleanup
+        if 'session' in locals():
+            session.close()
+
+# Update the apply_ml_pre_filtering function to handle import errors gracefully
+def apply_ml_pre_filtering(df, project_root):
+    """Apply ML filtering before detailed processing to save time"""
+    if not ML_AVAILABLE or MLEnhancedFilter is None:
+        log_progress("⚠️ ML Enhanced Filter not available, continuing with original order")
+        return df
+    
+    try:
+        # Try to import and use ML filtering
+        ml_filter = MLEnhancedFilter()
+        if ml_filter.load_models():
+            log_progress("🤖 Applying ML pre-filtering to prioritize relevant articles...")
+            
+            ml_predictions, ml_scores = ml_filter.predict_relevance(
+                df, 
+                threshold=0.3  # Lower threshold for pre-filtering
+            )
+            
+            # Sort by ML score (highest first)
+            df['ml_temp_score'] = ml_scores
+            df_sorted = df.sort_values('ml_temp_score', ascending=False)
+            df_sorted = df_sorted.drop('ml_temp_score', axis=1)
+            
+            log_progress(f"📊 Articles sorted by ML relevance score")
+            return df_sorted
+        else:
+            log_progress("⚠️ ML models not available, skipping ML pre-filtering")
+            return df
+            
+    except Exception as e:
+        log_progress(f"⚠️ ML pre-filtering failed: {e}, continuing with original order")
+        return df
+
+def extract_victims_from_title(title):
+    """
+    Extrai contagens de vítimas do título da notícia
+    Retorna um dicionário com as contagens encontradas
+    """
+    vitimas = {
+        "fatalities": 0,
+        "injured": 0,
+        "evacuated": 0,
+        "displaced": 0,
+        "missing": 0
+    }
+    
+    # Padrões para mortos/vítimas mortais
+    fatalities_patterns = [
+        r'(\d+)\s*mort[eo]s?',
+        r'(\d+)\s*vítimas?\s*mortais?',
+        r'(\d+)\s*óbitos?',
+        r'faz\s+(\d+)\s+mortos?',  # "faz três mortos"
+        r'deixa\s+(\d+)\s+mortos?',  # "deixa quatro mortos"
+        r'matou\s+(\d+)',  # "matou cinco"
+        r'morrem\s+(\d+)'   # "morrem seis"
+    ]
+    
+    # Padrões para feridos
+    injured_patterns = [
+        r'(\d+)\s*feridos?',
+        r'(\d+)\s*pessoas?\s*feridas?',
+        r'deixa\s+(\d+)\s+feridos?'
+    ]
+    
+    # Padrões para evacuados
+    evacuated_patterns = [
+        r'(\d+)\s*evacuad[oa]s?',
+        r'(\d+)\s*pessoas?\s*evacuadas?'
+    ]
+    
+    # Padrões para desalojados
+    displaced_patterns = [
+        r'(\d+)\s*desalojad[oa]s?',
+        r'(\d+)\s*pessoas?\s*desalojadas?'
+    ]
+    
+    # Padrões para desaparecidos
+    missing_patterns = [
+        r'(\d+)\s*desaparecid[oa]s?',
+        r'(\d+)\s*pessoas?\s*desaparecidas?',
+        r'deixa\s+(\d+)\s+desaparecid[oa]s?',
+        r'e\s+(\d+)\s+desaparecid[oa]'  # "e um desaparecido"
+    ]
+
+    # Procurar por cada tipo de vítima
+    for pattern in fatalities_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            try:
+                vitimas["fatalities"] = int(match.group(1))
+            except ValueError:
+                # Converter palavras para números, se necessário
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["fatalities"] = num_map[num_str]
+            break
+
+    for pattern in injured_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            try:
+                vitimas["injured"] = int(match.group(1))
+            except ValueError:
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["injured"] = num_map[num_str]
+            break
+
+    for pattern in evacuated_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            try:
+                vitimas["evacuated"] = int(match.group(1))
+            except ValueError:
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["evacuated"] = num_map[num_str]
+            break
+
+    for pattern in displaced_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            try:
+                vitimas["displaced"] = int(match.group(1))
+            except ValueError:
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["displaced"] = num_map[num_str]
+            break
+
+    for pattern in missing_patterns:
+        match = re.search(pattern, title.lower())
+        if match:
+            try:
+                vitimas["missing"] = int(match.group(1))
+            except ValueError:
+                num_str = match.group(1).lower()
+                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
+                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
+                if num_str in num_map:
+                    vitimas["missing"] = num_map[num_str]
+            break
+    
+    return vitimas
+
+# Add the main entry point at the end of the file
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process relevant articles from scraper output")
     parser.add_argument("--dias", type=int, default=1, help="Number of days to process")
-    parser.add_argument("--date", type=str, help="Specific target date (YYYY-MM-DD)")
-    parser.add_argument("--input_file", type=str, help="Specific input file path")
-    parser.add_argument("--output_dir", type=str, help="Output directory for processed files")
+    parser.add_argument("--input_file", type=str, help="Input CSV file path")
+    parser.add_argument("--output_dir", type=str, help="Output directory path")
     parser.add_argument("--date_str", type=str, help="Date string for file naming")
+    parser.add_argument("--date", type=str, help="Target date (YYYY-MM-DD)")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    
     args = parser.parse_args()
     
     # Configure logging level
@@ -951,17 +1204,22 @@ def main():
     
     try:
         result = airflow_main(
-            target_date=args.date, 
+            target_date=args.date,
             dias=args.dias,
             input_file=args.input_file,
             output_dir=args.output_dir,
             date_str=args.date_str
         )
-        log_progress(f"✅ Processing completed. Processed {result} articles")
-        return 0
+        
+        if result:
+            log_progress("✅ Processing completed successfully")
+            sys.exit(0)
+        else:
+            log_progress("❌ Processing failed", "error")
+            sys.exit(1)
+            
     except Exception as e:
-        log_progress(f"❌ Processing failed: {e}", "error")
-        return 1
-
-if __name__ == "__main__":
-    sys.exit(main())
+        log_progress(f"❌ Processing failed with exception: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
