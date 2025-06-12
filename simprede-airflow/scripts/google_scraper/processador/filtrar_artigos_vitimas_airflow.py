@@ -18,7 +18,49 @@ if hasattr(sys.stderr, 'reconfigure'):
 # Add the missing imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from utils.helpers import guardar_csv_incremental
-from .ml_enhanced_filter import MLEnhancedFilter
+
+# Fix ML Enhanced Filter import - make it optional and handle both relative and absolute imports
+try:
+    from .ml_enhanced_filter import MLEnhancedFilter
+    ML_AVAILABLE = True
+except ImportError:
+    try:
+        # Try absolute import for standalone execution
+        import sys
+        import os
+        # Add the parent directory to the path for ml_enhanced_filter
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if parent_dir not in sys.path:
+            sys.path.append(parent_dir)
+        from processador.ml_enhanced_filter import MLEnhancedFilter
+        ML_AVAILABLE = True
+    except ImportError:
+        try:
+            # Try direct import if in same directory
+            from ml_enhanced_filter import MLEnhancedFilter
+            ML_AVAILABLE = True
+        except ImportError:
+            MLEnhancedFilter = None
+            ML_AVAILABLE = False
+            print("⚠️ ML Enhanced Filter not available - continuing with standard filtering")
+
+# Also import the new hydro disaster detector
+try:
+    # Try relative import first
+    from ..hydro_disaster_detector import HydromorphologicalDetector
+    HYDRO_DETECTOR_AVAILABLE = True
+except ImportError:
+    try:
+        # Try absolute import
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if parent_dir not in sys.path:
+            sys.path.append(parent_dir)
+        from hydro_disaster_detector import HydromorphologicalDetector
+        HYDRO_DETECTOR_AVAILABLE = True
+    except ImportError:
+        HydromorphologicalDetector = None
+        HYDRO_DETECTOR_AVAILABLE = False
+        print("⚠️ Hydromorphological Detector not available - using standard detection")
 
 # Configure logging for Airflow compatibility with immediate flushing
 def setup_airflow_logging():
@@ -632,7 +674,7 @@ def apply_enhanced_comprehensive_filters(df, project_root, target_date=None):
     
     initial_count = len(df)
     if 'page' in df.columns:
-        keyword_results = df['page'].apply(lambda url: enhanced_keyword_filter(url, enhanced_keywords))
+        keyword_results = df['page'].apply(lambda text: enhanced_keyword_filter(text, enhanced_keywords))
         df = df[keyword_results.apply(lambda x: x[0])]  # Keep only articles that pass keyword filter
     log_progress(f"   After enhanced keyword filter: {len(df)} articles (removed {initial_count - len(df)})")
     
@@ -784,24 +826,30 @@ def main():
     parser.add_argument("--output_dir", type=str, help="Output directory for filtered files")
     parser.add_argument("--date_str", type=str, help="Date string for file naming")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
-    parser.add_argument('--ml_threshold', type=float, default=0.6, help='ML relevance threshold')
-    parser.add_argument('--use_ml_filtering', type=str, default='true', help='Enable ML filtering')
+    
+    # Add ML filtering arguments
+    parser.add_argument("--ml_threshold", type=float, default=0.6, help="ML filtering threshold (0.0-1.0)")
+    parser.add_argument("--use_ml_filtering", type=str, default="true", help="Enable/disable ML filtering (true/false)")
+    
     args = parser.parse_args()
+    
+    # Convert string to boolean for ML filtering
+    use_ml_filtering = args.use_ml_filtering.lower() in ['true', '1', 'yes', 'on']
     
     # Configure logging level
     if args.debug:
         logger.setLevel(logging.DEBUG)
         log_progress("🔍 DEBUG logging enabled", "debug")
     
-    log_progress("Starting filtrar_artigos_vitimas_airflow")
+    log_progress("Starting enhanced filtrar_artigos_vitimas_airflow")
     log_progress(f"Parameters: dias={args.dias}, date={args.date}")
     log_progress(f"Paths: input_file={args.input_file}, output_dir={args.output_dir}, date_str={args.date_str}")
+    log_progress(f"ML Settings: threshold={args.ml_threshold}, enabled={use_ml_filtering}")
     
-    # Convert string to boolean for ML filtering
-    use_ml = args.use_ml_filtering.lower() == 'true'
-    
-    # Set global ML parameters (you might need to modify the filtering functions to accept these)
-    # Or pass them to the main filtering function
+    # Set global variables for ML filtering
+    global ML_THRESHOLD, USE_ML_FILTERING
+    ML_THRESHOLD = args.ml_threshold
+    USE_ML_FILTERING = use_ml_filtering
     
     try:
         result = airflow_main(
@@ -811,10 +859,12 @@ def main():
             output_dir=args.output_dir,
             date_str=args.date_str
         )
-        log_progress(f"✅ Filtering completed. Found {result} articles with victims")
+        log_progress(f"✅ Enhanced filtering completed. Found {result} articles with victims")
         return 0
     except Exception as e:
-        log_progress(f"❌ Filtering failed: {e}", "error")
+        log_progress(f"❌ Enhanced filtering failed: {e}", "error")
+        import traceback
+        log_progress(f"❌ Full traceback: {traceback.format_exc()}", "error")
         return 1
 
 if __name__ == "__main__":

@@ -269,65 +269,71 @@ def organize_path_by_date(caminho):
     
     return caminho
 
-def guardar_csv_incremental(caminho, novos_artigos: list[dict]):
-    if not novos_artigos:
-        print("⚠️ Nenhum novo artigo recebido.")
-        return
-
-    # Check if the data is empty (only has headers but no actual rows)
-    if len(novos_artigos) == 0:
-        print("⚠️ Lista de artigos está vazia. Nenhum arquivo será salvo.")
-        return
-
-    print(f"📥 Novos artigos recebidos: {len(novos_artigos)}")
-
-    # Ensure all articles have valid IDs
-    for artigo in novos_artigos:
-        if not artigo.get("ID"):
-            artigo["ID"] = hashlib.md5((artigo.get("title", "") + artigo.get("link", "")).encode()).hexdigest()
-
-    novos_artigos = [a for a in novos_artigos if a.get("ID")]
-    if not novos_artigos:
-        print("⚠️ Nenhum artigo com ID válido encontrado.")
+def guardar_csv_incremental(output_csv, artigos):
+    """
+    Save articles incrementally to CSV, avoiding duplicates based on ID and URL
+    """
+    if not artigos:
+        print("⚠️ Nenhum artigo para salvar.")
         return
     
-    # Organize path by year/month/day
-    organized_path = organize_path_by_date(caminho)
+    print(f"📥 Novos artigos recebidos: {len(artigos)}")
     
-    # Create directories if needed
-    os.makedirs(os.path.dirname(organized_path), exist_ok=True)
-    print(f"📂 Organizando saída por ano/mês/dia: {organized_path}")
+    # Create directory if it doesn't exist
+    os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     
-    # Check for existing articles in the organized file
-    existentes = set()
-    if os.path.exists(organized_path):
-        with open(organized_path, "r", encoding="utf-8") as f:
-            existentes = {row["ID"] for row in csv.DictReader(f)}
+    print(f"📂 Organizando saída por ano/mês/dia: {output_csv}")
     
-    print(f"📂 IDs existentes no arquivo: {len(existentes)}")
-
-    # Filter out articles with duplicate IDs
-    artigos_unicos = [a for a in novos_artigos if a["ID"] not in existentes]
-    print(f"🆕 Artigos únicos para salvar: {len(artigos_unicos)}")
-
-    if not artigos_unicos:
-        print("⚠️ Nenhum artigo único para salvar.")
-        return
-
-    # Save to the organized path only
-    with open(organized_path, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=artigos_unicos[0].keys())
-        if os.stat(organized_path).st_size == 0:  # Write header if file is empty
-            writer.writeheader()
-
-        batch_size = 10
-        for i in range(0, len(artigos_unicos), batch_size):
-            batch = artigos_unicos[i:i + batch_size]
-            for artigo in batch:
-                writer.writerow(artigo)
-            print(f"💾 Guardados {len(batch)} artigos no arquivo {organized_path} (batch {i // batch_size + 1})")
+    # Convert to DataFrame for easier manipulation
+    df_novos = pd.DataFrame(artigos)
     
-    print(f"✅ Arquivo salvo com sucesso em: {organized_path}")
+    # Load existing articles if file exists
+    if os.path.exists(output_csv):
+        try:
+            df_existentes = pd.read_csv(output_csv, encoding='utf-8')
+            print(f"📂 IDs existentes no arquivo: {len(df_existentes)}")
+            
+            # More flexible duplicate detection
+            if 'ID' in df_existentes.columns and 'ID' in df_novos.columns:
+                # Remove duplicates based on ID first
+                existing_ids = set(df_existentes['ID'].astype(str))
+                df_novos = df_novos[~df_novos['ID'].astype(str).isin(existing_ids)]
+            
+            # If we still have articles, check for URL duplicates
+            if len(df_novos) > 0 and 'page' in df_existentes.columns and 'page' in df_novos.columns:
+                existing_urls = set(df_existentes['page'].astype(str))
+                df_novos = df_novos[~df_novos['page'].astype(str).isin(existing_urls)]
+            
+            # Combine with existing data
+            if len(df_novos) > 0:
+                df_final = pd.concat([df_existentes, df_novos], ignore_index=True)
+            else:
+                df_final = df_existentes
+                
+        except Exception as e:
+            print(f"⚠️ Erro ao ler arquivo existente: {e}")
+            df_final = df_novos
+    else:
+        df_final = df_novos
+    
+    print(f"🆕 Artigos únicos para salvar: {len(df_novos)}")
+    
+    if len(df_novos) > 0:
+        # Save with proper CSV formatting
+        try:
+            df_final.to_csv(output_csv, index=False, encoding='utf-8', quoting=1)
+            print(f"✅ Arquivo salvo com sucesso: {output_csv}")
+            print(f"📊 Total de artigos no arquivo: {len(df_final)}")
+        except Exception as e:
+            print(f"❌ Erro ao salvar arquivo: {e}")
+            # Try with different encoding
+            try:
+                df_final.to_csv(output_csv, index=False, encoding='utf-8-sig', quoting=1)
+                print(f"✅ Arquivo salvo com encoding alternativo: {output_csv}")
+            except Exception as e2:
+                print(f"❌ Erro persistente ao salvar: {e2}")
+    else:
+        print("⚠️ Nenhum artigo único para salvar (todos são duplicatas).")
 
 
 # --------------------------- Process URLs in parallel ---------------------------

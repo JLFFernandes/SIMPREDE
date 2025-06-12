@@ -384,10 +384,7 @@ def is_international_news(title, url):
 
 # Complete the extract_victims_from_title function
 def extract_victims_from_title(title):
-    """
-    Extrai contagens de vítimas do título da notícia
-    Retorna um dicionário com as contagens encontradas
-    """
+    """Extract victim counts from article title using Portuguese patterns"""
     vitimas = {
         "fatalities": 0,
         "injured": 0,
@@ -396,168 +393,232 @@ def extract_victims_from_title(title):
         "missing": 0
     }
     
-    # Padrões para mortos/vítimas mortais
+    if not title or pd.isna(title):
+        return vitimas
+    
+    title_lower = title.lower()
+    
+    # Portuguese victim patterns
     fatalities_patterns = [
-        r'(\d+)\s*mort[eo]s?',
+        r'(\d+)\s*mort[oa]s?',
         r'(\d+)\s*vítimas?\s*mortais?',
         r'(\d+)\s*óbitos?',
-        r'faz\s+(\d+)\s+mortos?',  # "faz três mortos"
-        r'deixa\s+(\d+)\s+mortos?',  # "deixa quatro mortos"
-        r'matou\s+(\d+)',  # "matou cinco"
-        r'morrem\s+(\d+)'   # "morrem seis"
+        r'(?:mata|matou|morr[eu])\s*(\d+)',
+        r'(\d+)\s*pessoa[s]?\s*(?:morr[eu]|falec[eu])',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*mort[oa]s?',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*vítimas?\s*mortais?'
     ]
     
-    # Padrões para feridos
     injured_patterns = [
-        r'(\d+)\s*feridos?',
-        r'(\d+)\s*pessoas?\s*feridas?',
-        r'deixa\s+(\d+)\s+feridos?'
+        r'(\d+)\s*ferid[oa]s?',
+        r'(\d+)\s*pessoa[s]?\s*ferid[ao]s?',
+        r'(?:fere|deixa)\s*(\d+)',
+        r'(\d+)\s*ferimento[s]?',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*ferid[oa]s?'
     ]
     
-    # Padrões para evacuados
     evacuated_patterns = [
         r'(\d+)\s*evacuad[oa]s?',
-        r'(\d+)\s*pessoas?\s*evacuadas?'
+        r'(\d+)\s*pessoa[s]?\s*evacuad[ao]s?',
+        r'evacuação\s*de\s*(\d+)',
+        r'(?:retirou|retirad[oa]s?)\s*(\d+)',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*evacuad[oa]s?'
     ]
     
-    # Padrões para desalojados
     displaced_patterns = [
         r'(\d+)\s*desalojad[oa]s?',
-        r'(\d+)\s*pessoas?\s*desalojadas?'
+        r'(\d+)\s*pessoa[s]?\s*desalojad[ao]s?',
+        r'(\d+)\s*(?:sem\s*casa|sem\s*abrigo)',
+        r'(?:realojad[oa]s?|realojamento)\s*(\d+)',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*desalojad[oa]s?'
     ]
     
-    # Padrões para desaparecidos
     missing_patterns = [
         r'(\d+)\s*desaparecid[oa]s?',
-        r'(\d+)\s*pessoas?\s*desaparecidas?',
-        r'deixa\s+(\d+)\s+desaparecid[oa]s?',
-        r'e\s+(\d+)\s+desaparecid[oa]'  # "e um desaparecido"
+        r'(\d+)\s*pessoa[s]?\s*desaparecid[ao]s?',
+        r'(?:procuram?|procura[s]?)\s*(\d+)',
+        r'(\d+)\s*(?:em\s*falta|dado[s]?\s*como\s*desaparecid[oa]s?)',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*desaparecid[oa]s?'
     ]
-
-    # Procurar por cada tipo de vítima
+    
+    # Number word mappings
+    num_words = {
+        "um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3,
+        "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8,
+        "nove": 9, "dez": 10, "onze": 11, "doze": 12, "vinte": 20
+    }
+    
+    def extract_number(match_text):
+        """Extract number from match, handling both digits and words"""
+        if match_text.isdigit():
+            return int(match_text)
+        elif match_text.lower() in num_words:
+            return num_words[match_text.lower()]
+        return 0
+    
+    # Extract fatalities
     for pattern in fatalities_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["fatalities"] = int(match.group(1))
-            except ValueError:
-                # Converter palavras para números, se necessário
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["fatalities"] = num_map[num_str]
-            break
-
+                if match.group(1):  # If there's a capture group
+                    num = extract_number(match.group(1))
+                else:
+                    # Handle patterns without capture groups
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["fatalities"] = max(vitimas["fatalities"], num)
+            except (ValueError, IndexError):
+                pass
+    
+    # Extract injured
     for pattern in injured_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["injured"] = int(match.group(1))
-            except ValueError:
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["injured"] = num_map[num_str]
-            break
-
+                if match.group(1):
+                    num = extract_number(match.group(1))
+                else:
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["injured"] = max(vitimas["injured"], num)
+            except (ValueError, IndexError):
+                pass
+    
+    # Extract evacuated
     for pattern in evacuated_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["evacuated"] = int(match.group(1))
-            except ValueError:
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["evacuated"] = num_map[num_str]
-            break
-
+                if match.group(1):
+                    num = extract_number(match.group(1))
+                else:
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["evacuated"] = max(vitimas["evacuated"], num)
+            except (ValueError, IndexError):
+                pass
+    
+    # Extract displaced
     for pattern in displaced_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["displaced"] = int(match.group(1))
-            except ValueError:
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["displaced"] = num_map[num_str]
-            break
-
+                if match.group(1):
+                    num = extract_number(match.group(1))
+                else:
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["displaced"] = max(vitimas["displaced"], num)
+            except (ValueError, IndexError):
+                pass
+    
+    # Extract missing
     for pattern in missing_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["missing"] = int(match.group(1))
-            except ValueError:
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["missing"] = num_map[num_str]
-            break
+                if match.group(1):
+                    num = extract_number(match.group(1))
+                else:
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["missing"] = max(vitimas["missing"], num)
+            except (ValueError, IndexError):
+                pass
     
     return vitimas
 
 def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CODIGOS, progress_callback=None):
-    """Process a single article with progress callback - OPTIMIZED VERSION"""
-    # Extract data from the row with exact field names from scraper output
-    original_url = row.get("link", "")
-    titulo = row.get("title", "")
-    localidade = row.get("localidade", "")
-    keyword = row.get("keyword", "desconhecido")
-    publicado = row.get("published", "")
-    article_id = row.get("ID", "")
-    
-    # Validate required fields
-    if not all([original_url, titulo, article_id]):
-        log_progress(f"⚠️ Artigo com dados incompletos ignorado: ID={article_id}, título={titulo[:30]}...", "warning")
-        return None
-
-    # OPTIMIZATION: Pre-filter based on title analysis
-    # If title clearly indicates non-disaster content, skip processing
-    non_disaster_indicators = [
-        'futebol', 'desporto', 'filme', 'música', 'exposição', 'festival',
-        'política', 'economia', 'eleições', 'parlamento', 'governo',
-        'arte', 'cultura', 'literatura', 'teatro', 'cinema'
-    ]
-    
-    titulo_lower = titulo.lower()
-    if any(indicator in titulo_lower for indicator in non_disaster_indicators):
-        # Quick check if it might still be disaster-related
-        disaster_keywords = ['incêndio', 'inundação', 'temporal', 'vento', 'chuva', 'neve', 'morto', 'ferido', 'evacuado']
-        if not any(keyword in titulo_lower for keyword in disaster_keywords):
-            log_progress(f"⚠️ Artigo filtrado por título não relacionado: {titulo[:50]}...", "warning")
+    """Process a single article with enhanced error handling"""
+    try:
+        # Extract data from the row with safer field access
+        original_url = str(row.get("link", "")).strip()
+        titulo = str(row.get("title", "")).strip()
+        localidade = str(row.get("localidade", "")).strip()
+        keyword = str(row.get("keyword", "desconhecido")).strip()
+        publicado = str(row.get("published", "")).strip()
+        article_id = str(row.get("ID", "")).strip()
+        
+        # Generate a fallback ID if missing
+        if not article_id:
+            import hashlib
+            article_id = hashlib.md5(f"{original_url}{titulo}".encode()).hexdigest()[:16]
+        
+        # Validate required fields
+        if not all([original_url, titulo]):
+            log_progress(f"⚠️ Artigo com dados incompletos ignorado: ID={article_id}, título={titulo[:30]}...", "warning")
             return None
 
-    # Initialize the variables before using them
-    potential_tipo_from_title = None
-    subtipo_from_title = None
+        # OPTIMIZATION: Pre-filter based on title analysis
+        non_disaster_indicators = [
+            'futebol', 'desporto', 'filme', 'música', 'exposição', 'festival',
+            'política', 'economia', 'eleições', 'parlamento', 'governo',
+            'arte', 'cultura', 'literatura', 'teatro', 'cinema', 'turismo',
+            'saúde', 'médico', 'hospital', 'educação', 'escola'
+        ]
+        
+        titulo_lower = titulo.lower()
+        if any(indicator in titulo_lower for indicator in non_disaster_indicators):
+            # Quick check if it might still be disaster-related
+            disaster_keywords = ['incêndio', 'inundação', 'temporal', 'vento', 'chuva', 'neve', 'morto', 'ferido', 'evacuado', 'granizo', 'trovoada']
+            if not any(keyword in titulo_lower for keyword in disaster_keywords):
+                log_progress(f"⚠️ Artigo filtrado por título não relacionado: {titulo[:50]}...", "warning")
+                return None
 
-    # Check for victims in the title first
-    vitimas_do_titulo = extract_victims_from_title(titulo)
-    has_victims_in_title = any(vitimas_do_titulo.values())
-    if has_victims_in_title:
-        log_progress(f"✅ Vítimas encontradas no título: {titulo}")
+        # Check for victims in the title first
+        vitimas_do_titulo = extract_victims_from_title(titulo)
+        has_victims_in_title = any(vitimas_do_titulo.values())
+        
         # Try to detect disaster type from title
         potential_tipo_from_title, subtipo_from_title = detect_disaster_type(titulo)
-        if potential_tipo_from_title != "unknown" and potential_tipo_from_title:
+        
+        if has_victims_in_title:
+            log_progress(f"✅ Vítimas encontradas no título: {titulo}")
+        
+        if potential_tipo_from_title != "unknown":
             log_progress(f"🔍 Tipo de desastre identificado do título: {potential_tipo_from_title}")
-    
-    # OPTIMIZATION: Reduce timeout for URL resolution - REMOVE timeout parameter
-    resolved_url = None
-    try:
-        # Set shorter timeout for faster processing
-        rate_limiter.wait_if_needed(original_url)
-        resolved_url = resolve_google_news_url(original_url)  # REMOVED timeout parameter
-        if not resolved_url or not resolved_url.startswith("http"):
-            log_progress(f"⚠️ Link não resolvido: {original_url[:100]}...", "warning")
+        
+        # URL resolution with better error handling
+        resolved_url = None
+        try:
+            rate_limiter.wait_if_needed(original_url)
+            resolved_url = resolve_google_news_url(original_url)
+            if not resolved_url or not resolved_url.startswith("http"):
+                log_progress(f"⚠️ Link não resolvido: {original_url[:100]}...", "warning")
+                # If we have victims and disaster type from title, create partial record
+                if has_victims_in_title and potential_tipo_from_title != "unknown":
+                    log_progress(f"💡 Criando registro parcial baseado apenas no título")
+                    return create_partial_article_record(
+                        article_id, titulo, original_url, localidade, keyword, publicado,
+                        potential_tipo_from_title, subtipo_from_title, vitimas_do_titulo,
+                        LOCALIDADES, FREGUESIAS_COM_CODIGOS
+                    )
+                return None
+        except Exception as e:
+            log_progress(f"❌ Erro de conexão ao resolver URL: {str(e)[:100]}...", "error")
             # If we have victims and disaster type from title, create partial record
-            if has_victims_in_title and potential_tipo_from_title and potential_tipo_from_title != "unknown":
+            if has_victims_in_title and potential_tipo_from_title != "unknown":
                 log_progress(f"💡 Criando registro parcial baseado apenas no título")
                 return create_partial_article_record(
                     article_id, titulo, original_url, localidade, keyword, publicado,
@@ -565,104 +626,91 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
                     LOCALIDADES, FREGUESIAS_COM_CODIGOS
                 )
             return None
-    except (requests.RequestException, ConnectionError, TimeoutError) as e:
-        log_progress(f"❌ Erro de conexão ao resolver URL: {str(e)[:100]}...", "error")
-        # If we have victims and disaster type from title, create partial record
-        if has_victims_in_title and potential_tipo_from_title and potential_tipo_from_title != "unknown":
-            log_progress(f"💡 Criando registro parcial baseado apenas no título")
-            return create_partial_article_record(
-                article_id, titulo, original_url, localidade, keyword, publicado,
-                potential_tipo_from_title, subtipo_from_title, vitimas_do_titulo,
-                LOCALIDADES, FREGUESIAS_COM_CODIGOS
-            )
-        return None
 
-    # Only fetch full text if we don't have sufficient info from title
-    texto = ""
-    if not has_victims_in_title or not potential_tipo_from_title or potential_tipo_from_title == "unknown":
-        try:
-            rate_limiter.wait_if_needed(resolved_url)
-            # OPTIMIZATION: Reduce text extraction timeout - REMOVE timeout parameter
-            texto = fetch_and_extract_article_text(resolved_url)  # REMOVED timeout parameter
-            if not texto or not is_potentially_disaster_related(texto, KEYWORDS):
-                log_progress(f"⚠️ Artigo ignorado após extração: {titulo[:50]}...", "warning")
-                return None
-        except (requests.RequestException, ConnectionError, TimeoutError) as e:
-            log_progress(f"❌ Erro de conexão ao extrair texto: {str(e)[:100]}...", "error")
-            return None
-    
-    # Use title-based disaster type if available, otherwise extract from text
-    if potential_tipo_from_title and potential_tipo_from_title != "unknown":
-        tipo, subtipo = potential_tipo_from_title, subtipo_from_title
-    else:
-        if not texto:  # Fetch text if we haven't already
+        # Fetch article text with better error handling
+        texto = ""
+        if not has_victims_in_title or potential_tipo_from_title == "unknown":
             try:
                 rate_limiter.wait_if_needed(resolved_url)
-                texto = fetch_and_extract_article_text(resolved_url)  # REMOVED timeout parameter
-            except (requests.RequestException, ConnectionError, TimeoutError) as e:
+                texto = fetch_and_extract_article_text(resolved_url)
+                if not texto or not is_potentially_disaster_related(texto, KEYWORDS):
+                    log_progress(f"⚠️ Artigo ignorado após extração: {titulo[:50]}...", "warning")
+                    return None
+            except Exception as e:
                 log_progress(f"❌ Erro de conexão ao extrair texto: {str(e)[:100]}...", "error")
                 return None
-        tipo, subtipo = detect_disaster_type(texto)
-    
-    # Use title victims if they exist, otherwise extract from text
-    if has_victims_in_title:
-        vitimas = vitimas_do_titulo
-        log_progress(f"🔍 Nenhuma vítima detectada no texto, tentando extrair do título: {titulo}")
-    else:
-        vitimas = extract_victim_counts(texto)
-        # If no victims found in text, try again with title as backup
-        if not any(vitimas.values()):
+        
+        # Determine disaster type
+        if potential_tipo_from_title and potential_tipo_from_title != "unknown":
+            tipo, subtipo = potential_tipo_from_title, subtipo_from_title
+        else:
+            tipo, subtipo = detect_disaster_type(texto or titulo)
+        
+        # Extract victims
+        if has_victims_in_title:
             vitimas = vitimas_do_titulo
-            if any(vitimas.values()):
-                log_progress(f"🔍 Nenhuma vítima detectada no texto, tentando extrair do título: {titulo}")
+        else:
+            vitimas = extract_victim_counts(texto)
+            if not any(vitimas.values()):
+                vitimas = extract_victims_from_title(titulo)
 
-    loc = detect_municipality(texto or titulo, LOCALIDADES) or localidade
-    district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
-    concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
-    parish_normalized = normalize(loc.lower())
-    dicofreg = FREGUESIAS_COM_CODIGOS.get(parish_normalized, "")
+        # Geographic detection
+        loc = detect_municipality(texto or titulo, LOCALIDADES) or localidade
+        district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
+        concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
+        parish_normalized = normalize(loc.lower())
+        dicofreg = FREGUESIAS_COM_CODIGOS.get(parish_normalized, "")
 
-    data_evt_formatada, ano, mes, dia, hora_evt = formatar_data_para_ddmmyyyy(publicado)
-    fonte = extrair_nome_fonte(resolved_url)
+        # Date formatting
+        data_evt_formatada, ano, mes, dia, hora_evt = formatar_data_para_ddmmyyyy(publicado)
+        fonte = extrair_nome_fonte(resolved_url)
 
-    # Use the ID from the scraper output
-    if not article_id:
-        log_progress(f"⚠️ Artigo sem ID válido ignorado: {titulo[:30]}...", "warning")
+        # Create clean result record
+        result = {
+            "ID": article_id,
+            "title": clean_text_for_csv(titulo),
+            "type": tipo,
+            "subtype": subtipo,
+            "date": data_evt_formatada,
+            "year": ano,
+            "month": mes,
+            "day": dia,
+            "hour": hora_evt,
+            "georef": clean_text_for_csv(loc),
+            "district": clean_text_for_csv(district),
+            "municipali": clean_text_for_csv(concelho),
+            "parish": clean_text_for_csv(loc),
+            "DICOFREG": dicofreg,
+            "source": clean_text_for_csv(fonte),
+            "sourcedate": datetime.today().date().isoformat(),
+            "sourcetype": "web",
+            "page": clean_text_for_csv(resolved_url),
+            "fatalities": vitimas["fatalities"],
+            "injured": vitimas["injured"],
+            "evacuated": vitimas["evacuated"],
+            "displaced": vitimas["displaced"],
+            "missing": vitimas["missing"]
+        }
+
+        log_progress(f"🔄 Processado: {titulo[:50]}...")
+        return result
+        
+    except Exception as e:
+        log_progress(f"❌ Erro inesperado ao processar artigo: {e}", "error")
         return None
 
-    result = {
-        "ID": article_id,
-        "title": titulo,  # Add title for better tracking
-        "type": tipo,
-        "subtype": subtipo,
-        "date": data_evt_formatada,
-        "year": ano,
-        "month": mes,
-        "day": dia,
-        "hour": hora_evt,
-        "georef": loc,
-        "district": district,
-        "municipali": concelho,
-        "parish": loc,
-        "DICOFREG": dicofreg,
-        "source": fonte,
-        "sourcedate": datetime.today().date().isoformat(),
-        "sourcetype": "web",
-        "page": resolved_url,
-        "fatalities": vitimas["fatalities"],
-        "injured": vitimas["injured"],
-        "evacuated": vitimas["evacuated"],
-        "displaced": vitimas["displaced"],
-        "missing": vitimas["missing"]
-    }
+def clean_text_for_csv(text):
+    """Clean text to avoid CSV parsing issues"""
+    if not text or pd.isna(text):
+        return ""
+    
+    text = str(text).strip()
+    # Remove problematic characters that can break CSV parsing
+    text = text.replace('"', "'").replace('\n', ' ').replace('\r', ' ')
+    # Remove multiple spaces
+    text = ' '.join(text.split())
+    return text
 
-    if progress_callback:
-        progress_callback(f"Processado: {titulo[:50]}...")
-
-    log_progress(f"🔄 Processado: {titulo[:50]}...")
-    return result
-
-# Add helper function for partial records
 def create_partial_article_record(article_id, titulo, original_url, localidade, keyword, publicado,
                                  tipo, subtipo, vitimas, LOCALIDADES, FREGUESIAS_COM_CODIGOS):
     """Create a partial article record based on title information only"""
@@ -678,7 +726,7 @@ def create_partial_article_record(article_id, titulo, original_url, localidade, 
 
     return {
         "ID": article_id,
-        "title": titulo,
+        "title": clean_text_for_csv(titulo),
         "type": tipo,
         "subtype": subtipo,
         "date": data_evt_formatada,
@@ -686,15 +734,15 @@ def create_partial_article_record(article_id, titulo, original_url, localidade, 
         "month": mes,
         "day": dia,
         "hour": hora_evt,
-        "georef": loc,
-        "district": district,
-        "municipali": concelho,
-        "parish": loc,
+        "georef": clean_text_for_csv(loc),
+        "district": clean_text_for_csv(district),
+        "municipali": clean_text_for_csv(concelho),
+        "parish": clean_text_for_csv(loc),
         "DICOFREG": dicofreg,
-        "source": fonte,
+        "source": clean_text_for_csv(fonte),
         "sourcedate": datetime.today().date().isoformat(),
         "sourcetype": "web",
-        "page": original_url,  # Use original URL for partial records
+        "page": clean_text_for_csv(original_url),
         "fatalities": vitimas["fatalities"],
         "injured": vitimas["injured"],
         "evacuated": vitimas["evacuated"],
@@ -1062,10 +1110,7 @@ def apply_ml_pre_filtering(df, project_root):
         return df
 
 def extract_victims_from_title(title):
-    """
-    Extrai contagens de vítimas do título da notícia
-    Retorna um dicionário com as contagens encontradas
-    """
+    """Extract victim counts from article title using Portuguese patterns"""
     vitimas = {
         "fatalities": 0,
         "injured": 0,
@@ -1074,110 +1119,159 @@ def extract_victims_from_title(title):
         "missing": 0
     }
     
-    # Padrões para mortos/vítimas mortais
+    if not title or pd.isna(title):
+        return vitimas
+    
+    title_lower = title.lower()
+    
+    # Portuguese victim patterns
     fatalities_patterns = [
-        r'(\d+)\s*mort[eo]s?',
+        r'(\d+)\s*mort[oa]s?',
         r'(\d+)\s*vítimas?\s*mortais?',
         r'(\d+)\s*óbitos?',
-        r'faz\s+(\d+)\s+mortos?',  # "faz três mortos"
-        r'deixa\s+(\d+)\s+mortos?',  # "deixa quatro mortos"
-        r'matou\s+(\d+)',  # "matou cinco"
-        r'morrem\s+(\d+)'   # "morrem seis"
+        r'(?:mata|matou|morr[eu])\s*(\d+)',
+        r'(\d+)\s*pessoa[s]?\s*(?:morr[eu]|falec[eu])',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*mort[oa]s?',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*vítimas?\s*mortais?'
     ]
     
-    # Padrões para feridos
     injured_patterns = [
-        r'(\d+)\s*feridos?',
-        r'(\d+)\s*pessoas?\s*feridas?',
-        r'deixa\s+(\d+)\s+feridos?'
+        r'(\d+)\s*ferid[oa]s?',
+        r'(\d+)\s*pessoa[s]?\s*ferid[ao]s?',
+        r'(?:fere|deixa)\s*(\d+)',
+        r'(\d+)\s*ferimento[s]?',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*ferid[oa]s?'
     ]
     
-    # Padrões para evacuados
     evacuated_patterns = [
         r'(\d+)\s*evacuad[oa]s?',
-        r'(\d+)\s*pessoas?\s*evacuadas?'
+        r'(\d+)\s*pessoa[s]?\s*evacuad[ao]s?',
+        r'evacuação\s*de\s*(\d+)',
+        r'(?:retirou|retirad[oa]s?)\s*(\d+)',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*evacuad[oa]s?'
     ]
     
-    # Padrões para desalojados
     displaced_patterns = [
         r'(\d+)\s*desalojad[oa]s?',
-        r'(\d+)\s*pessoas?\s*desalojadas?'
+        r'(\d+)\s*pessoa[s]?\s*desalojad[ao]s?',
+        r'(\d+)\s*(?:sem\s*casa|sem\s*abrigo)',
+        r'(?:realojad[oa]s?|realojamento)\s*(\d+)',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*desalojad[oa]s?'
     ]
     
-    # Padrões para desaparecidos
     missing_patterns = [
         r'(\d+)\s*desaparecid[oa]s?',
-        r'(\d+)\s*pessoas?\s*desaparecidas?',
-        r'deixa\s+(\d+)\s+desaparecid[oa]s?',
-        r'e\s+(\d+)\s+desaparecid[oa]'  # "e um desaparecido"
+        r'(\d+)\s*pessoa[s]?\s*desaparecid[ao]s?',
+        r'(?:procuram?|procura[s]?)\s*(\d+)',
+        r'(\d+)\s*(?:em\s*falta|dado[s]?\s*como\s*desaparecid[oa]s?)',
+        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*desaparecid[oa]s?'
     ]
-
-    # Procurar por cada tipo de vítima
+    
+    # Number word mappings
+    num_words = {
+        "um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3,
+        "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8,
+        "nove": 9, "dez": 10, "onze": 11, "doze": 12, "vinte": 20
+    }
+    
+    def extract_number(match_text):
+        """Extract number from match, handling both digits and words"""
+        if match_text.isdigit():
+            return int(match_text)
+        elif match_text.lower() in num_words:
+            return num_words[match_text.lower()]
+        return 0
+    
+    # Extract fatalities
     for pattern in fatalities_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["fatalities"] = int(match.group(1))
-            except ValueError:
-                # Converter palavras para números, se necessário
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["fatalities"] = num_map[num_str]
-            break
-
+                if match.group(1):  # If there's a capture group
+                    num = extract_number(match.group(1))
+                else:
+                    # Handle patterns without capture groups
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["fatalities"] = max(vitimas["fatalities"], num)
+            except (ValueError, IndexError):
+                pass
+    
+    # Extract injured
     for pattern in injured_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["injured"] = int(match.group(1))
-            except ValueError:
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["injured"] = num_map[num_str]
-            break
-
+                if match.group(1):
+                    num = extract_number(match.group(1))
+                else:
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["injured"] = max(vitimas["injured"], num)
+            except (ValueError, IndexError):
+                pass
+    
+    # Extract evacuated
     for pattern in evacuated_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["evacuated"] = int(match.group(1))
-            except ValueError:
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["evacuated"] = num_map[num_str]
-            break
-
+                if match.group(1):
+                    num = extract_number(match.group(1))
+                else:
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["evacuated"] = max(vitimas["evacuated"], num)
+            except (ValueError, IndexError):
+                pass
+    
+    # Extract displaced
     for pattern in displaced_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["displaced"] = int(match.group(1))
-            except ValueError:
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["displaced"] = num_map[num_str]
-            break
-
+                if match.group(1):
+                    num = extract_number(match.group(1))
+                else:
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["displaced"] = max(vitimas["displaced"], num)
+            except (ValueError, IndexError):
+                pass
+    
+    # Extract missing
     for pattern in missing_patterns:
-        match = re.search(pattern, title.lower())
-        if match:
+        matches = re.finditer(pattern, title_lower)
+        for match in matches:
             try:
-                vitimas["missing"] = int(match.group(1))
-            except ValueError:
-                num_str = match.group(1).lower()
-                num_map = {"um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3, 
-                          "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8}
-                if num_str in num_map:
-                    vitimas["missing"] = num_map[num_str]
-            break
+                if match.group(1):
+                    num = extract_number(match.group(1))
+                else:
+                    for word, number in num_words.items():
+                        if word in match.group(0):
+                            num = number
+                            break
+                    else:
+                        continue
+                vitimas["missing"] = max(vitimas["missing"], num)
+            except (ValueError, IndexError):
+                pass
     
     return vitimas
 

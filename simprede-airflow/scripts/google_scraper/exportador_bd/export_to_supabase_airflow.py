@@ -312,6 +312,67 @@ def find_filtered_articles_file(target_date, input_file=None):
     
     return selected_file
 
+def convert_date_format(date_str):
+    """Converter data para formato DD/MM/YYYY para manter consistência com o resto da BD"""
+    if pd.isna(date_str) or not date_str:
+        return None
+    
+    try:
+        # Handle different possible date formats
+        date_str = str(date_str).strip()
+        
+        # If already in DD/MM/YYYY format, return as is
+        if re.match(r'^\d{1,2}/\d{1,2}/\d{4}$', date_str):
+            # Validate that it's not a future date (likely wrong format)
+            try:
+                day, month, year = map(int, date_str.split('/'))
+                test_date = datetime(year, month, day)
+                # If date is more than 1 day in the future, likely wrong format
+                if test_date > datetime.now() + timedelta(days=1):
+                    log_progress(f"⚠️ Data futura detectada: {date_str}, pode estar em formato incorreto", "warning")
+            except:
+                pass
+            return date_str
+        
+        # If in DD-MM-YYYY format, convert to DD/MM/YYYY
+        if re.match(r'^\d{1,2}-\d{1,2}-\d{4}$', date_str):
+            day, month, year = date_str.split('-')
+            return f"{day.zfill(2)}/{month.zfill(2)}/{year}"
+        
+        # If in YYYY-MM-DD format, convert to DD/MM/YYYY
+        if re.match(r'^\d{4}-\d{1,2}-\d{1,2}$', date_str):
+            year, month, day = date_str.split('-')
+            # Validate the date makes sense
+            try:
+                test_date = datetime(int(year), int(month), int(day))
+                # Check if this creates a future date (indicating correct parsing)
+                if test_date > datetime.now() + timedelta(days=1):
+                    log_progress(f"⚠️ YYYY-MM-DD gerou data futura: {date_str} -> {day.zfill(2)}/{month.zfill(2)}/{year}", "warning")
+                return f"{day.zfill(2)}/{month.zfill(2)}/{year}"
+            except ValueError as ve:
+                log_progress(f"⚠️ Data inválida detectada: {date_str} - {ve}", "warning")
+                return None
+        
+        # If in YYYY/MM/DD format, convert to DD/MM/YYYY
+        if re.match(r'^\d{4}/\d{1,2}/\d{1,2}$', date_str):
+            year, month, day = date_str.split('/')
+            return f"{day.zfill(2)}/{month.zfill(2)}/{year}"
+        
+        # Try parsing with pandas and convert to DD/MM/YYYY
+        parsed_date = pd.to_datetime(date_str, errors='coerce')
+        if not pd.isna(parsed_date):
+            # Check if parsed date is reasonable (not too far in future)
+            if parsed_date > datetime.now() + timedelta(days=1):
+                log_progress(f"⚠️ Data futura após parsing: {date_str} -> {parsed_date.strftime('%d/%m/%Y')}", "warning")
+            return parsed_date.strftime('%d/%m/%Y')
+        
+        log_progress(f"⚠️ Não foi possível analisar data: {date_str}", "warning")
+        return None
+        
+    except Exception as e:
+        log_progress(f"⚠️ Erro ao converter data '{date_str}': {e}", "warning")
+        return None
+
 def create_table_if_not_exists(cursor, schema, table_name, df_columns):
     """Criar a tabela se não existir com colunas dinâmicas baseadas nos dados de entrada"""
     # Eliminar a tabela primeiro para garantir esquema limpo (pois estamos a lidar com tabelas temporárias)
@@ -322,15 +383,16 @@ def create_table_if_not_exists(cursor, schema, table_name, df_columns):
     # Generate column definitions based on input DataFrame
     column_defs = []
     for col in df_columns:
-        if col.upper() == 'ID':
-            # Use the existing ID column as TEXT primary key (since IDs are hash strings)
+        # Handle various ID column names - preserve original ID if possible
+        if col.upper() in ['ID', 'ORIGINAL_ID', 'GOOGLE_ID']:
             column_defs.append(f"{col} TEXT PRIMARY KEY")
         elif col in ['fatalities', 'injured', 'evacuated', 'displaced', 'missing', 'year', 'month', 'day']:
             column_defs.append(f"{col} INTEGER DEFAULT 0")
         elif col == 'relevance_score':
             column_defs.append(f"{col} REAL DEFAULT 0")
         elif col == 'date':
-            column_defs.append(f"{col} DATE")
+            # Use TEXT to store DD/MM/YYYY format consistently with rest of DB
+            column_defs.append(f"{col} TEXT")
         elif col in ['DICOFREG']:
             column_defs.append(f"{col} REAL")
         else:
@@ -361,41 +423,6 @@ def create_table_if_not_exists(cursor, schema, table_name, df_columns):
     
     log_progress(f"✅ Índices criados para a tabela {schema}.{table_name}")
 
-def convert_date_format(date_str):
-    """Converter data do formato DD/MM/AAAA para AAAA-MM-DD para PostgreSQL"""
-    if pd.isna(date_str) or not date_str:
-        return None
-    
-    try:
-        # Handle different possible date formats
-        date_str = str(date_str).strip()
-        
-        # If already in YYYY-MM-DD format, return as is
-        if re.match(r'^\d{4}-\d{2}-\d{2}$', date_str):
-            return date_str
-        
-        # If in DD/MM/YYYY format, convert it
-        if re.match(r'^\d{1,2}/\d{1,2}/\d{4}$', date_str):
-            day, month, year = date_str.split('/')
-            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
-        
-        # If in YYYY/MM/DD format, convert it
-        if re.match(r'^\d{4}/\d{1,2}/\d{1,2}$', date_str):
-            year, month, day = date_str.split('/')
-            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
-        
-        # Try parsing with pandas
-        parsed_date = pd.to_datetime(date_str, errors='coerce')
-        if not pd.isna(parsed_date):
-            return parsed_date.strftime('%Y-%m-%d')
-        
-        log_progress(f"⚠️ Não foi possível analisar data: {date_str}", "warning")
-        return None
-        
-    except Exception as e:
-        log_progress(f"⚠️ Erro ao converter data '{date_str}': {e}", "warning")
-        return None
-
 def prepare_dataframe_for_insert(df):
     """Preparar o dataframe para inserção na base de dados com tipos de dados adequados"""
     log_progress("🔧 A preparar dataframe para inserção na base de dados...")
@@ -403,10 +430,39 @@ def prepare_dataframe_for_insert(df):
     # Create a copy to avoid modifying the original
     df_prepared = df.copy()
     
+    # Debug: Log original ID column info
+    id_columns = [col for col in df_prepared.columns if 'id' in col.lower()]
+    log_progress(f"🔍 Colunas de ID encontradas: {id_columns}")
+    
+    # If there's an original_id or google_id column, prefer that over evt_ IDs
+    if 'original_id' in df_prepared.columns:
+        log_progress("✅ A usar original_id como ID principal")
+        df_prepared['ID'] = df_prepared['original_id']
+    elif 'google_id' in df_prepared.columns:
+        log_progress("✅ A usar google_id como ID principal")
+        df_prepared['ID'] = df_prepared['google_id']
+    elif 'ID' not in df_prepared.columns and 'id' in df_prepared.columns:
+        log_progress("✅ A renomear coluna 'id' para 'ID'")
+        df_prepared['ID'] = df_prepared['id']
+    
+    # Log sample of ID values for debugging
+    if 'ID' in df_prepared.columns:
+        sample_ids = df_prepared['ID'].head(3).tolist()
+        log_progress(f"🔍 Amostra de IDs: {sample_ids}")
+    
     # Converter coluna de data para formato adequado
     if 'date' in df_prepared.columns:
         log_progress("📅 A converter formatos de data...")
+        # Log some sample dates before conversion
+        sample_dates = df_prepared['date'].head(3).tolist()
+        log_progress(f"📅 Datas originais (amostra): {sample_dates}")
+        
         df_prepared['date'] = df_prepared['date'].apply(convert_date_format)
+        
+        # Log converted dates
+        sample_converted = df_prepared['date'].head(3).tolist()
+        log_progress(f"📅 Datas convertidas (amostra): {sample_converted}")
+        
         # Remover linhas com datas inválidas
         invalid_dates = df_prepared['date'].isna()
         if invalid_dates.any():
