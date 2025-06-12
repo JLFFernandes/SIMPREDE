@@ -1,0 +1,9 @@
+{"timestamp":"2025-06-10T09:15:44.937780","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T09:15:44.938291","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T09:15:44.951000Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:15:44.959526Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:15:44.959907Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:15:45.022225Z","level":"info","event":"🔧 Setting up Supabase connection...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:15:45.022687Z","level":"info","event":"⚠️ Missing Supabase credentials in environment variables","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:15:45.023099Z","level":"info","event":"Required: DB_USER, DB_PASSWORD, DB_HOST","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:15:44.970829","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}

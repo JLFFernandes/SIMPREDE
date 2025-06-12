@@ -1,0 +1,26 @@
+{"timestamp":"2025-06-10T09:01:41.203324","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T09:01:41.203966","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T09:01:41.222824Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.222991Z","level":"info","event":"⚠️ PostgresOperator not available: No module named 'airflow.providers.postgres.operators'","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.223090Z","level":"info","event":"⚠️ PostgreSQL provider partially or not available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.223170Z","level":"info","event":"⚠️ MySQL provider not available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277118Z","level":"info","event":"🔍 Checking available database providers...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277257Z","level":"info","event":"📋 Provider Status:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277311Z","level":"info","event":"  - POSTGRES: ❌ Not Available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277355Z","level":"info","event":"  - MYSQL: ❌ Not Available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277396Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277436Z","level":"info","event":"🚨 CRITICAL: PostgreSQL provider not available!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277476Z","level":"info","event":"📦 To install PostgreSQL provider:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277517Z","level":"info","event":"1. Add to Dockerfile: apache-airflow-providers-postgres==5.8.0","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277555Z","level":"info","event":"2. Rebuild container: docker compose down && docker compose up --build","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277606Z","level":"info","event":"3. Or install manually: pip install apache-airflow-providers-postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277650Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277688Z","level":"info","event":"📦 To install MySQL provider:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277764Z","level":"info","event":"1. Add to Dockerfile: apache-airflow-providers-mysql==5.4.0","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277831Z","level":"info","event":"2. Rebuild container: docker compose down && docker compose up --build","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277876Z","level":"info","event":"3. Or install manually: pip install apache-airflow-providers-mysql","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277916Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277955Z","level":"info","event":"⚠️ WARNING: Core PostgreSQL functionality will be limited!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.277993Z","level":"info","event":"The DAG will run in stub mode until providers are installed.","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T09:01:41.246676","level":"info","event":"Done. Returned value was: {'postgres': False, 'mysql': False}","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T09:01:41.246777","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975912-e78f-7543-9962-bd0a56f40df0'), task_id='check_providers', dag_id='sql_queries_pipeline', run_id='manual__2025-06-10T09:56:46.529417+01:00', try_number=2, map_index=-1, hostname='b78e0a4b1bb6', context_carrier=None, task=<Task(PythonOperator): check_providers>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=2, start_date=datetime.datetime(2025, 6, 10, 9, 1, 41, 109023, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

@@ -1,0 +1,16 @@
+{"timestamp":"2025-06-10T08:42:06.393266","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T08:42:06.393847","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T08:42:06.404192Z","level":"info","event":"⚠️ PostgreSQL provider not available, using basic SQL functionality","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.405614Z","level":"info","event":"⚠️ MySQL provider not available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478124Z","level":"info","event":"🔍 Checking available database providers...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478285Z","level":"info","event":"📋 Provider Status:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478382Z","level":"info","event":"  - POSTGRES: ❌ Not Available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478460Z","level":"info","event":"  - MYSQL: ❌ Not Available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478547Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478630Z","level":"info","event":"📦 To install PostgreSQL provider:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478703Z","level":"info","event":"pip install apache-airflow-providers-postgres","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478766Z","level":"info","event":"","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478827Z","level":"info","event":"📦 To install MySQL provider:","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.478885Z","level":"info","event":"pip install apache-airflow-providers-mysql","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T08:42:06.434936","level":"info","event":"Done. Returned value was: {'postgres': False, 'mysql': False}","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
+{"timestamp":"2025-06-10T08:42:06.435098","level":"info","event":"Pushing xcom","ti":"RuntimeTaskInstance(id=UUID('01975900-0d38-7b40-88c6-cfe7cc4f3080'), task_id='check_providers', dag_id='sql_queries_pipeline', run_id='manual__2025-06-10T09:18:09.431118+01:00', try_number=6, map_index=-1, hostname='b78e0a4b1bb6', context_carrier={}, task=<Task(PythonOperator): check_providers>, bundle_instance=LocalDagBundle(name=dags-folder), max_tries=6, start_date=datetime.datetime(2025, 6, 10, 8, 42, 6, 108792, tzinfo=TzInfo(UTC)), end_date=None, state=<TaskInstanceState.RUNNING: 'running'>, is_mapped=False, rendered_map_index=None)","logger":"task"}

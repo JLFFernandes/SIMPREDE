@@ -1,0 +1,27 @@
+{"timestamp":"2025-06-10T16:01:13.437468","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
+{"timestamp":"2025-06-10T16:01:13.437839","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
+{"timestamp":"2025-06-10T16:01:13.452721Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.463967Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.464127Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.489157Z","level":"info","event":"✅ Recreated environment variable: AIRFLOW_CONN_SUPABASE_POSTGRES","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.490081Z","level":"info","event":"🔄 Inserting test data using direct connection...","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.490533Z","level":"info","event":"📋 Executing: create_schema","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.836237Z","level":"info","event":"✅ create_schema: executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:13.836406Z","level":"info","event":"📋 Executing: check_table_exists","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.174081Z","level":"info","event":"✅ check_table_exists: [(1,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.174461Z","level":"info","event":"✅ Table google_scraper.artigos_filtrados already exists","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.174752Z","level":"info","event":"📋 Executing: create_table","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.521486Z","level":"info","event":"✅ create_table: executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.522339Z","level":"info","event":"✅ Table google_scraper.artigos_filtrados created successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.522599Z","level":"info","event":"📋 Executing: current_article_count","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.912173Z","level":"info","event":"✅ current_article_count: [(16,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:14.912681Z","level":"info","event":"📋 Executing: insert_test_article","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.281036Z","level":"info","event":"✅ insert_test_article: executed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.282061Z","level":"info","event":"📋 Executing: verify_insertion","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.661389Z","level":"info","event":"✅ verify_insertion: [(8,)]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:15.664012Z","level":"info","event":"📋 Executing: latest_articles","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.090290Z","level":"info","event":"✅ latest_articles: [('airflow_test_20250610T160108', 'Teste Airflow - Inserção de Dados Bem-sucedida', 'Porto', datetime.datetime(2025, 6, 10, 16, 1, 15, 261164)), ('airflow_test_1749571275.033690', 'Teste Airflow - Conexão Bem-sucedida', 'Lisboa', datetime.datetime(2025, 6, 10, 16, 1, 15, 33690)), ('airflow_test_1749570656.433474', 'Teste Airflow - Conexão Bem-sucedida', 'Lisboa', datetime.datetime(2025, 6, 10, 15, 50, 56, 433474))]","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.093129Z","level":"info","event":"✅ Database schema and table setup completed successfully","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.094219Z","level":"info","event":"🎉 Test data insertion completed!","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.097042Z","level":"info","event":"👉 Check your Supabase dashboard to see the inserted test article","chan":"stdout","logger":"task"}
+{"timestamp":"2025-06-10T16:01:16.091688","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
