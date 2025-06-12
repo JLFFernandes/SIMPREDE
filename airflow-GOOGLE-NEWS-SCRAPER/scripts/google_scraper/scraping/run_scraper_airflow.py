@@ -89,7 +89,7 @@ def lazy_imports():
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from utils.helpers import load_keywords, carregar_paroquias_com_municipios, gerar_id
     return load_keywords, carregar_paroquias_com_municipios, gerar_id
-
+#NOTE:
 # Global variables - will be initialized in main function
 GOOGLE_NEWS_TEMPLATE = "https://news.google.com/rss/search?q={query}+{municipio}+Portugal&hl=pt-PT&gl=PT&ceid=PT:pt{date_filter}"
 KEYWORDS = []
@@ -103,6 +103,7 @@ MAX_CONCURRENT_REQUESTS = 180  # Reduced from 250 for better stability
 MIN_DELAY = 0.005  # Slightly increased from 0.003
 MAX_DELAY = 0.2    # Slightly increased from 0.15
 BATCH_SIZE = 250   # Reduced from 350 for better stability
+# NOTE:
 
 # Initial semaphore value - will be adjusted dynamically
 SEMAPHORE = None
