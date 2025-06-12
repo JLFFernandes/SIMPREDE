@@ -1,5 +1,5 @@
 {
-  "export_timestamp": "2025-06-11T15:57:44.572259",
+  "export_timestamp": "2025-06-11T16:46:54.429569",
   "export_date": "2025-06-11",
   "target_date": "2025-06-11",
   "bucket_name": "simprede-data-pipeline",
@@ -9,12 +9,12 @@
     "/opt/airflow/data/structured/2025/06/11",
     "/opt/airflow/data/processed/2025/06/11"
   ],
-  "files_uploaded": 13,
+  "files_uploaded": 15,
   "files_failed": 0,
-  "total_files": 13,
-  "airflow_logs_uploaded": 5,
+  "total_files": 15,
+  "airflow_logs_uploaded": 7,
   "airflow_logs_failed": 0,
-  "total_size_mb": 0.19,
+  "total_size_mb": 0.5,
   "upload_results": {
     "/opt/airflow/data/raw/2025/06/11/google_news_articles_20250611.csv": true,
     "/opt/airflow/data/raw/2025/06/11/artigos_google_municipios_pt_2025-06-11.csv": true,
@@ -24,11 +24,13 @@
     "/opt/airflow/data/processed/2025/06/11/export_stats_20250611.json": true,
     "/opt/airflow/data/processed/2025/06/11/export_backup_20250611.csv": true,
     "/opt/airflow/data/processed/2025/06/11/gcs_export_stats_20250611.json": true,
-    "/opt/airflow/logs/dag_id=pipeline_scraper_google/run_id=manual__2025-06-11T15:56:47.358119+01:00/task_id=exportar_para_supabase/attempt=1.log": true,
-    "/opt/airflow/logs/dag_id=pipeline_scraper_google/run_id=manual__2025-06-11T15:56:47.358119+01:00/task_id=processar_relevantes/attempt=1.log": true,
-    "/opt/airflow/logs/dag_id=pipeline_scraper_google/run_id=manual__2025-06-11T15:56:47.358119+01:00/task_id=verificar_directorio_dados/attempt=1.log": true,
-    "/opt/airflow/logs/dag_id=pipeline_scraper_google/run_id=manual__2025-06-11T15:56:47.358119+01:00/task_id=exportar_para_gcs/attempt=1.log": true,
-    "/opt/airflow/logs/dag_id=pipeline_scraper_google/run_id=manual__2025-06-11T15:56:47.358119+01:00/task_id=executar_scraper_airflow/attempt=1.log": true
+    "/opt/airflow/logs/dag_id=daily_eventos_processing/run_id=scheduled__2025-06-11T00:00:00+01:00/task_id=check_staging_table/attempt=1.log": true,
+    "/opt/airflow/logs/dag_id=daily_eventos_processing/run_id=scheduled__2025-06-11T00:00:00+01:00/task_id=copy_to_public_schema/attempt=1.log": true,
+    "/opt/airflow/logs/dag_id=daily_eventos_processing/run_id=scheduled__2025-06-11T00:00:00+01:00/task_id=append_staging_to_eventos/attempt=1.log": true,
+    "/opt/airflow/logs/dag_id=daily_eventos_processing/run_id=scheduled__2025-06-11T00:00:00+01:00/task_id=update_geometry/attempt=1.log": true,
+    "/opt/airflow/logs/dag_id=daily_eventos_processing/run_id=scheduled__2025-06-11T00:00:00+01:00/task_id=setup_connection/attempt=1.log": true,
+    "/opt/airflow/logs/dag_id=daily_eventos_processing/run_id=scheduled__2025-06-11T00:00:00+01:00/task_id=update_coordinates/attempt=1.log": true,
+    "/opt/airflow/logs/dag_id=daily_eventos_processing/run_id=scheduled__2025-06-11T00:00:00+01:00/task_id=cleanup_old_staging_tables/attempt=1.log": true
   },
   "cleanup_enabled": true,
   "cleanup_results": {

@@ -493,10 +493,15 @@ def filtrar_vitimas_task(**context):
         dias = dag_run.conf.get('dias', 1)
         date = dag_run.conf.get('date', '')
         use_current_date = dag_run.conf.get('use_current_date', True)
+        # Add ML configuration parameters
+        ml_threshold = dag_run.conf.get('ml_threshold', 0.6)
+        use_ml_filtering = dag_run.conf.get('use_ml_filtering', True)
     else:
         dias = 1
         date = ''
         use_current_date = True
+        ml_threshold = 0.6
+        use_ml_filtering = True
     
     # Get paths configuration from previous task or create new one
     try:
@@ -580,7 +585,9 @@ def filtrar_vitimas_task(**context):
         '--dias', str(dias),
         '--input_file', input_file,
         '--output_dir', paths.processed_dir,
-        '--date_str', paths.date_iso
+        '--date_str', paths.date_iso,
+        '--ml_threshold', str(ml_threshold),  # Add ML threshold parameter
+        '--use_ml_filtering', str(use_ml_filtering).lower()  # Enable/disable ML filtering
     ]
     
     # Pass specific date

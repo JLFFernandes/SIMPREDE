@@ -252,61 +252,7 @@ def append_staging_to_eventos_task(**context):
                 cursor.execute("SET datestyle = 'DMY'")
                 print("🔧 Set PostgreSQL datestyle to DMY (DD/MM/YYYY)")
                 
-                # Build date conversion based on actual column type
-                if date_is_text:
-                    date_conversion = "af.date::date"
-                    print("🔧 Using direct date conversion for text date column")
-                else:
-                    date_conversion = "af.date"
-                    print("🔧 Using direct date column (already date type)")
-                
-                # Build column references based on available columns
-                type_ref = "COALESCE(af.type, 'Other')" if 'type' in available_columns else "'Other'"
-                subtype_ref = "COALESCE(af.subtype, 'Other')" if 'subtype' in available_columns else "'Other'"
-                year_ref = "COALESCE(af.year, EXTRACT(YEAR FROM af.date))" if 'year' in available_columns else "EXTRACT(YEAR FROM af.date)"
-                month_ref = "COALESCE(af.month, EXTRACT(MONTH FROM af.date))" if 'month' in available_columns else "EXTRACT(MONTH FROM af.date)"
-                day_ref = "COALESCE(af.day, EXTRACT(DAY FROM af.date))" if 'day' in available_columns else "EXTRACT(DAY FROM af.date)"
-                hour_ref = "COALESCE(af.hour, '08:00')" if 'hour' in available_columns else "'08:00'"
-                georef_ref = "COALESCE(af.georef, 'unknown')" if 'georef' in available_columns else "'unknown'"
-                district_ref = "COALESCE(af.district, 'unknown')" if 'district' in available_columns else "'unknown'"
-                
-                # Handle municipality column - only use what exists
-                if 'municipali' in available_columns:
-                    municipality_ref = "COALESCE(af.municipali, 'unknown')"
-                elif 'municipality' in available_columns:
-                    municipality_ref = "COALESCE(af.municipality, 'unknown')"
-                else:
-                    municipality_ref = "'unknown'"
-                
-                # Handle parish column variations
-                if 'parish' in available_columns:
-                    parish_ref = "COALESCE(af.parish, 'unknown')"
-                elif 'freguesia' in available_columns:
-                    parish_ref = "COALESCE(af.freguesia, 'unknown')"
-                else:
-                    parish_ref = "'unknown'"
-                dicofreg_ref = 'af."DICOFREG"' if 'DICOFREG' in available_columns else ('af.dicofreg' if 'dicofreg' in available_columns else 'NULL')
-                fatalities_ref = "COALESCE(af.fatalities, 0)" if 'fatalities' in available_columns else "0"
-                injured_ref = "COALESCE(af.injured, 0)" if 'injured' in available_columns else "0"
-                evacuated_ref = "COALESCE(af.evacuated, 0)" if 'evacuated' in available_columns else "0"
-                displaced_ref = "COALESCE(af.displaced, 0)" if 'displaced' in available_columns else "0"
-                missing_ref = "COALESCE(af.missing, 0)" if 'missing' in available_columns else "0"
-                source_ref = "af.source" if 'source' in available_columns else "'unknown'"
-                sourcedate_ref = "af.sourcedate" if 'sourcedate' in available_columns else "af.date"
-                sourcetype_ref = "COALESCE(af.sourcetype, 'news_article')" if 'sourcetype' in available_columns else "'news_article'"
-                
-                # Handle page/url column variations
-                if 'page' in available_columns:
-                    page_ref = "COALESCE(af.page, 'unknown')"
-                elif 'url' in available_columns:
-                    page_ref = "COALESCE(af.url, 'unknown')"
-                else:
-                    page_ref = "'unknown'"
-                
-                # Set datestyle again right before the query execution
-                cursor.execute("SET datestyle = 'DMY'")
-                
-                # Build insert query
+                # Build insert query with proper table name formatting
                 insert_query = f"""
                     INSERT INTO google_scraper.google_scraper_eventos (
                         id, type, subtype, date, year, month, day, hour,
@@ -315,49 +261,70 @@ def append_staging_to_eventos_task(**context):
                         source_name, source_date, source_type, page
                     )
                     SELECT 
-                        'evt_' || EXTRACT(EPOCH FROM NOW())::text || '_' || ROW_NUMBER() OVER (ORDER BY af.date) as id,
-                        {type_ref} as type,
-                        {subtype_ref} as subtype,
-                        {date_conversion} as date,
-                        {year_ref} as year,
-                        {month_ref} as month,
-                        {day_ref} as day,
-                        {hour_ref} as hour,
+                        af.id as id,
+                        COALESCE(af.type, 'Other') as type,
+                        COALESCE(af.subtype, 'Other') as subtype,
+                        af.date as date,
+                        -- Convert text date to proper date, then extract components
+                        COALESCE(af.year, 
+                            CASE 
+                                WHEN af.date ~ '^[0-9]{{1,2}}/[0-9]{{1,2}}/[0-9]{{4}}$' THEN 
+                                    CAST(SPLIT_PART(af.date, '/', 3) AS INTEGER)
+                                ELSE NULL
+                            END
+                        ) as year,
+                        COALESCE(af.month,
+                            CASE 
+                                WHEN af.date ~ '^[0-9]{{1,2}}/[0-9]{{1,2}}/[0-9]{{4}}$' THEN 
+                                    CAST(SPLIT_PART(af.date, '/', 2) AS INTEGER)
+                                ELSE NULL
+                            END
+                        ) as month,
+                        COALESCE(af.day,
+                            CASE 
+                                WHEN af.date ~ '^[0-9]{{1,2}}/[0-9]{{1,2}}/[0-9]{{4}}$' THEN 
+                                    CAST(SPLIT_PART(af.date, '/', 1) AS INTEGER)
+                                ELSE NULL
+                            END
+                        ) as day,
+                        COALESCE(af.hour, '08:00') as hour,
                         NULL as latitude,
                         NULL as longitude,
-                        {georef_ref} as georef_class,
-                        {district_ref} as district,
-                        {municipality_ref} as municipality,
-                        {parish_ref} as parish,
-                        {dicofreg_ref} as dicofreg,
+                        COALESCE(af.georef, 'unknown') as georef_class,
+                        COALESCE(af.district, 'unknown') as district,
+                        COALESCE(af.municipali, 'unknown') as municipality,
+                        COALESCE(af.parish, 'unknown') as parish,
+                        af.dicofreg as dicofreg,
                         NULL as location_geom,
-                        {fatalities_ref} as fatalities,
-                        {injured_ref} as injured,
-                        {evacuated_ref} as evacuated,
-                        {displaced_ref} as displaced,
-                        {missing_ref} as missing,
-                        {source_ref} as source_name,
-                        {sourcedate_ref} as source_date,
-                        {sourcetype_ref} as source_type,
-                        {page_ref} as page
+                        COALESCE(af.fatalities, 0) as fatalities,
+                        COALESCE(af.injured, 0) as injured,
+                        COALESCE(af.evacuated, 0) as evacuated,
+                        COALESCE(af.displaced, 0) as displaced,
+                        COALESCE(af.missing, 0) as missing,
+                        af.source as source_name,
+                        af.sourcedate as source_date,
+                        COALESCE(af.sourcetype, 'news_article') as source_type,
+                        af.page as page
                     FROM {staging_table} af
                     WHERE af.date IS NOT NULL
-                    AND NOT EXISTS (
-                        SELECT 1 FROM google_scraper.google_scraper_eventos e 
-                        WHERE e.source_name = {source_ref}
-                        AND e.source_date = {sourcedate_ref}
-                        AND e.district = {district_ref}
-                        AND e.municipality = {municipality_ref}
-                        AND e.date::date = {date_conversion}
-                    )
+                    AND af.date != ''
+                    -- Optional: Add date validation to ensure proper format
+                    AND af.date ~ '^[0-9]{{1,2}}/[0-9]{{1,2}}/[0-9]{{4}}$'
                     ON CONFLICT (id) DO UPDATE SET
                         type = EXCLUDED.type,
                         subtype = EXCLUDED.subtype,
+                        date = EXCLUDED.date,
+                        year = EXCLUDED.year,
+                        month = EXCLUDED.month,
+                        day = EXCLUDED.day,
                         fatalities = EXCLUDED.fatalities,
                         injured = EXCLUDED.injured,
                         evacuated = EXCLUDED.evacuated,
                         displaced = EXCLUDED.displaced,
                         missing = EXCLUDED.missing,
+                        district = EXCLUDED.district,
+                        municipality = EXCLUDED.municipality,
+                        parish = EXCLUDED.parish,
                         updated_at = CURRENT_TIMESTAMP
                 """
                 
