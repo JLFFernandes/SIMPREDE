@@ -36,7 +36,7 @@ for _, row in df.iterrows():
 
         # === INSERIR DESASTRE ===
         cur.execute("""
-            INSERT INTO eswd_testing.disasters (type, subtype, date, year, month, day, hour)
+            INSERT INTO disasters (type, subtype, date, year, month, day, hour)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id;
         """, (
@@ -57,7 +57,7 @@ for _, row in df.iterrows():
 
         if lat is not None and lon is not None:
             cur.execute("""
-                INSERT INTO eswd_testing.location (id, latitude, longitude, georef_class,
+                INSERT INTO location (id, latitude, longitude, georef_class,
                                              district, municipality, parish, dicofreg, geom)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
                         ST_SetSRID(ST_MakePoint(%s, %s), 4326));
@@ -72,7 +72,7 @@ for _, row in df.iterrows():
 
         # === IMPACTOS HUMANOS ===
         cur.execute("""
-            INSERT INTO eswd_testing.human_impacts
+            INSERT INTO human_impacts
             (id, fatalities, injured, evacuated, displaced, missing)
             VALUES (%s, %s, %s, %s, %s, %s);
         """, (
@@ -86,7 +86,7 @@ for _, row in df.iterrows():
 
         # === FONTE DE INFORMAÇÃO ===
         cur.execute("""
-            INSERT INTO eswd_testing.information_sources
+            INSERT INTO information_sources
             (disaster_id, source_name, source_date, source_type, page)
             VALUES (%s, %s, %s, %s, %s);
         """, (
