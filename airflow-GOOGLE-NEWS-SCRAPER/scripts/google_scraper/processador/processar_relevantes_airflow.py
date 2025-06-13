@@ -1,3 +1,7 @@
+#TODO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/processador/filtrar_artigos_vitimas_airflow.py
+# Script para processar artigos relevantes do Google News e filtrar aqueles relacionados a vítimas de desastres naturais
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import sys
 import os

@@ -1,3 +1,7 @@
+#TODO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/tests/test_connection.py
+# Script para testar a conexão com o base de dados Supabase usando psycopg2
+
 import os
 import psycopg2
 import time

@@ -1,7 +1,12 @@
+#TODO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/dags/google_scraper_dag.py
+# Script para o DAG do Airflow que executa o pipeline de scraping de notícias do Google
 #!/usr/bin/env python3
 """
-SIMPREDE Pipeline de Scraping de Notícias do Google
+DAG do pipeline SIMPREDE para scraping e processamento de notícias do Google
+Otimizado para produção com gestão eficiente de recursos e caminhos
 """
+
 import os
 import sys
 import subprocess
@@ -12,532 +17,311 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 
 class GoogleScraperPaths:
-    """Centralized path management for Google Scraper pipeline"""
+    """
+    Gestão centralizada e otimizada de caminhos para o pipeline
+    Implementa padrões consistentes de organização de ficheiros
+    """
     
     def __init__(self, base_dir="/opt/airflow", execution_date=None, use_current_date=False):
         self.base_dir = base_dir
         
-        # Fix: Use current date when explicitly requested or when no execution_date provided
+        # Determina data de execução
         if use_current_date or execution_date is None:
             self.execution_date = datetime.now()
-            print(f"📅 Using current date: {self.execution_date.strftime('%Y-%m-%d')}")
         else:
             self.execution_date = execution_date
-            print(f"📅 Using provided execution date: {self.execution_date.strftime('%Y-%m-%d')}")
         
-        # Base directories
-        self.scripts_dir = os.path.join(base_dir, "scripts", "google_scraper")
-        # Fix: Use correct data directory path - mounted at /opt/airflow/data not /opt/airflow/scripts/google_scraper/data
-        self.data_dir = os.path.join(base_dir, "data")
-        
-        # Date-based structure
+        # Inicializa estruturas de caminhos
+        self._init_base_paths()
+        self._init_date_structure()
+        self._init_data_directories()
+    
+    def _init_base_paths(self):
+        """Inicializa caminhos base do sistema"""
+        self.scripts_dir = os.path.join(self.base_dir, "scripts", "google_scraper")
+        self.data_dir = os.path.join(self.base_dir, "data")
+    
+    def _init_date_structure(self):
+        """Inicializa estrutura baseada em data"""
         self.year = self.execution_date.strftime("%Y")
         self.month = self.execution_date.strftime("%m")
         self.day = self.execution_date.strftime("%d")
         self.date_str = self.execution_date.strftime("%Y%m%d")
-        self.date_str_compact = self.date_str  # Add missing property
         self.date_iso = self.execution_date.strftime("%Y-%m-%d")
-        
-        # Data directories
+    
+    def _init_data_directories(self):
+        """Inicializa directorias de dados organizadas"""
         self.raw_dir = os.path.join(self.data_dir, "raw", self.year, self.month, self.day)
         self.structured_dir = os.path.join(self.data_dir, "structured", self.year, self.month, self.day)
         self.processed_dir = os.path.join(self.data_dir, "processed", self.year, self.month, self.day)
-        
-        # Script directories
-        self.scraping_dir = os.path.join(self.scripts_dir, "scraping")
-        self.processador_dir = os.path.join(self.scripts_dir, "processador")
-        self.exportador_dir = os.path.join(self.scripts_dir, "exportador_bd")
-        self.config_dir = os.path.join(self.scripts_dir, "config")
-        
-    def get_scraper_outputs(self):
-        """Get all output file paths for the scraper task"""
+    
+    def get_output_paths(self):
+        """
+        Retorna todos os caminhos de saída organizados por etapa
+        Facilita gestão e verificação de ficheiros
+        """
         return {
-            "intermediate_csv": os.path.join(self.raw_dir, f"intermediate_google_news_{self.date_str}.csv"),
-            "final_csv": os.path.join(self.raw_dir, f"google_news_articles_{self.date_str}.csv"),
-            "log_file": os.path.join(self.raw_dir, f"scraper_log_{self.date_str}.log"),
-            "stats_json": os.path.join(self.raw_dir, f"scraper_stats_{self.date_str}.json")
+            "scraper": {
+                "intermediate": os.path.join(self.raw_dir, f"intermediate_google_news_{self.date_str}.csv"),
+                "final": os.path.join(self.raw_dir, f"google_news_articles_{self.date_str}.csv"),
+                "log": os.path.join(self.raw_dir, f"scraper_log_{self.date_str}.log")
+            },
+            "processar": {
+                "articles": os.path.join(self.structured_dir, f"artigos_google_municipios_pt_{self.date_iso}.csv"),
+                "log": os.path.join(self.structured_dir, f"processing_log_{self.date_str}.log")
+            },
+            "filtrar": {
+                "victims": os.path.join(self.processed_dir, f"artigos_vitimas_filtrados_{self.date_str}.csv"),
+                "no_victims": os.path.join(self.processed_dir, f"artigos_sem_vitimas_{self.date_str}.csv"),
+                "log": os.path.join(self.processed_dir, f"filtering_log_{self.date_str}.log")
+            },
+            "export": {
+                "backup": os.path.join(self.processed_dir, f"export_backup_{self.date_str}.csv"),
+                "log": os.path.join(self.processed_dir, f"export_log_{self.date_str}.log")
+            }
         }
     
-    def get_processar_outputs(self):
-        """Get all output file paths for the processar_relevantes task"""
-        return {
-            "relevant_articles": os.path.join(self.structured_dir, f"artigos_google_municipios_pt_{self.date_iso}.csv"),
-            "irrelevant_articles": os.path.join(self.structured_dir, f"artigos_irrelevantes_{self.date_iso}.csv"),
-            "processing_log": os.path.join(self.structured_dir, f"processing_log_{self.date_str}.log"),
-            "stats_json": os.path.join(self.structured_dir, f"processing_stats_{self.date_str}.json")
-        }
-    
-    def get_filtrar_outputs(self):
-        """Get all output file paths for the filtrar_vitimas task"""
-        return {
-            "victims_articles": os.path.join(self.processed_dir, f"artigos_vitimas_filtrados_{self.date_str}.csv"),
-            "no_victims_articles": os.path.join(self.processed_dir, f"artigos_sem_vitimas_{self.date_str}.csv"),
-            "filtering_log": os.path.join(self.processed_dir, f"filtering_log_{self.date_str}.log"),
-            "stats_json": os.path.join(self.processed_dir, f"filtering_stats_{self.date_str}.json")
-        }
-    
-    def get_export_outputs(self):
-        """Get all output file paths for the export task"""
-        return {
-            "export_log": os.path.join(self.processed_dir, f"export_log_{self.date_str}.log"),
-            "export_stats": os.path.join(self.processed_dir, f"export_stats_{self.date_str}.json"),
-            "backup_csv": os.path.join(self.processed_dir, f"export_backup_{self.date_str}.csv")
-        }
-    
-    def create_all_directories(self):
-        """Create all necessary directories"""
-        directories = [
-            self.raw_dir,
-            self.structured_dir,
-            self.processed_dir
-        ]
-        
+    def create_directories(self):
+        """Cria todas as directorias necessárias de forma eficiente"""
+        directories = [self.raw_dir, self.structured_dir, self.processed_dir]
         for directory in directories:
             os.makedirs(directory, exist_ok=True)
-            
         return directories
-    
-    def get_all_paths_summary(self):
-        """Get a summary of all paths for logging"""
-        return {
-            "base_dir": self.base_dir,
-            "execution_date": self.date_iso,
-            "raw_dir": self.raw_dir,
-            "structured_dir": self.structured_dir,
-            "processed_dir": self.processed_dir,
-            "scraper_outputs": self.get_scraper_outputs(),
-            "processar_outputs": self.get_processar_outputs(),
-            "filtrar_outputs": self.get_filtrar_outputs(),
-            "export_outputs": self.get_export_outputs()
-        }
 
-# Default arguments
+class TaskExecutor:
+    """
+    Executor otimizado para tarefas do pipeline
+    Implementa logging em tempo real e gestão de timeouts
+    """
+    
+    @staticmethod
+    def execute_with_logging(cmd, cwd, timeout, task_name):
+        """
+        Executa comando com logging em tempo real e controlo de timeout
+        Melhora visibilidade no Airflow UI
+        """
+        print(f"🔄 A executar {task_name}: {' '.join(cmd)}")
+        
+        # Configura ambiente para output não bufferizado
+        env = os.environ.copy()
+        env['PYTHONPATH'] = '/opt/airflow/scripts/google_scraper:' + env.get('PYTHONPATH', '')
+        env['PYTHONUNBUFFERED'] = '1'
+        
+        # Inicia processo
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=cwd,
+            env=env,
+            bufsize=1
+        )
+        
+        stdout_lines = []
+        stderr_lines = []
+        
+        def read_output(pipe, lines_list, prefix):
+            """Lê output em tempo real"""
+            for line in iter(pipe.readline, ''):
+                if line:
+                    print(f"{prefix} {line.rstrip()}")
+                    lines_list.append(line)
+            pipe.close()
+        
+        # Cria threads para captura de output
+        stdout_thread = threading.Thread(
+            target=read_output, 
+            args=(process.stdout, stdout_lines, "📋")
+        )
+        stderr_thread = threading.Thread(
+            target=read_output, 
+            args=(process.stderr, stderr_lines, "⚠️")
+        )
+        
+        stdout_thread.start()
+        stderr_thread.start()
+        
+        try:
+            exit_code = process.wait(timeout=timeout)
+            stdout_thread.join()
+            stderr_thread.join()
+            
+            stdout_content = ''.join(stdout_lines)
+            stderr_content = ''.join(stderr_lines)
+            
+            if exit_code != 0:
+                error_msg = f"{task_name} falhou com código {exit_code}"
+                if stderr_content:
+                    error_msg += f": {stderr_content}"
+                raise Exception(error_msg)
+            
+            print(f"✅ {task_name} concluído com sucesso!")
+            return stdout_content
+            
+        except subprocess.TimeoutExpired:
+            process.kill()
+            timeout_msg = f"{task_name} excedeu timeout de {timeout} segundos"
+            print(f"⏰ {timeout_msg}")
+            raise Exception(timeout_msg)
+
+# Configuração do DAG
 default_args = {
     'owner': 'simprede',
     'depends_on_past': False,
     'start_date': datetime(2025, 6, 1),
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 0,  # Avoid retry buffering
+    'retries': 0,
     'retry_delay': timedelta(minutes=5),
-    'do_xcom_push': False,  # Reduces buffering and forces immediate log output
+    'do_xcom_push': False,
 }
 
-# Define the DAG
 dag = DAG(
-    'pipeline_scraper_google',
+    'pipeline_scraper_google_optimized',
     default_args=default_args,
-    description='Pipeline completo de scraping e processamento de notícias do Google (optimizado para Airflow)',
-    schedule="@daily",  # Updated for Airflow 3.x
+    description='Pipeline otimizado de scraping e processamento de notícias do Google',
+    schedule="@daily",
     start_date=datetime(2025, 6, 1),
     catchup=False,
-    tags=['google', 'scraping', 'noticias', 'simprede', 'airflow-optimizado'],
+    tags=['google', 'scraping', 'noticias', 'simprede', 'otimizado'],
     max_active_runs=1,
     doc_md=__doc__,
 )
 
-def run_scraper_task(**context):
-    """Run the Google News scraper with controlled output paths"""
-    print("🚀 Starting Airflow-Optimized Google News Scraper")
-    
-    # Fix: Always use current date unless specific date is provided in DAG run config
+def get_execution_config(context):
+    """
+    Obtém configuração de execução de forma centralizada
+    Permite customização via DAG run configuration
+    """
     dag_run = context.get('dag_run')
-    if dag_run and dag_run.conf:
-        dias = dag_run.conf.get('dias', 1)
-        date = dag_run.conf.get('date', '')
-        max_execution_time = dag_run.conf.get('max_execution_time', 3600)
-        use_current_date = dag_run.conf.get('use_current_date', True)  # Default to current date
-    else:
-        dias = 1
-        date = ''
-        max_execution_time = 3600
-        use_current_date = True  # Default to current date
+    default_config = {
+        'dias': 1,
+        'date': '',
+        'use_current_date': True,
+        'max_execution_time': 3600,
+        'ml_threshold': 0.6,
+        'use_ml_filtering': True
+    }
     
-    # Initialize path manager with current date preference
-    if date:
-        # If specific date provided, use that
-        target_date = datetime.strptime(date, '%Y-%m-%d')
+    if dag_run and dag_run.conf:
+        default_config.update(dag_run.conf)
+    
+    # Determina data de execução
+    if default_config['date']:
+        target_date = datetime.strptime(default_config['date'], '%Y-%m-%d')
         paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
-        print(f"📅 Using specific date from config: {date}")
     else:
-        # Use current date by default
         paths = GoogleScraperPaths(use_current_date=True)
         target_date = paths.execution_date
-        print(f"📅 Using current date: {target_date.strftime('%Y-%m-%d')}")
     
-    # Create directories if they don't exist
-    created_dirs = paths.create_all_directories()
-    print(f"📁 Ensured directories exist: {created_dirs}")
+    return default_config, paths, target_date
+
+def executar_scraper(**context):
+    """Executa scraper do Google News de forma otimizada"""
+    config, paths, target_date = get_execution_config(context)
+    paths.create_directories()
+    outputs = paths.get_output_paths()['scraper']
     
-    # Get scraper output paths
-    scraper_outputs = paths.get_scraper_outputs()
-    
-    print(f"📅 Scraper Parameters:")
-    print(f"  - Days: {dias}")
-    print(f"  - Specific date: {date if date else 'None (use execution_date)'}")
-    print(f"  - Max execution time: {max_execution_time} seconds")
-    print(f"  - Target date: {paths.date_iso}")
-    
-    print(f"📁 Output paths:")
-    for key, path in scraper_outputs.items():
-        print(f"  - {key}: {path}")
-    
-    # Build command with controlled output paths
     cmd = [
         'python', '/opt/airflow/scripts/google_scraper/scraping/run_scraper_airflow.py',
-        '--dias', str(dias),
-        '--max_time', str(max_execution_time),
+        '--dias', str(config['dias']),
+        '--max_time', str(config['max_execution_time']),
         '--output_dir', paths.raw_dir,
-        '--date_str', paths.date_str_compact
+        '--date_str', paths.date_str,
+        '--date', target_date.strftime('%Y-%m-%d')
     ]
     
-    # Pass the actual target date to the command
-    if date:
-        cmd.extend(['--date', date])
-    else:
-        cmd.extend(['--date', target_date.strftime('%Y-%m-%d')])
-    
-    print(f"🔄 Running scraper command: {' '.join(cmd)}")
-    
-    # Set working directory and environment for real-time output
-    env = os.environ.copy()
-    env['PYTHONPATH'] = '/opt/airflow/scripts/google_scraper:' + env.get('PYTHONPATH', '')
-    env['PYTHONUNBUFFERED'] = '1'
-    
-    # Run with real-time output capture
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        cwd='/opt/airflow/scripts/google_scraper/scraping',
-        env=env,
-        bufsize=1
+    result = TaskExecutor.execute_with_logging(
+        cmd, '/opt/airflow/scripts/google_scraper/scraping', 
+        config['max_execution_time'], 'Scraper'
     )
     
-    # Capture and print output in real-time
-    stdout_lines = []
-    stderr_lines = []
+    # Verifica outputs criados
+    created_files = []
+    for name, path in outputs.items():
+        if os.path.exists(path):
+            created_files.append(path)
+            print(f"✅ {name}: {path}")
     
-    # Function to read from a pipe and print/store output
-    def read_pipe(pipe, lines_list, prefix):
-        for line in iter(pipe.readline, ''):
-            if line:
-                print(f"{prefix} {line.rstrip()}")  # Print directly to Airflow logs
-                lines_list.append(line)
-        pipe.close()
+    context['task_instance'].xcom_push(key='created_files', value=created_files)
+    context['task_instance'].xcom_push(key='paths_config', value=paths.get_output_paths())
     
-    # Create threads to read stdout and stderr
-    stdout_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stdout, stdout_lines, "📋")
-    )
-    stderr_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stderr, stderr_lines, "⚠️")
-    )
-    
-    # Start threads and wait for them to finish
-    stdout_thread.start()
-    stderr_thread.start()
-    
-    # Wait for process to complete with timeout
-    try:
-        print(f"⏰ Waiting for scraper completion with timeout: {max_execution_time} seconds")
-        
-        exit_code = process.wait(timeout=max_execution_time)
-        stdout_thread.join()
-        stderr_thread.join()
-        
-        stdout_content = ''.join(stdout_lines)
-        stderr_content = ''.join(stderr_lines)
-        
-        if exit_code != 0:
-            print(f"❌ Scraper failed with return code {exit_code}")
-            if stderr_content:
-                print(f"❌ Error details: {stderr_content}")
-            raise Exception(f"Scraper failed with return code {exit_code}: {stderr_content}")
-        
-        print("✅ Scraper completed successfully!")
-        
-        # Verify outputs were created
-        print("🔍 Verifying scraper outputs:")
-        created_files = []
-        for output_name, output_path in scraper_outputs.items():
-            if os.path.exists(output_path):
-                file_size = os.path.getsize(output_path)
-                print(f"✅ {output_name}: {output_path} ({file_size} bytes)")
-                created_files.append(output_path)
-                
-                # Log file content info for main output
-                if output_name == 'final_csv':
-                    try:
-                        import pandas as pd
-                        df = pd.read_csv(output_path)
-                        print(f"📊 Number of articles scraped: {len(df)}")
-                        if len(df) > 0:
-                            print(f"📊 Columns: {list(df.columns)}")
-                    except Exception as e:
-                        print(f"⚠️ Could not read CSV details: {e}")
-            else:
-                print(f"⚠️ {output_name}: {output_path} (not found)")
-        
-        # Store output paths in XCom for next tasks
-        context['task_instance'].xcom_push(key='scraper_outputs', value=scraper_outputs)
-        context['task_instance'].xcom_push(key='created_files', value=created_files)
-        context['task_instance'].xcom_push(key='paths_config', value=paths.get_all_paths_summary())
-        
-        return stdout_content
-        
-    except subprocess.TimeoutExpired:
-        process.kill()
-        print(f"⏰ Scraper timed out after {max_execution_time} seconds ({max_execution_time/60:.1f} minutes)")
-        raise Exception(f"Scraper execution exceeded maximum time limit of {max_execution_time} seconds")
-    except Exception as e:
-        print(f"❌ Unexpected error in scraper task: {str(e)}")
-        raise
+    return result
 
-def processar_relevantes_task(**context):
-    """Process relevant articles with controlled output paths"""
-    print("🔄 Starting processar_relevantes task")
+def processar_relevantes(**context):
+    """Processa artigos relevantes com otimizações"""
+    config, paths, target_date = get_execution_config(context)
     
-    # Get parameters from DAG run configuration
-    dag_run = context.get('dag_run')
-    if dag_run and dag_run.conf:
-        dias = dag_run.conf.get('dias', 1)
-        date = dag_run.conf.get('date', '')
-        use_current_date = dag_run.conf.get('use_current_date', True)
-    else:
-        dias = 1
-        date = ''
-        use_current_date = True
-    
-    # Get paths configuration from previous task or create new one
-    try:
-        paths_config = context['task_instance'].xcom_pull(key='paths_config', task_ids='executar_scraper_airflow')
-        if paths_config and 'execution_date' in paths_config:
-            print(f"📁 Using paths from scraper task: {paths_config['execution_date']}")
-            target_date = datetime.strptime(paths_config['execution_date'], '%Y-%m-%d')
-            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
-        else:
-            raise ValueError("No valid paths config from previous task")
-    except (TypeError, KeyError, ValueError):
-        # Fallback: use same date logic as scraper
-        if date:
-            target_date = datetime.strptime(date, '%Y-%m-%d')
-            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
-        else:
-            paths = GoogleScraperPaths(use_current_date=True)
-            target_date = paths.execution_date
-    
-    # Create directories if they don't exist
-    created_dirs = paths.create_all_directories()
-    print(f"📁 Ensured directories exist: {created_dirs}")
-    
-    # Get processar output paths
-    processar_outputs = paths.get_processar_outputs()
-    
-    print(f"📅 Processar Parameters:")
-    print(f"  - Days: {dias}")
-    print(f"  - Specific date: {date if date else 'None (use execution_date)'}")
-    print(f"  - Target date: {paths.date_iso}")
-    print(f"📁 Input/Output paths:")
-    
-    # Find input file (output from scraper task)
-    scraper_outputs = paths.get_scraper_outputs()
-    input_files_to_check = [
-        scraper_outputs['final_csv'],
-        scraper_outputs['intermediate_csv']
-    ]
+    # Encontra ficheiro de entrada de forma inteligente
+    scraper_files = context['task_instance'].xcom_pull(
+        key='created_files', task_ids='executar_scraper'
+    ) or []
     
     input_file = None
-    for potential_input in input_files_to_check:
-        print(f"🔍 Checking for input file: {potential_input}")
-        if os.path.exists(potential_input):
-            input_file = potential_input
-            print(f"✅ Found input file: {input_file}")
+    for file_path in scraper_files:
+        if os.path.exists(file_path) and 'google_news_articles' in file_path:
+            input_file = file_path
             break
     
     if not input_file:
-        print("❌ No input file found from scraper task")
-        
-        if not input_file:
-            raise Exception(f"No input file found. Checked: {input_files_to_check}")
+        # Fallback para caminhos esperados
+        outputs = paths.get_output_paths()['scraper']
+        for path in [outputs['final'], outputs['intermediate']]:
+            if os.path.exists(path):
+                input_file = path
+                break
     
-    print(f"📁 Output paths:")
-    for key, path in processar_outputs.items():
-        print(f"  - {key}: {path}")
+    if not input_file:
+        raise Exception("Ficheiro de entrada do scraper não encontrado")
     
     cmd = [
         'python', '/opt/airflow/scripts/google_scraper/processador/processar_relevantes_airflow.py',
-        '--dias', str(dias),
+        '--dias', str(config['dias']),
         '--input_file', input_file,
         '--output_dir', paths.structured_dir,
-        '--date_str', paths.date_iso
+        '--date_str', paths.date_iso,
+        '--date', target_date.strftime('%Y-%m-%d')
     ]
     
-    # Pass specific date
-    if date:
-        cmd.extend(['--date', date])
-    else:
-        cmd.extend(['--date', target_date.strftime('%Y-%m-%d')])
-    
-    print(f"🔄 Running processing command: {' '.join(cmd)}")
-    
-    # Set working directory and environment for real-time output
-    env = os.environ.copy()
-    env['PYTHONPATH'] = '/opt/airflow/scripts/google_scraper:' + env.get('PYTHONPATH', '')
-    env['PYTHONUNBUFFERED'] = '1'
-    
-    # Run with real-time output capture
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        cwd='/opt/airflow/scripts/google_scraper/processador',
-        env=env,
-        bufsize=1
+    result = TaskExecutor.execute_with_logging(
+        cmd, '/opt/airflow/scripts/google_scraper/processador', 
+        1800, 'Processamento'
     )
     
-    # Capture and print output in real-time
-    stdout_lines = []
-    stderr_lines = []
+    # Verifica e armazena outputs
+    outputs = paths.get_output_paths()['processar']
+    created_files = [path for path in outputs.values() if os.path.exists(path)]
     
-    # Function to read from a pipe and print/store output
-    def read_pipe(pipe, lines_list, prefix):
-        for line in iter(pipe.readline, ''):
-            if line:
-                print(f"{prefix} {line.rstrip()}")  # Print directly to Airflow logs
-                lines_list.append(line)
-        pipe.close()
-    
-    # Create threads to read stdout and stderr
-    stdout_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stdout, stdout_lines, "📋")
-    )
-    stderr_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stderr, stderr_lines, "⚠️")
-    )
-    
-    # Start threads and wait for them to finish
-    stdout_thread.start()
-    stderr_thread.start()
-    
-    # Wait for process to complete with timeout
-    try:
-        timeout = 1800  # 30 minutes timeout for processing
-        print(f"⏰ Waiting for processing completion with timeout: {timeout} seconds")
-        
-        exit_code = process.wait(timeout=timeout)
-        stdout_thread.join()
-        stderr_thread.join()
-        
-        stdout_content = ''.join(stdout_lines)
-        stderr_content = ''.join(stderr_lines)
-        
-        if exit_code != 0:
-            print(f"❌ Processing failed with return code {exit_code}")
-            if stderr_content:
-                print(f"❌ Error details: {stderr_content}")
-            raise Exception(f"Processing failed with return code {exit_code}: {stderr_content}")
-        
-        print("✅ Processing completed successfully!")
-        
-        # Verify outputs were created
-        print("🔍 Verifying processar outputs:")
-        created_files = []
-        for output_name, output_path in processar_outputs.items():
-            if os.path.exists(output_path):
-                file_size = os.path.getsize(output_path)
-                print(f"✅ {output_name}: {output_path} ({file_size} bytes)")
-                created_files.append(output_path)
-                
-                # Log file content info for main output
-                if output_name == 'relevant_articles':
-                    try:
-                        import pandas as pd
-                        df = pd.read_csv(output_path)
-                        print(f"📊 Number of processed articles: {len(df)}")
-                        if len(df) > 0:
-                            print(f"📊 Columns: {list(df.columns)}")
-                    except Exception as e:
-                        print(f"⚠️ Could not read CSV details: {e}")
-            else:
-                print(f"⚠️ {output_name}: {output_path} (not found)")
-        
-        # Store output paths in XCom for next tasks
-        context['task_instance'].xcom_push(key='processar_outputs', value=processar_outputs)
-        context['task_instance'].xcom_push(key='created_files', value=created_files)
-        context['task_instance'].xcom_push(key='paths_config', value=paths.get_all_paths_summary())
-        
-        return stdout_content
-        
-    except subprocess.TimeoutExpired:
-        process.kill()
-        print(f"⏰ Processing timed out after {timeout} seconds ({timeout/60:.1f} minutes)")
-        raise Exception(f"Processing execution exceeded maximum time limit of {timeout} seconds")
-    except Exception as e:
-        print(f"❌ Unexpected error in processing task: {str(e)}")
-        raise
+    context['task_instance'].xcom_push(key='created_files', value=created_files)
+    return result
 
 def filtrar_vitimas_task(**context):
     """Filter articles with victim information using controlled output paths"""
     print("🔄 Starting filtrar_vitimas task")
     
-    # Get parameters from DAG run configuration
-    dag_run = context.get('dag_run')
-    if dag_run and dag_run.conf:
-        dias = dag_run.conf.get('dias', 1)
-        date = dag_run.conf.get('date', '')
-        use_current_date = dag_run.conf.get('use_current_date', True)
-        # Add ML configuration parameters
-        ml_threshold = dag_run.conf.get('ml_threshold', 0.6)
-        use_ml_filtering = dag_run.conf.get('use_ml_filtering', True)
-    else:
-        dias = 1
-        date = ''
-        use_current_date = True
-        ml_threshold = 0.6
-        use_ml_filtering = True
-    
-    # Get paths configuration from previous task or create new one
-    try:
-        paths_config = context['task_instance'].xcom_pull(key='paths_config', task_ids='processar_relevantes')
-        if paths_config and 'execution_date' in paths_config:
-            print(f"📁 Using paths from processar task: {paths_config['execution_date']}")
-            target_date = datetime.strptime(paths_config['execution_date'], '%Y-%m-%d')
-            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
-        else:
-            raise ValueError("No valid paths config from previous task")
-    except (TypeError, KeyError, ValueError):
-        # Fallback: use same date logic as previous tasks
-        if date:
-            target_date = datetime.strptime(date, '%Y-%m-%d')
-            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
-        else:
-            paths = GoogleScraperPaths(use_current_date=True)
-            target_date = paths.execution_date
+    # Obter configuração da tarefa e gestão de caminhos
+    config, paths, target_date = get_execution_config(context)
+    dias = config['dias']
+    max_execution_time = config['max_execution_time']
     
     # Create directories if they don't exist
-    created_dirs = paths.create_all_directories()
+    created_dirs = paths.create_directories()
     print(f"📁 Ensured directories exist: {created_dirs}")
     
     # Get filtrar output paths
-    filtrar_outputs = paths.get_filtrar_outputs()
+    filtrar_outputs = paths.get_output_paths()["filtrar"]
     
     print(f"📅 Filtrar Parameters:")
     print(f"  - Days: {dias}")
-    print(f"  - Specific date: {date if date else 'None (use execution_date)'}")
+    print(f"  - Specific date: {config['date'] if config['date'] else 'None (use execution_date)'}")
     print(f"  - Target date: {paths.date_iso}")
     print(f"📁 Input/Output paths:")
     
     # Find input file (output from processar task)
-    processar_outputs = paths.get_processar_outputs()
+    processar_outputs = paths.get_output_paths()["processar"]
     input_files_to_check = [
-        processar_outputs['relevant_articles'],
+        processar_outputs['articles'],  # Corrigido: usar 'articles' em vez de 'relevant_articles'
         # Fallback to previous task outputs stored in XCom
     ]
     
@@ -551,7 +335,7 @@ def filtrar_vitimas_task(**context):
     
     input_file = None
     for potential_input in input_files_to_check:
-        print(f"🔍 Checking for input file: {potential_input}")
+        print(f"🔍 Checking for input file: {potential_input}")  # Corrigido: removido 'potentialial_input'
         if os.path.exists(potential_input):
             input_file = potential_input
             print(f"✅ Found input file: {input_file}")
@@ -561,9 +345,9 @@ def filtrar_vitimas_task(**context):
         print("❌ No input file found from processar task")
         # Try legacy paths as fallback
         legacy_paths = [
-            f"/opt/airflow/scripts/google_scraper/data/structured/{paths.year}/{paths.month}/{paths.day}/artigos_google_municipios_pt_{paths.date_iso}.csv",
-            f"/opt/airflow/scripts/google_scraper/data/raw/{paths.year}/{paths.month}/{paths.day}/artigos_google_municipios_pt_{paths.date_iso}.csv",
-            "/opt/airflow/scripts/google_scraper/data/structured/artigos_google_municipios_pt.csv"
+            f"/opt/airflow/data/structured/{paths.year}/{paths.month}/{paths.day}/artigos_google_municipios_pt_{paths.date_iso}.csv",
+            f"/opt/airflow/data/raw/{paths.year}/{paths.month}/{paths.day}/artigos_google_municipios_pt_{paths.date_iso}.csv",
+            "/opt/airflow/data/structured/artigos_google_municipios_pt.csv"
         ]
         
         for legacy_path in legacy_paths:
@@ -586,13 +370,13 @@ def filtrar_vitimas_task(**context):
         '--input_file', input_file,
         '--output_dir', paths.processed_dir,
         '--date_str', paths.date_iso,
-        '--ml_threshold', str(ml_threshold),  # Add ML threshold parameter
-        '--use_ml_filtering', str(use_ml_filtering).lower()  # Enable/disable ML filtering
+        '--ml_threshold', str(config.get('ml_threshold', 0.6)),  # Add ML threshold parameter
+        '--use_ml_filtering', str(config.get('use_ml_filtering', True)).lower()  # Enable/disable ML filtering
     ]
     
     # Pass specific date
-    if date:
-        cmd.extend(['--date', date])
+    if config['date']:
+        cmd.extend(['--date', config['date']])
     else:
         cmd.extend(['--date', target_date.strftime('%Y-%m-%d')])
     
@@ -614,27 +398,19 @@ def filtrar_vitimas_task(**context):
         bufsize=1
     )
     
-    # Capture and print output in real-time
     stdout_lines = []
     stderr_lines = []
     
-    # Function to read from a pipe and print/store output
     def read_pipe(pipe, lines_list, prefix):
         for line in iter(pipe.readline, ''):
             if line:
-                print(f"{prefix} {line.rstrip()}")  # Print directly to Airflow logs
+                print(f"{prefix} {line.rstrip()}")
                 lines_list.append(line)
         pipe.close()
     
-    # Create threads to read stdout and stderr
-    stdout_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stdout, stdout_lines, "📋")
-    )
-    stderr_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stderr, stderr_lines, "⚠️")
-    )
+    # Cria threads para stdout e stderr
+    stdout_thread = threading.Thread(target=read_pipe, args=(process.stdout, stdout_lines, "📋"))
+    stderr_thread = threading.Thread(target=read_pipe, args=(process.stderr, stderr_lines, "⚠️"))
     
     # Start threads and wait for them to finish
     stdout_thread.start()
@@ -670,7 +446,7 @@ def filtrar_vitimas_task(**context):
                 created_files.append(output_path)
                 
                 # Log file content info for main output
-                if output_name == 'victims_articles':
+                if output_name == 'victims':  # Corrigido: usar 'victims' em vez de 'victims_articles'
                     try:
                         import pandas as pd
                         df = pd.read_csv(output_path)
@@ -685,7 +461,7 @@ def filtrar_vitimas_task(**context):
         # Store output paths in XCom for next tasks
         context['task_instance'].xcom_push(key='filtrar_outputs', value=filtrar_outputs)
         context['task_instance'].xcom_push(key='created_files', value=created_files)
-        context['task_instance'].xcom_push(key='paths_config', value=paths.get_all_paths_summary())
+        context['task_instance'].xcom_push(key='paths_config', value=paths.get_output_paths())
         
         return stdout_content
         
@@ -701,41 +477,17 @@ def export_supabase_task(**context):
     """Export filtered articles to Supabase using controlled output paths"""
     print("🔄 Starting export_supabase task")
     
-    # Get parameters from DAG run configuration
-    dag_run = context.get('dag_run')
-    if dag_run and dag_run.conf:
-        dias = dag_run.conf.get('dias', 1)
-        date = dag_run.conf.get('date', '')
-        use_current_date = dag_run.conf.get('use_current_date', True)
-    else:
-        dias = 1
-        date = ''
-        use_current_date = True
-    
-    # Get paths configuration from previous task or create new one
-    try:
-        paths_config = context['task_instance'].xcom_pull(key='paths_config', task_ids='filtrar_vitimas')
-        if paths_config and 'execution_date' in paths_config:
-            print(f"📁 Using paths from filtrar task: {paths_config['execution_date']}")
-            target_date = datetime.strptime(paths_config['execution_date'], '%Y-%m-%d')
-            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
-        else:
-            raise ValueError("No valid paths config from previous task")
-    except (TypeError, KeyError, ValueError):
-        # Fallback: use same date logic as previous tasks
-        if date:
-            target_date = datetime.strptime(date, '%Y-%m-%d')
-            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
-        else:
-            paths = GoogleScraperPaths(use_current_date=True)
-            target_date = paths.execution_date
+    # Obter configuração da tarefa e gestão de caminhos
+    config, paths, target_date = get_execution_config(context)
+    dias = config['dias']
+    max_execution_time = config['max_execution_time']
     
     # Create directories if they don't exist
-    created_dirs = paths.create_all_directories()
+    created_dirs = paths.create_directories()
     print(f"📁 Ensured directories exist: {created_dirs}")
     
     # Get export output paths
-    export_outputs = paths.get_export_outputs()
+    export_outputs = paths.get_output_paths()["export"]
     
     # Generate expected table name for logging
     date_compact = paths.date_iso.replace('-', '')
@@ -743,7 +495,7 @@ def export_supabase_task(**context):
     
     print(f"📅 Export Parameters:")
     print(f"  - Days: {dias}")
-    print(f"  - Specific date: {date if date else 'None (use execution_date)'}")
+    print(f"  - Specific date: {config['date'] if config['date'] else 'None (use execution_date)'}")
     print(f"  - Target date: {paths.date_iso}")
     print(f"  - Database table: {expected_table_name}")
     print(f"📁 Input/Output paths:")
@@ -752,10 +504,10 @@ def export_supabase_task(**context):
     input_files_to_check = []
     
     # Get filtrar outputs first (both victims and non-victims files)
-    filtrar_outputs = paths.get_filtrar_outputs()
+    filtrar_outputs = paths.get_output_paths()["filtrar"]
     input_files_to_check.extend([
-        filtrar_outputs['victims_articles'],  # Articles with victims (preferred)
-        filtrar_outputs['no_victims_articles']  # Articles without victims but still relevant
+        filtrar_outputs['victims'],  # Corrigido: usar 'victims' em vez de 'victims_articles'
+        filtrar_outputs['no_victims']  # Corrigido: usar 'no_victims' em vez de 'no_victims_articles'
     ])
     
     # Try to get input from XCom (all files created by filtrar task)
@@ -768,8 +520,8 @@ def export_supabase_task(**context):
         pass
     
     # Fallback to processar outputs if filtrar didn't produce anything
-    processar_outputs = paths.get_processar_outputs()
-    input_files_to_check.append(processar_outputs['relevant_articles'])
+    processar_outputs = paths.get_output_paths()["processar"]
+    input_files_to_check.append(processar_outputs['articles'])  # Corrigido: usar 'articles' em vez de 'relevant_articles'
     
     # Try to get processar files from XCom as well
     try:
@@ -785,11 +537,11 @@ def export_supabase_task(**context):
     
     # Check all potential input files and collect info
     for potential_input in input_files_to_check:
-        print(f"🔍 Checking for input file: {potential_input}")
+        print(f"🔍 Checking for input file: {potential_input}")  # Corrigido: removido 'potentialial_input'
         if os.path.exists(potential_input):
             file_size = os.path.getsize(potential_input)
             input_file_info.append((potential_input, file_size))
-            print(f"✅ Found file: {potential_input} ({file_size} bytes)")
+            print(f"✅ Found file: {potential_input} ({file_size} bytes)")  # Corrigido: removido 'potentialial_input'
     
     # Select the best input file based on priority
     if input_file_info:
@@ -876,27 +628,19 @@ def export_supabase_task(**context):
         bufsize=1
     )
     
-    # Capture and print output in real-time
     stdout_lines = []
     stderr_lines = []
     
-    # Function to read from a pipe and print/store output
     def read_pipe(pipe, lines_list, prefix):
         for line in iter(pipe.readline, ''):
             if line:
-                print(f"{prefix} {line.rstrip()}")  # Print directly to Airflow logs
+                print(f"{prefix} {line.rstrip()}")
                 lines_list.append(line)
         pipe.close()
     
-    # Create threads to read stdout and stderr
-    stdout_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stdout, stdout_lines, "📋")
-    )
-    stderr_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stderr, stderr_lines, "⚠️")
-    )
+    # Cria threads para stdout e stderr
+    stdout_thread = threading.Thread(target=read_pipe, args=(process.stdout, stdout_lines, "📋"))
+    stderr_thread = threading.Thread(target=read_pipe, args=(process.stderr, stderr_lines, "⚠️"))
     
     # Start threads and wait for them to finish
     stdout_thread.start()
@@ -947,7 +691,7 @@ def export_supabase_task(**context):
         # Store output paths in XCom for potential downstream tasks
         context['task_instance'].xcom_push(key='export_outputs', value=export_outputs)
         context['task_instance'].xcom_push(key='created_files', value=created_files)
-        context['task_instance'].xcom_push(key='paths_config', value=paths.get_all_paths_summary())
+        context['task_instance'].xcom_push(key='paths_config', value=paths.get_output_paths())
         context['task_instance'].xcom_push(key='exported_table', value=expected_table_name)
         
         return stdout_content
@@ -964,50 +708,22 @@ def export_to_gcs_task(**context):
     """Export all pipeline files to Google Cloud Storage maintaining directory structure"""
     print("🔄 Starting export_to_gcs task")
     
-    # Get parameters from DAG run configuration
-    dag_run = context.get('dag_run')
-    if dag_run and dag_run.conf:
-        dias = dag_run.conf.get('dias', 1)
-        date = dag_run.conf.get('date', '')
-        use_current_date = dag_run.conf.get('use_current_date', True)
-        gcs_project_id = dag_run.conf.get('gcs_project_id', None)
-        gcs_bucket_name = dag_run.conf.get('gcs_bucket_name', None)
-    else:
-        dias = 1
-        date = ''
-        use_current_date = True
-        gcs_project_id = None
-        gcs_bucket_name = None
-    
-    # Get paths configuration from previous task or create new one
-    try:
-        paths_config = context['task_instance'].xcom_pull(key='paths_config', task_ids='exportar_para_supabase')
-        if paths_config and 'execution_date' in paths_config:
-            print(f"📁 Using paths from export_supabase task: {paths_config['execution_date']}")
-            target_date = datetime.strptime(paths_config['execution_date'], '%Y-%m-%d')
-            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
-        else:
-            raise ValueError("No valid paths config from previous task")
-    except (TypeError, KeyError, ValueError):
-        # Fallback: use same date logic as previous tasks
-        if date:
-            target_date = datetime.strptime(date, '%Y-%m-%d')
-            paths = GoogleScraperPaths(execution_date=target_date, use_current_date=False)
-        else:
-            paths = GoogleScraperPaths(use_current_date=True)
-            target_date = paths.execution_date
+    # Obter configuração da tarefa e gestão de caminhos
+    config, paths, target_date = get_execution_config(context)
+    dias = config['dias']
+    max_execution_time = config['max_execution_time']
     
     # Create directories if they don't exist
-    created_dirs = paths.create_all_directories()
+    created_dirs = paths.create_directories()
     print(f"📁 Ensured directories exist: {created_dirs}")
     
     print(f"📅 GCS Export Parameters:")
     print(f"  - Days: {dias}")
-    print(f"  - Specific date: {date if date else 'None (use execution_date)'}")
+    print(f"  - Specific date: {config['date'] if config['date'] else 'None (use execution_date)'}")
     print(f"  - Target date: {paths.date_iso}")
     print(f"  - Base data directory: {paths.data_dir}")
-    print(f"  - GCS Project ID: {gcs_project_id or 'From config/environment'}")
-    print(f"  - GCS Bucket: {gcs_bucket_name or 'From config/environment'}")
+    print(f"  - GCS Project ID: {config.get('gcs_project_id') or 'From config/environment'}")
+    print(f"  - GCS Bucket: {config.get('gcs_bucket_name') or 'From config/environment'}")
     
     # Build command for GCS export
     cmd = [
@@ -1018,10 +734,10 @@ def export_to_gcs_task(**context):
     ]
     
     # Add GCS configuration if provided
-    if gcs_project_id:
-        cmd.extend(['--gcs_project_id', gcs_project_id])
-    if gcs_bucket_name:
-        cmd.extend(['--gcs_bucket_name', gcs_bucket_name])
+    if config.get('gcs_project_id'):
+        cmd.extend(['--gcs_project_id', config['gcs_project_id']])
+    if config.get('gcs_bucket_name'):
+        cmd.extend(['--gcs_bucket_name', config['gcs_bucket_name']])
     
     print(f"🔄 Running GCS export command: {' '.join(cmd)}")
     
@@ -1041,27 +757,19 @@ def export_to_gcs_task(**context):
         bufsize=1
     )
     
-    # Capture and print output in real-time
     stdout_lines = []
     stderr_lines = []
     
-    # Function to read from a pipe and print/store output
     def read_pipe(pipe, lines_list, prefix):
         for line in iter(pipe.readline, ''):
             if line:
-                print(f"{prefix} {line.rstrip()}")  # Print directly to Airflow logs
+                print(f"{prefix} {line.rstrip()}")
                 lines_list.append(line)
         pipe.close()
     
-    # Create threads to read stdout and stderr
-    stdout_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stdout, stdout_lines, "📋")
-    )
-    stderr_thread = threading.Thread(
-        target=read_pipe, 
-        args=(process.stderr, stderr_lines, "⚠️")
-    )
+    # Cria threads para stdout e stderr
+    stdout_thread = threading.Thread(target=read_pipe, args=(process.stdout, stdout_lines, "📋"))
+    stderr_thread = threading.Thread(target=read_pipe, args=(process.stderr, stderr_lines, "⚠️"))
     
     # Start threads and wait for them to finish
     stdout_thread.start()
@@ -1116,7 +824,7 @@ def export_to_gcs_task(**context):
         }
         
         context['task_instance'].xcom_push(key='gcs_export_info', value=gcs_export_info)
-        context['task_instance'].xcom_push(key='paths_config', value=paths.get_all_paths_summary())
+        context['task_instance'].xcom_push(key='paths_config', value=paths.get_output_paths())
         
         return stdout_content
         
@@ -1164,13 +872,13 @@ verificar_directorio_dados = BashOperator(
 # Define tasks
 executar_scraper = PythonOperator(
     task_id='executar_scraper_airflow',
-    python_callable=run_scraper_task,
+    python_callable=executar_scraper,
     dag=dag,
 )
 
 processar_relevantes = PythonOperator(
     task_id='processar_relevantes',
-    python_callable=processar_relevantes_task,
+    python_callable=processar_relevantes,
     dag=dag,
 )
 
@@ -1195,162 +903,28 @@ exportar_para_gcs = PythonOperator(
 # Set dependencies
 verificar_directorio_dados >> executar_scraper >> processar_relevantes >> filtrar_artigos_vitimas >> exportar_para_supabase >> exportar_para_gcs
 
-# Pipeline documentation
-dag.doc_md = """
-# SIMPREDE Google News Scraper Pipeline
 
-## Pipeline Overview
-This DAG implements a complete news scraping and processing pipeline for the SIMPREDE project, 
-optimized for Airflow with controlled output paths and centralized path management.
-
-**Date Handling**: By default, the pipeline uses the current date for file naming and processing.
-You can override this by providing a specific date in the DAG run configuration.
-
-## Configuration Parameters
-- `dias`: Number of days to process (default: 1)
-- `date`: Specific date to process (YYYY-MM-DD format, optional)
-- `max_execution_time`: Maximum scraper execution time in seconds
-- `use_current_date`: Whether to use current date instead of execution date (default: true)
-
-## Date Configuration Examples
-
-### Use Current Date (Default)
-```json
-{
-  "dias": 1,
-  "use_current_date": true
-}
-```
-
-### Use Specific Date
-```json
-{
-  "dias": 1,
-  "date": "2025-01-15",
-  "use_current_date": false
-}
-```
-
-### Process Multiple Days from Today
-```json
-{
-  "dias": 7,
-  "use_current_date": true
-}
-```
-
-## Pipeline Stages
-
-### 1. **executar_scraper_airflow** 
-- Scrapes Google News for disaster-related articles
-- Uses current date by default for file naming
-- Outputs: `intermediate_google_news_{current_date}.csv` and `google_news_articles_{current_date}.csv`
-- Location: `/opt/airflow/scripts/google_scraper/data/raw/YYYY/MM/DD/`
-
-### 2. **processar_relevantes**
-- Processes scraped articles to extract relevant disaster information
-- Inherits date from previous task for consistency
-- Outputs: `artigos_google_municipios_pt_{date}.csv` and `artigos_irrelevantes_{date}.csv`
-- Location: `/opt/airflow/scripts/google_scraper/data/structured/YYYY/MM/DD/`
-
-### 3. **filtrar_vitimas**
-- Applies comprehensive filtering to identify articles with victim information
-- Maintains date consistency across pipeline
-- Outputs: `artigos_vitimas_filtrados_{date}.csv` and `artigos_sem_vitimas_{date}.csv`
-- Location: `/opt/airflow/scripts/google_scraper/data/processed/YYYY/MM/DD/`
-
-### 4. **export_supabase**
-- Exports ALL filtered articles to Supabase database (both with and without victims)
-- Creates tables with naming convention: `artigos_filtrados_{YYYY-MM-DD}`
-- Prioritizes articles with victims, but includes all disaster-related articles
-- Handles cases where no disaster-related events were detected gracefully
-- Outputs: Export logs, statistics, and backup CSV files
-- Location: `/opt/airflow/scripts/google_scraper/data/processed/YYYY/MM/DD/`
-
-### 5. **export_to_gcs**
-- Exports ALL pipeline files to Google Cloud Storage maintaining directory structure
-- Creates/ensures GCS bucket exists before upload
-- Uploads entire data directory structure: `raw/`, `structured/`, and `processed/`
-- Maintains original date-based folder structure in GCS
-- Supports configuration via environment variables or config file
-- Outputs: GCS export logs, statistics, and upload summaries
-- Location: `gs://{bucket_name}/data/YYYY/MM/DD/`
-
-## Export Logic
-The export task intelligently selects input files in this priority order:
-1. **Articles with victims** (`artigos_vitimas_filtrados_{date}.csv`) - highest priority
-2. **Articles without victims** (`artigos_sem_vitimas_{date}.csv`) - disaster-related but no victims detected
-3. **All relevant articles** (`artigos_google_municipios_pt_{date}.csv`) - fallback to all disaster-related articles
-
-## Database Tables
-- **Schema**: `google_scraper`
-- **Table naming**: `artigos_filtrados_{YYYYMMDD}_staging` (e.g., `artigos_filtrados_20250605_staging`)
-- **Content**: All disaster-related articles (with or without victims) from the filtering process
-- **Primary key**: `ID` column (hash-based unique identifier)
-
-This ensures that all disaster-related content is captured in clean, date-specific staging tables ready for further processing or promotion to production tables.
-
-## GCS Configuration
-The GCS export task can be configured in multiple ways:
-
-### Environment Variables (Recommended)
-```bash
-export GCS_PROJECT_ID="your-gcp-project-id"
-export GCS_BUCKET_NAME="simprede-data-pipeline"
-export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
-```
-
-### Configuration File
-Create `/opt/airflow/scripts/google_scraper/config/gcs_config.json`:
-```json
-{
-  "project_id": "your-gcp-project-id",
-  "bucket_name": "simprede-data-pipeline",
-  "credentials_path": "/opt/airflow/config/gcs-credentials.json",
-  "location": "EUROPE-WEST1"
-}
-```
-
-### DAG Run Configuration
-Override GCS settings via DAG run configuration:
-```json
-{
-  "dias": 1,
-  "gcs_project_id": "your-project",
-  "gcs_bucket_name": "your-bucket"
-}
-```
-
-## Cloud Storage Structure
-Files are uploaded to GCS maintaining the original directory structure:
-```
-gs://your-bucket/
-└── data/
-    ├── raw/YYYY/MM/DD/
-    │   ├── intermediate_google_news_YYYYMMDD.csv
-    │   ├── google_news_articles_YYYYMMDD.csv
-    │   └── scraper_stats_YYYYMMDD.json
-    ├── structured/YYYY/MM/DD/
-    │   ├── artigos_google_municipios_pt_YYYY-MM-DD.csv
-    │   ├── artigos_irrelevantes_YYYY-MM-DD.csv
-    │   └── processing_stats_YYYYMMDD.json
-    └── processed/YYYY/MM/DD/
-        ├── artigos_vitimas_filtrados_YYYYMMDD.csv
-        ├── artigos_sem_vitimas_YYYYMMDD.csv
-        ├── export_stats_YYYYMMDD.json
-        └── gcs_export_stats_YYYYMMDD.json
-```
-
-## Monitoring and Logging
-- All tasks log progress and errors in real-time to Airflow logs.
-- Key output files and directories are printed at each stage for verification.
-- Export task provides a summary of inserted/updated records and the target database table.
-
-## Troubleshooting Tips
-- If no articles are found, verify the keywords and region settings in `keywords.json` and `municipios_por_distrito.json`.
-- Check Airflow worker logs for detailed error messages and stack traces.
-- Ensure network access to Google News and Supabase from the Airflow environment.
-- For GCS export issues, verify that the service account has Storage Object Admin permissions.
-- If GCS bucket creation fails, ensure the bucket name is globally unique and the project has billing enabled.
-- Check that the Google Cloud Storage library is installed: `pip install google-cloud-storage`.
-"""
+def find_input_file(context, task_ids, output_keys, paths, stage_name):
+    """Encontra ficheiro de entrada das tarefas anteriores"""
+    input_files_to_check = []
+    
+    # Tenta obter do XCom
+    try:
+        files_from_xcom = context['task_instance'].xcom_pull(key='created_files', task_ids=task_ids)
+        if files_from_xcom:
+            input_files_to_check.extend(files_from_xcom)
+    except:
+        pass
+    
+    # Adiciona caminhos esperados
+    for key in output_keys:
+        input_files_to_check.append(key)
+    
+    # Procura ficheiro existente
+    for potential_input in input_files_to_check:
+        if os.path.exists(potential_input):
+            print(f"✅ Encontrado ficheiro de entrada para {stage_name}: {potential_input}")
+            return potential_input
+    
+    print(f"❌ Nenhum ficheiro de entrada encontrado para {stage_name}")
+    return None

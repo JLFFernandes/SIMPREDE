@@ -1,3 +1,8 @@
+#TODO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/processador/filtrar_artigos_vitimas_airflow.py
+# Script para filtrar artigos com vítimas de desastres naturais
+# Este script é executado como parte do DAG do Airflow e deve ser compatível com o ambiente do Airflow
+
 import sys
 import os
 import logging

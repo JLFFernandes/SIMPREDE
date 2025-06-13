@@ -1,3 +1,8 @@
+#TODO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/exportador_bd/export_to_supabase_airflow.py
+# Script para exportar artigos filtrados para a base de dados Supabase
+# Este script é executado como parte do DAG do Airflow e deve ser compatível com o ambiente do Airflow
+
 import sys
 import os
 import logging

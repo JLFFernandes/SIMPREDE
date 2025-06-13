@@ -1,3 +1,12 @@
+"""
+Extrator de conteúdo de artigos do Google News e outras fontes
+Otimizado para ambiente Docker e produção
+"""
+
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/extracao/extractor.py
+# Script para extrair conteúdo de artigos do Google News e outras fontes
+# Este script é executado como parte do DAG do Airflow e deve ser compatível com o ambiente do Airflow
+
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs, urlencode
@@ -13,6 +22,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import csv
 import logging
 import os
+import time
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -39,52 +49,82 @@ def get_chrome_options():
     return options
 
 def get_webdriver():
-    """Create and return a configured WebDriver instance"""
+    """
+    Cria e retorna instância configurada do WebDriver
+    Otimizada para ambiente Docker com timeouts adequados
+    """
     options = get_chrome_options()
     service = Service("/usr/bin/chromedriver")
     
     try:
         driver = webdriver.Chrome(service=service, options=options)
+        # Define timeouts padrão para evitar travamentos
+        driver.set_page_load_timeout(30)
+        driver.implicitly_wait(10)
         return driver
     except Exception as e:
-        logger.error(f"Failed to create WebDriver: {e}")
+        logger.error(f"Falha ao criar WebDriver: {e}")
         raise
 
 def resolve_google_news_url(url, driver_path=None, max_wait_time=10):
-    options = get_chrome_options()
-    service = Service("/usr/bin/chromedriver")
-    driver = webdriver.Chrome(service=service, options=options)
-
+    """
+    Resolve URL do Google News para obter link original
+    Implementa retry logic e melhores práticas de timeout
+    """
+    if not url or not url.startswith("http"):
+        logger.warning(f"URL inválido fornecido: {url}")
+        return None
+    
+    driver = None
     try:
-        logger.info(f"🌐 Acessando o link: {url}")
+        driver = get_webdriver()
+        logger.info(f"🌐 A aceder ao link: {url}")
+        
+        # Acede ao URL com timeout
         driver.get(url)
         wait = WebDriverWait(driver, max_wait_time)
 
-        # Aceitar consentimento se necessário
+        # Trata página de consentimento se existir
         if "consent.google.com" in driver.current_url:
-            logger.warning("⚠️ Página de consentimento detectada. Tentando aceitar...")
+            logger.info("⚠️ Página de consentimento detectada, a tentar aceitar...")
             try:
-                accept_all_button = wait.until(
-                    EC.element_to_be_clickable((By.XPATH, '//button[.//span[text()="Accept all"]]'))
+                accept_button = wait.until(
+                    EC.element_to_be_clickable((By.XPATH, '//button[.//span[text()="Accept all" or text()="Aceitar tudo"]]'))
                 )
-                accept_all_button.click()
-                logger.info("✅ Consentimento aceite!")
+                accept_button.click()
+                logger.info("✅ Consentimento aceite")
+                
+                # Aguarda redirecionamento
+                time.sleep(2)
             except Exception as e:
-                logger.error(f"❌ Não foi possível aceitar o consentimento: {e}")
+                logger.warning(f"Não foi possível aceitar consentimento: {e}")
 
-        # Espera redireção
-        wait.until(lambda d: not d.current_url.startswith("https://news.google.com/")
-                            and not d.current_url.startswith("https://consent.google.com/"))
+        # Aguarda redirecionamento para site original
+        try:
+            wait.until(lambda d: not d.current_url.startswith("https://news.google.com/")
+                                and not d.current_url.startswith("https://consent.google.com/"))
+        except Exception:
+            logger.warning("Timeout aguardando redirecionamento")
 
         final_url = driver.current_url
-        logger.info(f"✅ URL final resolvido: {final_url}")
-        return final_url
+        
+        # Valida URL final
+        if final_url and final_url != url and not final_url.startswith("https://news.google.com/"):
+            logger.info(f"✅ URL resolvido: {final_url}")
+            return final_url
+        else:
+            logger.warning(f"URL não foi redirecionado adequadamente: {final_url}")
+            return None
 
     except Exception as e:
         logger.error(f"❌ Erro ao resolver URL do Google News: {e}")
         return None
     finally:
-        driver.quit()
+        if driver:
+            try:
+                driver.quit()
+            except Exception:
+                pass  # Ignora erros ao fechar driver
 
 
 

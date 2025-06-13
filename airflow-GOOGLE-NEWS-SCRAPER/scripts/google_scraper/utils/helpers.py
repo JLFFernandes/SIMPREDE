@@ -1,3 +1,8 @@
+"""
+Utilidades e funções auxiliares para normalização de texto, carregamento de dados e exportação
+Preparado para produção com comentários em português
+"""
+
 import unicodedata
 import pandas as pd
 import re
@@ -242,99 +247,106 @@ def gerar_id(url):
 
 def organize_path_by_date(caminho):
     """
-    Organize file path into year/month/day structure if it's in the structured directory.
-    Returns the new path with year/month/day folders.
+    Organiza o caminho do ficheiro por estrutura de data (ano/mês/dia)
+    Se o caminho estiver numa estrutura de dados, reorganiza-o hierarquicamente
     """
-    # Get current date components
-    current_year = datetime.now().strftime("%Y")
-    current_month = datetime.now().strftime("%m")
-    current_day = datetime.now().strftime("%d")
+    if not caminho:
+        return caminho
     
-    # Always organize files into year/month/day structure
-    if '/structured/' in caminho or '/raw/' in caminho:
-        # Extract the base directory path and filename
-        if '/structured/' in caminho:
-            base_dir = caminho.split('/structured/')[0] + '/structured'
-        else:
-            base_dir = caminho.split('/raw/')[0] + '/raw'
-        filename = os.path.basename(caminho)
+    try:
+        # Detecta se já está numa estrutura organizada
+        if "/data/" in caminho and ("/raw/" in caminho or "/structured/" in caminho or "/processed/" in caminho):
+            return caminho
         
-        # Create new path with year/month/day structure
-        new_path = os.path.join(base_dir, current_year, current_month, current_day, filename)
+        # Extrai informação de data do nome do ficheiro se possível
+        import re
+        from datetime import datetime
         
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(new_path), exist_ok=True)
+        basename = os.path.basename(caminho)
+        dirname = os.path.dirname(caminho)
         
-        return new_path
-    
-    return caminho
+        # Procura padrões de data no nome do ficheiro
+        date_patterns = [
+            r'(\d{4})(\d{2})(\d{2})',  # YYYYMMDD
+            r'(\d{4})-(\d{2})-(\d{2})', # YYYY-MM-DD
+        ]
+        
+        for pattern in date_patterns:
+            match = re.search(pattern, basename)
+            if match:
+                year, month, day = match.groups()
+                
+                # Constrói novo caminho organizado
+                if "/data/" in dirname:
+                    base_data_dir = dirname.split("/data/")[0] + "/data"
+                    if "/raw/" in dirname:
+                        data_type = "raw"
+                    elif "/structured/" in dirname:
+                        data_type = "structured"
+                    elif "/processed/" in dirname:
+                        data_type = "processed"
+                    else:
+                        data_type = "structured"  # padrão
+                    
+                    organized_path = os.path.join(base_data_dir, data_type, year, month, day, basename)
+                    return organized_path
+        
+        # Se não conseguir organizar por data, retorna o caminho original
+        return caminho
+        
+    except Exception:
+        # Em caso de erro, retorna o caminho original
+        return caminho
 
-def guardar_csv_incremental(output_csv, artigos):
+def guardar_csv_incremental(caminho, artigos: list[dict]):
     """
-    Save articles incrementally to CSV, avoiding duplicates based on ID and URL
+    Guarda artigos num ficheiro CSV de forma incremental
+    Cria as diretorias necessárias e organiza por estrutura de data
     """
     if not artigos:
-        print("⚠️ Nenhum artigo para salvar.")
+        print("⚠️ Lista de artigos vazia, nada para guardar")
         return
     
-    print(f"📥 Novos artigos recebidos: {len(artigos)}")
+    # Organiza o caminho por data se apropriado
+    caminho_organizado = organize_path_by_date(caminho)
     
-    # Create directory if it doesn't exist
-    os.makedirs(os.path.dirname(output_csv), exist_ok=True)
+    # Cria diretoria se não existir
+    os.makedirs(os.path.dirname(caminho_organizado), exist_ok=True)
     
-    print(f"📂 Organizando saída por ano/mês/dia: {output_csv}")
+    # Define estrutura de colunas padrão
+    colunas_padrao = [
+        "ID", "type", "subtype", "date", "year", "month", "day", "hour", "georef",
+        "district", "municipali", "parish", "DICOFREG", "source", "sourcedate",
+        "sourcetype", "page", "fatalities", "injured", "evacuated", "displaced", "missing"
+    ]
     
-    # Convert to DataFrame for easier manipulation
-    df_novos = pd.DataFrame(artigos)
-    
-    # Load existing articles if file exists
-    if os.path.exists(output_csv):
-        try:
-            df_existentes = pd.read_csv(output_csv, encoding='utf-8')
-            print(f"📂 IDs existentes no arquivo: {len(df_existentes)}")
-            
-            # More flexible duplicate detection
-            if 'ID' in df_existentes.columns and 'ID' in df_novos.columns:
-                # Remove duplicates based on ID first
-                existing_ids = set(df_existentes['ID'].astype(str))
-                df_novos = df_novos[~df_novos['ID'].astype(str).isin(existing_ids)]
-            
-            # If we still have articles, check for URL duplicates
-            if len(df_novos) > 0 and 'page' in df_existentes.columns and 'page' in df_novos.columns:
-                existing_urls = set(df_existentes['page'].astype(str))
-                df_novos = df_novos[~df_novos['page'].astype(str).isin(existing_urls)]
-            
-            # Combine with existing data
-            if len(df_novos) > 0:
-                df_final = pd.concat([df_existentes, df_novos], ignore_index=True)
-            else:
-                df_final = df_existentes
-                
-        except Exception as e:
-            print(f"⚠️ Erro ao ler arquivo existente: {e}")
-            df_final = df_novos
+    # Determina colunas existentes nos artigos
+    if artigos:
+        colunas_existentes = set()
+        for artigo in artigos:
+            colunas_existentes.update(artigo.keys())
+        
+        # Usa colunas padrão que existem nos dados, mais quaisquer colunas extras
+        colunas_finais = [col for col in colunas_padrao if col in colunas_existentes]
+        colunas_extras = sorted([col for col in colunas_existentes if col not in colunas_padrao])
+        colunas_finais.extend(colunas_extras)
     else:
-        df_final = df_novos
+        colunas_finais = colunas_padrao
     
-    print(f"🆕 Artigos únicos para salvar: {len(df_novos)}")
-    
-    if len(df_novos) > 0:
-        # Save with proper CSV formatting
-        try:
-            df_final.to_csv(output_csv, index=False, encoding='utf-8', quoting=1)
-            print(f"✅ Arquivo salvo com sucesso: {output_csv}")
-            print(f"📊 Total de artigos no arquivo: {len(df_final)}")
-        except Exception as e:
-            print(f"❌ Erro ao salvar arquivo: {e}")
-            # Try with different encoding
-            try:
-                df_final.to_csv(output_csv, index=False, encoding='utf-8-sig', quoting=1)
-                print(f"✅ Arquivo salvo com encoding alternativo: {output_csv}")
-            except Exception as e2:
-                print(f"❌ Erro persistente ao salvar: {e2}")
-    else:
-        print("⚠️ Nenhum artigo único para salvar (todos são duplicatas).")
-
+    try:
+        with open(caminho_organizado, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=colunas_finais)
+            writer.writeheader()
+            for artigo in artigos:
+                # Garante que todas as colunas têm valores (usa string vazia como padrão)
+                linha_completa = {col: artigo.get(col, "") for col in colunas_finais}
+                writer.writerow(linha_completa)
+        
+        print(f"✅ {len(artigos)} artigos guardados em {caminho_organizado}")
+        
+    except Exception as e:
+        print(f"❌ Erro ao guardar CSV: {e}")
+        raise
 
 # --------------------------- Process URLs in parallel ---------------------------
 def process_urls_in_parallel(urls, process_function, max_workers=5):
