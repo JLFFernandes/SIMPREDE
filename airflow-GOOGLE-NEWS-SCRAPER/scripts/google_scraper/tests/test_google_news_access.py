@@ -1,3 +1,7 @@
+#TODO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/tests/test_google_news_access.py
+# Script para testar o acesso ao RSS do Google News e verificar se o serviço está a funcionar sem bloqueios
+
 import requests
 import feedparser
 import time

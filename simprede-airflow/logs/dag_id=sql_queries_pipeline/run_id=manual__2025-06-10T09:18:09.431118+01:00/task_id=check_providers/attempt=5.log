@@ -1,4 +1,0 @@
-{"timestamp":"2025-06-10T08:39:54.382541","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
-{"timestamp":"2025-06-10T08:39:54.383023","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
-{"timestamp":"2025-06-10T08:39:54.383919","level":"error","event":"DAG not found during start up","dag_id":"sql_queries_pipeline","bundle":"BundleInfo(name='dags-folder', version=None)","path":"sql_queries_dag.py","logger":"task"}
-{"timestamp":"2025-06-10T08:39:54.391004Z","level":"warning","event":"Process exited abnormally","exit_code":1,"logger":"task"}
