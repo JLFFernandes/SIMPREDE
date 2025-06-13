@@ -1,3 +1,7 @@
+#TODO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/utils/export_centroids_to_supabase.py
+# Script para exportar centroides de freguesias e concelhos para a tabela pública do Supabase
+
 import os
 import pandas as pd
 import psycopg2

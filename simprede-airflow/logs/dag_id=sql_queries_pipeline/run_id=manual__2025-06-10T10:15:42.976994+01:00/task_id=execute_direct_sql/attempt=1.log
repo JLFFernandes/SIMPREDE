@@ -1,7 +1,0 @@
-{"timestamp":"2025-06-10T09:15:45.911821","level":"info","event":"DAG bundles loaded: dags-folder","logger":"airflow.dag_processing.bundles.manager.DagBundlesManager"}
-{"timestamp":"2025-06-10T09:15:45.912289","level":"info","event":"Filling up the DagBag from /opt/airflow/dags/sql_queries_dag.py","logger":"airflow.models.dagbag.DagBag"}
-{"timestamp":"2025-06-10T09:15:45.998747","level":"info","event":"Done. Returned value was: None","logger":"airflow.task.operators.airflow.providers.standard.operators.python.PythonOperator"}
-{"timestamp":"2025-06-10T09:15:46.773999Z","level":"info","event":"✅ PostgresHook imported successfully","chan":"stdout","logger":"task"}
-{"timestamp":"2025-06-10T09:15:46.774087Z","level":"info","event":"✅ PostgresOperator imported successfully","chan":"stdout","logger":"task"}
-{"timestamp":"2025-06-10T09:15:46.774160Z","level":"info","event":"✅ PostgreSQL provider fully available","chan":"stdout","logger":"task"}
-{"timestamp":"2025-06-10T09:15:46.774228Z","level":"info","event":"Execute direct SQL task stub executed.","chan":"stdout","logger":"task"}

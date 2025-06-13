@@ -1,3 +1,7 @@
+#TODO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/exportador_gcs/export_to_gcs_airflow.py
+# Script para exportar arquivos do pipeline SIMPREDE para o Google Cloud Storage (GCS)
+# This script é executado como parte do DAG do Airflow e deve ser compatível com o ambiente do Airflow
 #!/usr/bin/env python3
 """
 SIMPREDE Pipeline - Export to Google Cloud Storage

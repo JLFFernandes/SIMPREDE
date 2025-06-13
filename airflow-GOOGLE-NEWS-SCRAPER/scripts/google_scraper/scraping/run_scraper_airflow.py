@@ -1,3 +1,7 @@
+#TODO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/scraping/run_scraper_airflow.py
+# Sciript para executar o scraper do Google News de forma compatível com Airflow
+
 #!/usr/bin/env python3
 """
 Airflow-compatible version of run_scraper.py

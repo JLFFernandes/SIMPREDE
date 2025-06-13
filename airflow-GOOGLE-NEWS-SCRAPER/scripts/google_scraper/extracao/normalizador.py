@@ -1,8 +1,18 @@
+"""
+Normalizador e extrator de informações de textos relacionados a desastres naturais
+Preparado para produção com otimizações de performance
+"""
+
+#TOFO: Comentarios de código em português e preparado para produção
+# File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/extracao/normalizador.py
+# Script para normalizar e extrair informações de textos relacionados a desastres naturais
+
 import re
 from datetime import datetime
 import unicodedata
 import json
 from urllib.parse import urlparse
+import pandas as pd
 
 # Mapeamento de palavras para números
 NUM_PALAVRAS = {
@@ -70,8 +80,6 @@ def extrair_vitimas(titulo: str, corpo: str, url: str = None) -> dict:
 
     return extract_victim_counts(corpo_norm)
 
-# (restante código inalterado)
-
 def limpar_texto_lixo(texto: str) -> str:
     if not texto:
         return ""
@@ -112,25 +120,106 @@ def extract_event_hour(text: str) -> str | None:
 
 
 def parse_event_date(date_str):
-    if not date_str:
+    """
+    Analisa e converte string de data para formato estruturado
+    Retorna tuple com (date_obj, year, month, day)
+    """
+    if not date_str or pd.isna(date_str):
         return None, None, None, None
+    
     try:
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-        return date_obj, date_obj.year, date_obj.month, date_obj.day
-    except ValueError:
-        return None, None, None, None
-
+        # Lista de formatos de data suportados
+        formatos_data = [
+            "%Y-%m-%d",
+            "%d/%m/%Y", 
+            "%d-%m-%Y",
+            "%Y/%m/%d",
+            "%d.%m.%Y",
+            "%Y-%m-%d %H:%M:%S"
+        ]
+        
+        date_str_clean = str(date_str).strip()
+        
+        for formato in formatos_data:
+            try:
+                date_obj = datetime.strptime(date_str_clean, formato).date()
+                return date_obj, date_obj.year, date_obj.month, date_obj.day
+            except ValueError:
+                continue
+        
+        # Se nenhum formato funcionar, tenta parse automático
+        try:
+            import dateutil.parser
+            date_obj = dateutil.parser.parse(date_str_clean).date()
+            return date_obj, date_obj.year, date_obj.month, date_obj.day
+        except:
+            pass
+            
+    except Exception:
+        pass
+    
+    return None, None, None, None
 
 def detect_disaster_type(text: str) -> tuple[str, str]:
-    text = normalize(text)
-    categorias = {
-        "Flood": ["cheia", "inundacao", "alagamento", "transbordo"],
-        "Landslide": ["deslizamento", "desabamento", "desmoronamento", "queda de terra"]
+    """
+    Detecta tipo de desastre natural baseado no texto
+    Retorna tuple com (tipo_principal, subtipo)
+    """
+    if not text:
+        return "Other", "Other"
+    
+    text_normalizado = normalize(text)
+    
+    # Mapeamento otimizado de categorias de desastres
+    categorias_desastres = {
+        "Flood": {
+            "termos": ["cheia", "inundacao", "alagamento", "transbordo", "enchente"],
+            "subtipos": {
+                "flash_flood": ["cheia rapida", "torrente"],
+                "river_flood": ["rio", "margem", "leito"],
+                "urban_flood": ["cidade", "urbano", "rua"]
+            }
+        },
+        "Landslide": {
+            "termos": ["deslizamento", "desabamento", "desmoronamento", "queda de terra"],
+            "subtipos": {
+                "rockfall": ["pedra", "rocha"],
+                "mudslide": ["lama", "terra"],
+                "debris_flow": ["detrito", "material"]
+            }
+        },
+        "Fire": {
+            "termos": ["incendio", "fogo", "chama", "queimada"],
+            "subtipos": {
+                "wildfire": ["florestal", "mata", "campo"],
+                "urban_fire": ["edificio", "casa", "predio"],
+                "industrial_fire": ["fabrica", "industria"]
+            }
+        },
+        "Storm": {
+            "termos": ["tempestade", "temporal", "vento", "vendaval", "ciclone"],
+            "subtipos": {
+                "windstorm": ["vento", "vendaval"],
+                "hailstorm": ["granizo", "saraiva"],
+                "thunderstorm": ["trovoada", "relampago"]
+            }
+        }
     }
-    for tipo, termos in categorias.items():
-        for termo in termos:
-            if termo in text:
-                return tipo, termo
+    
+    # Procura correspondências
+    for tipo_principal, dados in categorias_desastres.items():
+        # Verifica termos principais
+        for termo in dados["termos"]:
+            if termo in text_normalizado:
+                # Procura subtipo específico
+                for subtipo, termos_subtipo in dados["subtipos"].items():
+                    for termo_subtipo in termos_subtipo:
+                        if termo_subtipo in text_normalizado:
+                            return tipo_principal, subtipo
+                
+                # Se não encontrar subtipo específico, usa o termo encontrado
+                return tipo_principal, termo
+    
     return "Other", "Other"
 
 
