@@ -1,4 +1,3 @@
-#TODO: Comentarios de código em português e preparado para produção
 # File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/processador/filtrar_artigos_vitimas_airflow.py
 # Script para filtrar artigos com vítimas de desastres naturais
 # Este script é executado como parte do DAG do Airflow e deve ser compatível com o ambiente do Airflow
@@ -17,7 +16,7 @@ os.environ['PYTHONUNBUFFERED'] = '1'
 # Force stdout to be unbuffered using reconfigure (Python 3.7+)
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(line_buffering=True)
-if hasattr(sys.stderr, 'reconfigure'):
+if hasattr(sys.stderr, 'reconfigure'): 
     sys.stderr.reconfigure(line_buffering=True)
 
 # Add the missing imports
