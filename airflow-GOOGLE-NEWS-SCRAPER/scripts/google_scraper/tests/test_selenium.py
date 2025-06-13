@@ -1,4 +1,3 @@
-#TODO: Comentarios de código em português e preparado para produção
 # File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/tests/test_selenium.py
 # Script para testar o Selenium com Chrome em modo headless
 

@@ -1,4 +1,3 @@
-#TODO: Comentarios de código em português e preparado para produção
 # File: airflow-GOOGLE-NEWS-SCRAPER/dags/sql_queries_dag.py
 # Dag para executar exportações historicas SQL para o Supabase
 #!/usr/bin/env python3

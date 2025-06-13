@@ -1,4 +1,3 @@
-#TODO: Comentarios de código em português e preparado para produção
 # File: airflow-GOOGLE-NEWS-SCRAPER/scripts/google_scraper/processador/ml_enhanced_filter.py
 # Script para aplicar filtro aprimorado de artigos usando modelos de machine learning
 

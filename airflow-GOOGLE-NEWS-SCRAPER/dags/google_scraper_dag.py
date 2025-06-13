@@ -1,4 +1,3 @@
-#TODO: Comentarios de código em português e preparado para produção
 # File: airflow-GOOGLE-NEWS-SCRAPER/dags/google_scraper_dag.py
 # Script para o DAG do Airflow que executa o pipeline de scraping de notícias do Google
 #!/usr/bin/env python3
