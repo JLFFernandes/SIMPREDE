@@ -1,0 +1,334 @@
+x-airflow-common: &airflow-common
+  # Use our custom built image with Chrome support
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - ../.env
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: 'false'
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
+    AIRFLOW__CORE__DAGS_FOLDER: '/opt/airflow/dags'
+    AIRFLOW__CORE__PLUGINS_FOLDER: '/opt/airflow/plugins'
+    AIRFLOW__CORE__EXAMPLE_DAGS: 'false'
+    AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: 300
+    AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT: 30
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 60
+    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
+    AIRFLOW__WEBSERVER__AUTHENTICATE: 'true'
+    AIRFLOW__WEBSERVER__RBAC: 'true'
+    AIRFLOW_HOME: '/opt/airflow'
+    # Chrome/Selenium environment variables
+    CHROME_BIN: /usr/bin/chromium
+    CHROMEDRIVER_PATH: /usr/bin/chromedriver
+    DISPLAY: :99
+    SELENIUM_HEADLESS: 1
+    PYTHONUNBUFFERED: 1
+    PYTHONDONTWRITEBYTECODE: 1
+    # GCS environment variables - Updated to use your actual credential file
+    GCS_PROJECT_ID: ${GCS_PROJECT_ID:-simprede-461309}
+    GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-simprede-data-pipeline}
+    GCS_LOCATION: ${GCS_LOCATION:-EUROPE-WEST1}
+    GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/config/gcs-credentials.json
+    # Google Cloud Project for client initialization
+    GOOGLE_CLOUD_PROJECT: ${GCS_PROJECT_ID:-simprede-461309}
+    # Database credentials for Supabase - DIRECT VALUES (no substitution)
+    DB_USER: postgres.kyrfsylobmsdjlrrpful
+    DB_PASSWORD: HXU3tLVVXRa1jtjo
+    DB_HOST: aws-0-eu-west-3.pooler.supabase.com
+    DB_PORT: 6543
+    DB_NAME: postgres
+    DB_SCHEMA: google_scraper
+    # Supabase API credentials - DIRECT VALUES
+    SUPABASE_URL: https://kyrfsylobmsdjlrrpful.supabase.co
+    SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ0NDc2MDQsImV4cCI6MjA1MDAyMzYwNH0.NyHaKt2SV0zg0e7FHhYTdZ8WVp3BN_Ls2Q3uQwp4pCE
+    # SQL Configuration
+    SQL_OUTPUT_PATH: /opt/airflow/data/sql_outputs
+    SQL_DEFAULT_TIMEOUT: 300
+    SQL_MAX_RESULTS: 10000
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ./data:/opt/airflow/data
+    - ./config:/opt/airflow/config
+    - ./config/airflow.cfg:/opt/airflow/airflow.cfg
+    - ./scripts:/opt/airflow/scripts
+    - ./requirements.txt:/opt/airflow/requirements.txt
+    - /etc/localtime:/etc/localtime:ro
+  user: "${AIRFLOW_UID:-501}:0"
+  depends_on: &airflow-common-depends-on
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: always
+    ports:
+      - "5432:5432"
+
+  # Use standalone mode for Airflow 3.0.1
+  airflow-standalone:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        # Create the airflow user with home directory if it doesn't exist
+        if ! id "airflow" &>/dev/null; then
+          useradd -r -u 501 -g 0 -m -s /bin/bash airflow
+          echo "Created airflow user with home directory"
+        fi
+        
+        # Create home directory if it doesn't exist
+        if [ ! -d "/home/airflow" ]; then
+          mkdir -p /home/airflow
+          chown 501:0 /home/airflow
+        fi
+        
+        # Set proper ownership for all Airflow directories
+        chown -R 501:0 /opt/airflow /home/airflow
+        
+        # Create the password file with proper permissions
+        touch /opt/airflow/simple_auth_manager_passwords.json.generated
+        chmod 666 /opt/airflow/simple_auth_manager_passwords.json.generated
+        chown 501:0 /opt/airflow/simple_auth_manager_passwords.json.generated
+        
+        # Debug: Print environment variables to verify they're loaded
+        echo "=== Environment Variables Debug ==="
+        echo "DB_USER: ${DB_USER:-NOT_SET}"
+        echo "DB_HOST: ${DB_HOST:-NOT_SET}"
+        echo "DB_PORT: ${DB_PORT:-NOT_SET}"
+        echo "DB_NAME: ${DB_NAME:-NOT_SET}"
+        echo "DB_PASSWORD: ${DB_PASSWORD:+SET}" # Only show if set, don't expose value
+        echo "SUPABASE_URL: ${SUPABASE_URL:-NOT_SET}"
+        echo "====================================="
+        
+        # Additional debug: Check raw environment
+        echo "=== Raw Environment Check ==="
+        env | grep -E '^(DB_|SUPABASE_)' | while read line; do
+          var_name=$(echo "$line" | cut -d'=' -f1)
+          if [[ "$var_name" == *PASSWORD* ]]; then
+            echo "$var_name=***HIDDEN***"
+          else
+            echo "$line"
+          fi
+        done
+        echo "============================="
+        
+        # Wait for postgres to be ready
+        echo "Waiting for PostgreSQL to be ready..."
+        until pg_isready -h postgres -p 5432 -U airflow; do
+          echo "PostgreSQL is unavailable - sleeping"
+          sleep 2
+        done
+        echo "PostgreSQL is ready!"
+        
+        # Set environment variables for airflow user
+        export AIRFLOW_HOME=/opt/airflow
+        export AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
+        export AIRFLOW__CORE__PLUGINS_FOLDER=/opt/airflow/plugins
+        export AIRFLOW__CORE__LOAD_EXAMPLES=false
+        export AIRFLOW__CORE__EXAMPLE_DAGS=false
+        
+        # Explicitly set database credentials for airflow user
+        export DB_USER=postgres.kyrfsylobmsdjlrrpful
+        export DB_PASSWORD=HXU3tLVVXRa1jtjo
+        export DB_HOST=aws-0-eu-west-3.pooler.supabase.com
+        export DB_PORT=6543
+        export DB_NAME=postgres
+        export DB_SCHEMA=google_scraper
+        export SUPABASE_URL=https://kyrfsylobmsdjlrrpful.supabase.co
+        export SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ0NDc2MDQsImV4cCI6MjA1MDAyMzYwNH0.NyHaKt2SV0zg0e7FHhYTdZ8WVp3BN_Ls2Q3uQwp4pCE
+        
+        # Pass through all environment variables to airflow user
+        ALL_ENV_VARS=$(env | grep -E '^(DB_|SUPABASE_|GCS_|SQL_|AIRFLOW)' | sed 's/^/export /')
+        
+        # Switch to airflow user and start Airflow standalone
+        exec su - airflow -c "
+          export AIRFLOW_HOME=/opt/airflow
+          # Set all database credentials explicitly
+          export DB_USER=postgres.kyrfsylobmsdjlrrpful
+          export DB_PASSWORD=HXU3tLVVXRa1jtjo
+          export DB_HOST=aws-0-eu-west-3.pooler.supabase.com
+          export DB_PORT=6543
+          export DB_NAME=postgres
+          export DB_SCHEMA=google_scraper
+          export SUPABASE_URL=https://kyrfsylobmsdjlrrpful.supabase.co
+          export SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9zZSI6ImFub24iLCJpYXQiOjE3MzQ0NDc2MDQsImV4cCI6MjA1MDAyMzYwNH0.NyHaKt2SV0zg0e7FHhYTdZ8WVp3BN_Ls2Q3uQwp4pCE
+          
+          # Verify environment variables are set for airflow user
+          echo '=== Airflow User Environment Check ==='
+          echo \"DB_USER: \${DB_USER:-NOT_SET}\"
+          echo \"DB_HOST: \${DB_HOST:-NOT_SET}\"
+          echo \"DB_PASSWORD: \${DB_PASSWORD:+SET}\"
+          echo \"SUPABASE_URL: \${SUPABASE_URL:-NOT_SET}\"
+          echo '======================================'
+          
+          cd /opt/airflow
+          airflow standalone
+        "
+    ports:
+      - "8080:8080"
+    environment:
+      <<: *airflow-common-env
+      AIRFLOW__API__PORT: '8080'
+      AIRFLOW__API__HOST: '0.0.0.0'
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: 'false'
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
+      AIRFLOW__CORE__DAGS_FOLDER: '/opt/airflow/dags'
+      AIRFLOW__CORE__PLUGINS_FOLDER: '/opt/airflow/plugins'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+      AIRFLOW__WEBSERVER__SHOW_RECENT_STATS_FOR_COMPLETED_RUNS: 'true'
+      AIRFLOW__CORE__EXAMPLE_DAGS: 'false'
+      AIRFLOW_HOME: /opt/airflow
+      HOME: /home/airflow
+      # Explicitly set database credentials in service environment
+      DB_USER: postgres.kyrfsylobmsdjlrrpful
+      DB_PASSWORD: HXU3tLVVXRa1jtjo
+      DB_HOST: aws-0-eu-west-3.pooler.supabase.com
+      DB_PORT: 6543
+      DB_NAME: postgres
+      DB_SCHEMA: google_scraper
+      SUPABASE_URL: https://kyrfsylobmsdjlrrpful.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9zZSI6ImFub24iLCJpYXQiOjE3MzQ0NDc2MDQsImV4cCI6MjA1MDAyMzYwNH0.NyHaKt2SV0zg0e7FHhYTdZ8WVp3BN_Ls2Q3uQwp4pCE
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./data:/opt/airflow/data
+      - ./config:/opt/airflow/config
+      - ./config/airflow.cfg:/opt/airflow/airflow.cfg
+      - ./scripts:/opt/airflow/scripts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: always
+    user: "0:0"  # Start as root to create user, then switch
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        # Create the airflow user if it doesn't exist
+        if ! id "airflow" &>/dev/null; then
+          useradd -r -u 501 -g 0 airflow
+        fi
+        
+        # Set proper ownership
+        chown -R 501:0 /opt/airflow
+        
+        # Create the password file with proper permissions
+        touch /opt/airflow/simple_auth_manager_passwords.json.generated
+        chmod 666 /opt/airflow/simple_auth_manager_passwords.json.generated
+        chown 501:0 /opt/airflow/simple_auth_manager_passwords.json.generated
+        
+        # Set up environment and verify Chrome/Chromium
+        export CHROME_BIN=${CHROME_BIN:-/usr/bin/chromium}
+        export CHROMEDRIVER_PATH=${CHROMEDRIVER_PATH:-/usr/bin/chromedriver}
+        export DISPLAY=${DISPLAY:-:99}
+        export SELENIUM_HEADLESS=1
+        
+        echo "=== Airflow 3.0.1 Initialization ==="
+        
+        # Debug: Show environment variables during initialization
+        echo "=== Environment Variables Check ==="
+        echo "DB_USER: ${DB_USER:-NOT_SET}"
+        echo "DB_HOST: ${DB_HOST:-NOT_SET}"
+        echo "DB_PORT: ${DB_PORT:-NOT_SET}"
+        echo "DB_NAME: ${DB_NAME:-NOT_SET}"
+        echo "DB_PASSWORD: ${DB_PASSWORD:+SET}" # Only show if set
+        echo "SUPABASE_URL: ${SUPABASE_URL:-NOT_SET}"
+        echo "===================================="
+        
+        # Verify Chrome/Chromium installation
+        if command -v google-chrome >/dev/null 2>&1; then
+          echo "✓ Google Chrome found: $(google-chrome --version)"
+          export CHROME_BIN=/usr/bin/google-chrome
+        elif command -v chromium >/dev/null 2>&1; then
+          echo "✓ Chromium found: $(chromium --version)"
+          export CHROME_BIN=/usr/bin/chromium
+        else
+          echo "⚠ Warning: No Chrome/Chromium found"
+        fi
+        
+        # Verify ChromeDriver
+        if command -v chromedriver >/dev/null 2>&1; then
+          echo "✓ ChromeDriver found: $(chromedriver --version)"
+        else
+          echo "⚠ Warning: ChromeDriver not found"
+        fi
+        
+        # Initialize GCS configuration
+        echo "=== GCS Configuration Setup ==="
+        if [ -f "/opt/airflow/scripts/init_gcs.sh" ]; then
+          echo "Running GCS initialization script..."
+          /opt/airflow/scripts/init_gcs.sh || echo "⚠ GCS setup completed with warnings"
+        else
+          echo "⚠ GCS initialization script not found"
+        fi
+        
+        # Initialize the database (migrate is the correct command for 3.0.1)
+        echo "Initializing Airflow database..."
+        airflow db migrate
+        
+        echo "=== Initialization Complete ==="
+        echo "Admin user will be created automatically by standalone mode"
+        exit 0
+
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      # Explicitly set database credentials in init environment too
+      DB_USER: postgres.kyrfsylobmsdjlrrpful
+      DB_PASSWORD: HXU3tLVVXRa1jtjo
+      DB_HOST: aws-0-eu-west-3.pooler.supabase.com
+      DB_PORT: 6543
+      DB_NAME: postgres
+      DB_SCHEMA: google_scraper
+      SUPABASE_URL: https://kyrfsylobmsdjlrrpful.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9zZSI6ImFub24iLCJpYXQiOjE3MzQ0NDc2MDQsImV4cCI6MjA1MDAyMzYwNH0.NyHaKt2SV0zg0e7FHhYTdZ8WVp3BN_Ls2Q3uQwp4pCE
+    user: "0:0"  # Run as root for initialization
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./data:/opt/airflow/data
+      - ./config:/opt/airflow/config
+      - ./config/airflow.cfg:/opt/airflow/airflow.cfg
+      - ./scripts:/opt/airflow/scripts
+      - ./requirements.txt:/opt/airflow/requirements.txt
+
+volumes:
+  postgres-db-volume:
