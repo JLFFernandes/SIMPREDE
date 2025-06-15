@@ -66,7 +66,10 @@ def get_unique_values(series, exclude_none=True):
 # Center the logo at the top middle of the page
 col1, col_logo, col3 = st.columns([1, 2, 1])
 with col_logo:
-    st.image("logo.png", width=3200)
+    # Use absolute path to ensure logo is found regardless of working directory
+    import os
+    logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
+    st.image(logo_path, width=3200)
 
 # Title below the logo, centered
 st.markdown("<h1 style='color: #1f77b4; margin-bottom: 0; text-align: center;'>SIMPREDE - Sistema de Prevenção de Desastres</h1>", unsafe_allow_html=True)
