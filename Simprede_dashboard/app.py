@@ -324,7 +324,7 @@ elif page == "Ocorrências Históricas de Desastres":
 
     with col4:
         total_evacuated = df_eswd_filtered['evacuated'].sum() if 'evacuated' in df_eswd_filtered.columns else 0
-        st.metric("Evacuados", int(total_evacuated))
+        st.metric("Deslocados", int(total_evacuated))
 
     # Historical Disasters Map
     st.subheader("Localização dos Desastres Históricos")
