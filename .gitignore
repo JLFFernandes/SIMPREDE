@@ -17,3 +17,5 @@ news_scraper/scrapers/backup
 news_scraper_mz
 
 Simprede_dashboard/env
+
+Simprede_dashboard/.streamlit/secrets.toml

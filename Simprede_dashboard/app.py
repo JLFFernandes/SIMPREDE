@@ -15,7 +15,17 @@ st.set_page_config(
 # Initialize connection
 @st.cache_resource
 def init_connection():
-    return SupabaseConnection()
+    try:
+        return SupabaseConnection()
+    except ValueError as e:
+        st.error("❌ Erro de configuração da base de dados")
+        st.error(str(e))
+        st.info("ℹ️ Por favor, configure as credenciais do Supabase nas configurações da aplicação.")
+        st.stop()
+    except Exception as e:
+        st.error("❌ Erro inesperado ao conectar à base de dados")
+        st.error(str(e))
+        st.stop()
 
 # Load data with caching
 @st.cache_data(ttl=300)

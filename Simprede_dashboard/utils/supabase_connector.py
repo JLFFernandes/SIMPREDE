@@ -9,11 +9,18 @@ load_dotenv(dotenv_path=env_path)
 
 class SupabaseConnection:
     def __init__(self):
-        self.url = os.getenv('SUPABASE_URL')
-        self.key = os.getenv('SUPABASE_ANON_KEY')
+        # Try to get credentials from Streamlit secrets first (for cloud deployment)
+        try:
+            import streamlit as st
+            self.url = st.secrets["supabase"]["url"]
+            self.key = st.secrets["supabase"]["anon_key"]
+        except (ImportError, KeyError, FileNotFoundError, AttributeError):
+            # Fall back to environment variables (for local development)
+            self.url = os.getenv('SUPABASE_URL')
+            self.key = os.getenv('SUPABASE_ANON_KEY')
         
         if not self.url or not self.key:
-            raise ValueError("Supabase credentials not found in environment variables")
+            raise ValueError("Supabase credentials not found in environment variables or Streamlit secrets. Please configure SUPABASE_URL and SUPABASE_ANON_KEY in .env file or supabase.url and supabase.anon_key in Streamlit secrets.")
             
         self.client: Client = create_client(self.url, self.key)
     
