@@ -4,10 +4,11 @@
 import os
 import psycopg2
 import time
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
+from pathlib import Path
 
-# 🔐 Carregar variáveis do .env raiz
-load_dotenv(find_dotenv())
+# 🔐 Carregar variáveis do .env localizado na raiz do projeto
+load_dotenv(Path(__file__).resolve().parents[4] / '.env')
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
