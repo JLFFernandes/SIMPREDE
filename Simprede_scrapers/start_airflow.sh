@@ -265,49 +265,36 @@ wait_for_services() {
     
     while [ $counter -lt $timeout ]; do
         if $DOCKER_COMPOSE_CMD exec -T postgres pg_isready -U airflow > /dev/null 2>&1; then
-            print_success "PostgreSQL is ready"
             break
         fi
-        
-        if [ $counter -eq 0 ]; then
-            echo -n "Waiting"
-        fi
-        echo -n "."
-        sleep 2
         counter=$((counter + 2))
+        sleep 2
     done
     
     if [ $counter -ge $timeout ]; then
-        print_error "PostgreSQL failed to start within $timeout seconds"
-        return 1
+        print_warning "PostgreSQL did not become ready within timeout"
+    else
+        print_success "PostgreSQL is ready"
     fi
-    
-    echo ""  # New line after dots
     
     # Wait for Airflow webserver
     print_info "Waiting for Airflow webserver to be ready..."
-    timeout=60
+    timeout=120
     counter=0
     
     while [ $counter -lt $timeout ]; do
-        if curl -f http://localhost:8080/api/v2/monitor/health > /dev/null 2>&1; then
-            print_success "Airflow webserver is ready"
+        if curl -s http://localhost:8080/health > /dev/null 2>&1; then
             break
         fi
-        
-        if [ $counter -eq 0 ]; then
-            echo -n "Waiting"
-        fi
-        echo -n "."
-        sleep 3
-        counter=$((counter + 3))
+        counter=$((counter + 5))
+        sleep 5
     done
     
     if [ $counter -ge $timeout ]; then
-        print_warning "Airflow webserver health check timeout, but it might still be starting..."
+        print_warning "Airflow webserver did not become ready within timeout"
+    else
+        print_success "Airflow webserver is ready"
     fi
-    
-    echo ""  # New line after dots
 }
 
 # Function to display admin credentials
@@ -417,52 +404,65 @@ display_gcs_status() {
     fi
 }
 
+# Function to display access information
+display_access_info() {
+    print_separator
+    print_success "SIMPREDE Airflow started successfully!"
+    print_separator
+    
+    print_info "Access Information:"
+    print_info "  Web UI: http://localhost:8080"
+    print_info "  Default credentials: admin/admin"
+    print_info ""
+    
+    print_info "Useful commands:"
+    print_info "  View logs: $DOCKER_COMPOSE_CMD logs -f"
+    print_info "  Stop services: ./stop_airflow.sh"
+    print_info "  Restart services: ./restart_airflow.sh"
+    print_separator
+}
+
 # Main execution
 main() {
     print_separator
-    print_info "SIMPREDE AIRFLOW STARTUP SCRIPT"
+    print_info "Starting SIMPREDE Airflow Environment"
     print_separator
     
-    # Change to script directory
-    cd "$(dirname "$0")"
-    print_info "Working directory: $(pwd)"
+    # Check if we're in the correct directory
+    if [ ! -f "docker-compose.yml" ]; then
+        print_error "docker-compose.yml not found. Make sure you're in the correct directory."
+        exit 1
+    fi
     
-    # Pre-flight checks
+    # Check for project root .env file
+    PROJECT_ROOT="$(dirname "$(pwd)")"
+    if [ -f "$PROJECT_ROOT/.env" ]; then
+        print_info "Found .env file in project root: $PROJECT_ROOT/.env"
+        # Copy to local directory if not exists or different
+        if [ ! -f ".env" ] || ! cmp -s "$PROJECT_ROOT/.env" ".env"; then
+            cp "$PROJECT_ROOT/.env" ".env"
+            print_info "Copied .env from project root"
+        fi
+    elif [ ! -f ".env" ]; then
+        print_warning "No .env file found in project root or current directory"
+        print_info "You may need to create one from .env.template"
+    fi
+    
     check_docker
     check_docker_compose
-    
-    # Setup
     set_permissions
     setup_gcs_config
     create_directories
-    
-    # Ask user if they want to continue
-    echo ""
-    read -p "Do you want to build and start Airflow? (y/N): " -r
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Operation cancelled by user"
-        exit 0
-    fi
-    
-    # Stop any existing containers
-    print_info "Stopping any existing containers..."
-    $DOCKER_COMPOSE_CMD down > /dev/null 2>&1 || true
-    
-    # Build and start
     start_containers
-    
-    # Wait for services
     wait_for_services
-    
-    # Display information
-    display_credentials
-    display_gcs_status
-    display_status
-    display_commands
-    
-    print_separator
-    print_success "Airflow is now running! Access the web UI at http://localhost:8080"
-    print_separator
+    display_access_info
+}
+
+# Handle script interruption
+trap 'print_error "Script interrupted. You may need to run: $DOCKER_COMPOSE_CMD down"; exit 1' INT TERM
+
+# Run main function
+main "$@"
 }
 
 # Handle script interruption

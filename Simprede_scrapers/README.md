@@ -58,21 +58,33 @@ O SIMPREDE é um sistema de pipeline de dados automatizado que:
 
 ```bash
 git clone <url-do-repositorio>
-cd simprede-airflow
+cd SIMPREDE
 ```
 
 ### 2. Configuração Inicial
 
+Configure o ficheiro .env na raiz do projeto:
+
+```bash
+# Copy the template from project root
+cp .env.template .env
+# Edit the .env file with your configuration
+nano .env
+```
+
 Execute o script de arranque que configura automaticamente o ambiente:
 
 ```bash
-cp .env.template .env
+cd Simprede_scrapers
 chmod +x start_airflow.sh
 ./start_airflow.sh
 ```
 
+**Nota importante**: O ficheiro `.env` deve estar na raiz do projeto (`/SIMPREDE/.env`), não na pasta dos scrapers. Todos os scripts e containers irão procurar e usar este ficheiro centralizado.
+
 Este script irá:
 - Verificar pré-requisitos do Docker
+- Copiar o .env da raiz do projeto para o directório de trabalho
 - Configurar permissões dos directórios
 - Construir as imagens Docker
 - Inicializar a base de dados Airflow
@@ -406,5 +418,5 @@ Para questões e suporte:
 
 ---
 
-**SIMPREDE** - Sistema Integrado de Monitorização e Prevenção de Desastres  
+**SIMPREDE** - Sistema Integrado de Monitorização e Prevenção de Desastres
 

@@ -24,6 +24,10 @@ print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
 # Change to script directory
 cd "$(dirname "$0")"
 
@@ -37,18 +41,21 @@ else
     exit 1
 fi
 
-print_info "Stopping Airflow containers..."
-$DOCKER_COMPOSE_CMD down
+print_info "Stopping SIMPREDE Airflow containers..."
 
-print_success "Airflow containers stopped successfully!"
+# Stop all containers
+print_info "Stopping containers..."
+$DOCKER_COMPOSE_CMD stop
 
-# Ask if user wants to remove volumes (data)
-echo ""
-read -p "Do you want to remove all data volumes? This will delete all data! (y/N): " -r
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    print_warning "Removing volumes..."
-    $DOCKER_COMPOSE_CMD down -v
-    print_warning "All data has been removed!"
-else
-    print_info "Data volumes preserved"
-fi
+# Remove containers and networks
+print_info "Removing containers and networks..."
+$DOCKER_COMPOSE_CMD down --remove-orphans
+
+# Optional: Remove volumes (uncomment if you want to clean all data)
+# print_warning "Removing volumes (this will delete all data)..."
+# $DOCKER_COMPOSE_CMD down --volumes
+
+print_success "All SIMPREDE Airflow containers stopped successfully"
+
+print_info "To completely clean up including volumes, run:"
+print_info "$DOCKER_COMPOSE_CMD down --volumes"

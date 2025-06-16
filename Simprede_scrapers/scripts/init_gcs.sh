@@ -157,3 +157,22 @@ else
     echo "   3. Confirme que os ficheiros foram carregados no bucket: gs://$GCS_BUCKET_NAME"
 fi
 echo ""
+
+# Source environment variables if .env file exists
+# Check project root first, then container locations
+ENV_LOCATIONS=(
+    "/opt/airflow/../.env"
+    "/opt/airflow/.env"
+    "/.env"
+    "/tmp/.env"
+)
+
+for env_file in "${ENV_LOCATIONS[@]}"; do
+    if [ -f "$env_file" ]; then
+        log "Loading environment from: $env_file"
+        set -a
+        source "$env_file"
+        set +a
+        break
+    fi
+done
