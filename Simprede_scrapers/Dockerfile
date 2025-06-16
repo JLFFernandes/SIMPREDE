@@ -86,10 +86,18 @@ RUN ARCH=$(dpkg --print-architecture) && \
 # Create directories and set permissions
 RUN mkdir -p /usr/local/airflow/scripts /usr/local/airflow/include /usr/local/airflow/logs /usr/local/airflow/dags /usr/local/airflow/plugins
 
-# Copy scripts
+# Copy scripts and ensure .env is available
 COPY scripts/init_gcs.sh /usr/local/airflow/scripts/init_gcs.sh
 COPY scripts/docker-entrypoint.sh /usr/local/airflow/scripts/docker-entrypoint.sh
 COPY scripts /usr/local/airflow/scripts
+
+# Create a script to check for .env in parent directory (project root)
+RUN echo '#!/bin/bash' > /usr/local/airflow/scripts/check_env.sh && \
+    echo 'if [ -f "/opt/airflow/../.env" ]; then' >> /usr/local/airflow/scripts/check_env.sh && \
+    echo '  cp "/opt/airflow/../.env" "/opt/airflow/.env"' >> /usr/local/airflow/scripts/check_env.sh && \
+    echo '  echo "Copied .env from project root"' >> /usr/local/airflow/scripts/check_env.sh && \
+    echo 'fi' >> /usr/local/airflow/scripts/check_env.sh && \
+    chmod +x /usr/local/airflow/scripts/check_env.sh
 
 # Copy data files
 COPY include/pts_disaster_export.xlsx /usr/local/airflow/include/pts_disaster_export.xlsx

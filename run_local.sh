@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Orquestrador de Desenvolvimento Local SIMPREDE
-# Este script executa tanto os contentores de scrapers (Airflow) como o dashboard localmente
+# Este script executa tanto os containers de scrapers (Airflow) como o dashboard localmente
 
 set -e  # Sair em caso de erro
 
@@ -106,63 +106,66 @@ start_dashboard() {
     fi
 }
 
-# Função para parar contentores Docker completamente
-stop_docker_containers() {
-    log "A parar contentores Docker completamente..."
+# Função para verificar e configurar .env
+setup_env_file() {
+    log "A verificar configuração do ficheiro .env..."
     
-    cd "$SCRAPERS_DIR"
-    
-    # Verificar se o Docker está acessível antes de tentar parar contentores
-    if ! docker ps >/dev/null 2>&1; then
-        warning "Docker não está acessível - a saltar limpeza de contentores"
-        kill_port $AIRFLOW_PORT
-        return 0
+    # Verificar se o .env existe na raiz do projeto
+    if [ ! -f "$PROJECT_ROOT/.env" ]; then
+        if [ -f "$PROJECT_ROOT/.env.template" ]; then
+            warning "Ficheiro .env não encontrado na raiz do projeto. A criar a partir do template..."
+            cp "$PROJECT_ROOT/.env.template" "$PROJECT_ROOT/.env"
+            echo ""
+            echo -e "${YELLOW}IMPORTANTE:${NC} Foi criado um ficheiro .env a partir do template."
+            echo "Por favor, edite $PROJECT_ROOT/.env e preencha as configurações necessárias antes de continuar."
+            echo ""
+            echo "Configurações obrigatórias:"
+            echo "  - DB_USER, DB_PASSWORD, DB_HOST (credenciais da base de dados)"
+            echo "  - GCS_PROJECT_ID, GCS_BUCKET_NAME (configuração Google Cloud)"
+            echo ""
+            read -p "Pressione Enter depois de configurar o ficheiro .env..." -r
+        else
+            error "Nem .env nem .env.template encontrados na raiz do projeto: $PROJECT_ROOT"
+            echo "Por favor, crie um ficheiro .env na raiz do projeto com as configurações necessárias."
+            exit 1
+        fi
     fi
     
-    # Parar e remover contentores com timeout
-    log "A parar contentores graciosamente..."
-    docker-compose stop --timeout 30 2>/dev/null || true
-    
-    # Forçar remoção de contentores e redes
-    log "A remover contentores e redes..."
-    docker-compose down --remove-orphans --volumes --timeout 10 2>/dev/null || true
-    
-    # Limpar contentores restantes relacionados com o projeto
-    log "A limpar contentores SIMPREDE restantes..."
-    docker ps -a --filter "name=simprede" --format "{{.ID}}" | xargs -r docker rm -f 2>/dev/null || true
-    docker ps -a --filter "name=airflow" --format "{{.ID}}" | xargs -r docker rm -f 2>/dev/null || true
-    
-    # Remover volumes pendentes deste projeto
-    log "A limpar volumes do projeto..."
-    docker volume ls --filter "name=simprede" --format "{{.Name}}" | xargs -r docker volume rm 2>/dev/null || true
-    
-    # Terminar processos que ainda usem a porta do Airflow
-    kill_port $AIRFLOW_PORT
-    
-    success "Contentores Docker parados e limpos"
-}
-
-# Função para obter credenciais do Airflow
-get_airflow_credentials() {
-    log "A extrair credenciais do Airflow..."
-    
-    cd "$SCRAPERS_DIR"
-    
-    # Nome de utilizador padrão
-    AIRFLOW_USERNAME="admin"
-    
-    # Tentar extrair password dos logs
-    AIRFLOW_PASSWORD=$(docker-compose logs airflow-standalone 2>/dev/null | grep -i "Password for user 'admin'" | tail -1 | sed -n "s/.*Password for user 'admin': \([^ ]*\).*/\1/p" 2>/dev/null || echo "")
-    
-    # Se não encontrado nos logs, tentar o ficheiro gerado
-    if [ -z "$AIRFLOW_PASSWORD" ]; then
-        AIRFLOW_PASSWORD=$(docker-compose exec -T airflow-standalone cat /opt/airflow/simple_auth_manager_passwords.json.generated 2>/dev/null | grep -o '"admin": "[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "")
+    # Copiar .env para o diretório dos scrapers se necessário
+    if [ ! -f "$SCRAPERS_DIR/.env" ] || ! cmp -s "$PROJECT_ROOT/.env" "$SCRAPERS_DIR/.env"; then
+        log "A copiar .env da raiz do projeto para o diretório dos scrapers..."
+        cp "$PROJECT_ROOT/.env" "$SCRAPERS_DIR/.env"
+        success "Ficheiro .env copiado para o diretório dos scrapers"
     fi
     
-    # Se ainda não encontrado, fornecer mensagem de fallback
-    if [ -z "$AIRFLOW_PASSWORD" ]; then
-        AIRFLOW_PASSWORD="<verificar logs com: docker-compose -f $SCRAPERS_DIR/docker-compose.yml logs airflow-standalone | grep -i password>"
+    # Verificar se as variáveis essenciais estão definidas
+    local missing_vars=()
+    
+    # Carregar o .env para verificação
+    set -a
+    source "$PROJECT_ROOT/.env"
+    set +a
+    
+    # Verificar variáveis da base de dados
+    [ -z "$DB_USER" ] && missing_vars+=("DB_USER")
+    [ -z "$DB_PASSWORD" ] && missing_vars+=("DB_PASSWORD")
+    [ -z "$DB_HOST" ] && missing_vars+=("DB_HOST")
+    
+    # Verificar variáveis GCS
+    [ -z "$GCS_PROJECT_ID" ] && missing_vars+=("GCS_PROJECT_ID")
+    [ -z "$GCS_BUCKET_NAME" ] && missing_vars+=("GCS_BUCKET_NAME")
+    
+    if [ ${#missing_vars[@]} -gt 0 ]; then
+        error "Variáveis de ambiente obrigatórias em falta no ficheiro .env:"
+        for var in "${missing_vars[@]}"; do
+            echo "  - $var"
+        done
+        echo ""
+        echo "Por favor, edite $PROJECT_ROOT/.env e preencha estas variáveis."
+        exit 1
     fi
+    
+    success "Configuração do ficheiro .env validada"
 }
 
 # Função para iniciar o contentor de scrapers
@@ -201,15 +204,37 @@ start_scrapers() {
     
     success "Docker está disponível e em execução"
     
-    # Parar completamente quaisquer contentores existentes
+    # Verificar e configurar .env
+    setup_env_file
+    
+    # Parar completamente quaisquer containers existentes
     stop_docker_containers
     
     # Aguardar um momento para a limpeza terminar
     sleep 3
     
-    # Construir e iniciar os contentores
-    log "A construir e iniciar contentores de scrapers..."
-    docker-compose up --build -d
+    # Verificar se o ficheiro .env existe no diretório dos scrapers
+    if [ ! -f ".env" ]; then
+        error "Ficheiro .env não encontrado no diretório dos scrapers"
+        exit 1
+    fi
+    
+    # Mostrar algumas variáveis de ambiente (sem mostrar passwords)
+    log "Variáveis de ambiente carregadas:"
+    echo "  DB_HOST: $(grep '^DB_HOST=' .env | cut -d'=' -f2)"
+    echo "  DB_USER: $(grep '^DB_USER=' .env | cut -d'=' -f2)"
+    echo "  GCS_PROJECT_ID: $(grep '^GCS_PROJECT_ID=' .env | cut -d'=' -f2)"
+    echo "  GCS_BUCKET_NAME: $(grep '^GCS_BUCKET_NAME=' .env | cut -d'=' -f2)"
+    
+    # Construir e iniciar os containers
+    log "A construir e iniciar containers de scrapers..."
+    
+    # Usar docker-compose com --env-file explícito para garantir que as variáveis são carregadas
+    if command -v docker-compose >/dev/null 2>&1; then
+        docker-compose --env-file .env up --build -d
+    else
+        docker compose --env-file .env up --build -d
+    fi
     
     # Aguardar que o Airflow esteja pronto
     log "A aguardar que o Airflow esteja pronto..."
@@ -238,6 +263,77 @@ start_scrapers() {
     get_airflow_credentials
 }
 
+# Função para parar containers Docker completamente
+stop_docker_containers() {
+    log "A parar containers Docker completamente..."
+    
+    cd "$SCRAPERS_DIR"
+    
+    # Verificar se o Docker está acessível antes de tentar parar containers
+    if ! docker ps >/dev/null 2>&1; then
+        warning "Docker não está acessível - a saltar limpeza de containers"
+        kill_port $AIRFLOW_PORT
+        return 0
+    fi
+    
+    # Determinar comando docker-compose
+    local compose_cmd="docker-compose"
+    if ! command -v docker-compose >/dev/null 2>&1; then
+        if docker compose version >/dev/null 2>&1; then
+            compose_cmd="docker compose"
+        fi
+    fi
+    
+    # Parar e remover containers com timeout, usando --env-file se existir
+    log "A parar containers..."
+    if [ -f ".env" ]; then
+        $compose_cmd --env-file .env stop --timeout 30 2>/dev/null || true
+        log "A remover containers e redes..."
+        $compose_cmd --env-file .env down --remove-orphans --volumes --timeout 10 2>/dev/null || true
+    else
+        $compose_cmd stop --timeout 30 2>/dev/null || true
+        log "A remover containers e redes..."
+        $compose_cmd down --remove-orphans --volumes --timeout 10 2>/dev/null || true
+    fi
+    
+    # Limpar containers restantes relacionados com o projeto
+    log "A limpar containers SIMPREDE restantes..."
+    docker ps -a --filter "name=simprede" --format "{{.ID}}" | xargs -r docker rm -f 2>/dev/null || true
+    docker ps -a --filter "name=airflow" --format "{{.ID}}" | xargs -r docker rm -f 2>/dev/null || true
+    
+    # Remover volumes pendentes deste projeto
+    log "A limpar volumes do projeto..."
+    docker volume ls --filter "name=simprede" --format "{{.Name}}" | xargs -r docker volume rm 2>/dev/null || true
+    
+    # Terminar processos que ainda usem a porta do Airflow
+    kill_port $AIRFLOW_PORT
+    
+    success "containers Docker parados e limpos"
+}
+
+# Função para obter credenciais do Airflow
+get_airflow_credentials() {
+    log "A extrair credenciais do Airflow..."
+    
+    cd "$SCRAPERS_DIR"
+    
+    # Nome de utilizador padrão
+    AIRFLOW_USERNAME="admin"
+    
+    # Tentar extrair password dos logs
+    AIRFLOW_PASSWORD=$(docker-compose logs airflow-standalone 2>/dev/null | grep -i "Password for user 'admin'" | tail -1 | sed -n "s/.*Password for user 'admin': \([^ ]*\).*/\1/p" 2>/dev/null || echo "")
+    
+    # Se não encontrado nos logs, tentar o ficheiro gerado
+    if [ -z "$AIRFLOW_PASSWORD" ]; then
+        AIRFLOW_PASSWORD=$(docker-compose exec -T airflow-standalone cat /opt/airflow/simple_auth_manager_passwords.json.generated 2>/dev/null | grep -o '"admin": "[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "")
+    fi
+    
+    # Se ainda não encontrado, fornecer mensagem de fallback
+    if [ -z "$AIRFLOW_PASSWORD" ]; then
+        AIRFLOW_PASSWORD="<verificar logs com: docker-compose -f $SCRAPERS_DIR/docker-compose.yml logs airflow-standalone | grep -i password>"
+    fi
+}
+
 # Função para parar todos os serviços
 stop_services() {
     log "A parar todos os serviços..."
@@ -255,7 +351,7 @@ stop_services() {
     # Terminar processos restantes na porta do dashboard
     kill_port $DASHBOARD_PORT
     
-    # Parar contentores de scrapers completamente
+    # Parar containers de scrapers completamente
     stop_docker_containers
     
     success "Todos os serviços parados"
@@ -289,10 +385,10 @@ show_status() {
         echo -e "${RED}✗${NC} Airflow: Não está em execução"
     fi
     
-    # Verificar contentores Docker
+    # Verificar containers Docker
     cd "$SCRAPERS_DIR"
     echo ""
-    echo "=== Contentores Docker ==="
+    echo "=== containers Docker ==="
     docker-compose ps 2>/dev/null || echo "Nenhum contentor em execução"
     
     echo ""
@@ -332,7 +428,7 @@ Utilização: $0 [COMANDO]
 Comandos:
     start           Iniciar dashboard e scrapers
     stop            Parar todos os serviços
-    clean           Parar e limpar contentores e volumes Docker
+    clean           Parar e limpar containers e volumes Docker
     restart         Reiniciar todos os serviços
     status          Mostrar estado de todos os serviços
     credentials     Mostrar credenciais de login do Airflow (alias: creds)
@@ -346,7 +442,7 @@ Comandos:
 Exemplos:
     $0 start                    # Iniciar ambos os serviços
     $0 docker-check             # Diagnosticar problemas do Docker
-    $0 clean                    # Limpar contentores/volumes Docker
+    $0 clean                    # Limpar containers/volumes Docker
     $0 credentials              # Mostrar credenciais do Airflow
     $0 logs dashboard          # Mostrar logs do dashboard
     $0 logs scrapers           # Mostrar logs dos scrapers
@@ -370,6 +466,7 @@ EOF
 case ${1:-start} in
     "start")
         log "A iniciar ambiente de desenvolvimento local SIMPREDE..."
+        setup_env_file
         setup_dashboard
         start_scrapers
         start_dashboard
@@ -393,7 +490,7 @@ case ${1:-start} in
         stop_services
         ;;
     "clean")
-        log "A limpar contentores e volumes Docker..."
+        log "A limpar containers e volumes Docker..."
         stop_docker_containers
         success "Limpeza Docker concluída"
         ;;
@@ -428,14 +525,14 @@ case ${1:-start} in
             echo "  Ou verifique se o Docker Desktop está em execução"
         fi
         
-        # Verificar se conseguimos listar contentores
-        echo -n "Listagem de contentores: "
+        # Verificar se conseguimos listar containers
+        echo -n "Listagem de containers: "
         if docker ps >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} Consegue listar contentores"
-            echo "Contentores atuais:"
+            echo -e "${GREEN}✓${NC} Consegue listar containers"
+            echo "containers atuais:"
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "Nenhum"
         else
-            echo -e "${RED}✗${NC} Não consegue listar contentores"
+            echo -e "${RED}✗${NC} Não consegue listar containers"
         fi
         
         # Verificar docker-compose
@@ -448,12 +545,24 @@ case ${1:-start} in
             echo -e "${RED}✗${NC} Nem docker-compose nem docker compose encontrados"
         fi
         
+        # Verificar ficheiro .env
+        echo -n "Ficheiro .env: "
+        if [ -f "$PROJECT_ROOT/.env" ]; then
+            echo -e "${GREEN}✓${NC} Encontrado em $PROJECT_ROOT/.env"
+            # Mostrar algumas variáveis (sem passwords)
+            echo "Variáveis definidas:"
+            grep -E '^(DB_HOST|DB_USER|GCS_PROJECT_ID|GCS_BUCKET_NAME)=' "$PROJECT_ROOT/.env" | sed 's/^/  /' || echo "  Nenhuma variável essencial encontrada"
+        else
+            echo -e "${RED}✗${NC} Não encontrado em $PROJECT_ROOT/.env"
+        fi
+        
         echo ""
         ;;
     "restart")
         log "A reiniciar todos os serviços..."
         stop_services
         sleep 3
+        setup_env_file
         setup_dashboard
         start_scrapers
         start_dashboard
@@ -482,14 +591,17 @@ case ${1:-start} in
         show_logs ${2:-scrapers}
         ;;
     "setup")
+        setup_env_file
         setup_dashboard
         ;;
     "dashboard")
+        setup_env_file
         setup_dashboard
         start_dashboard
         success "Dashboard iniciado em http://localhost:$DASHBOARD_PORT"
         ;;
     "scrapers")
+        setup_env_file
         start_scrapers
         success "Scrapers iniciados em http://localhost:$AIRFLOW_PORT"
         echo ""

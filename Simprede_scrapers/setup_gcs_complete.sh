@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-PROJECT_ROOT="$SCRIPT_DIR"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo "🚀 SIMPREDE Airflow GCS Complete Setup"
 echo "======================================"
@@ -33,13 +33,23 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
-# Create .env file if it doesn't exist
-if [ ! -f "$PROJECT_ROOT/.env" ]; then
-    log "Creating .env file from template..."
-    cp "$PROJECT_ROOT/.env.template" "$PROJECT_ROOT/.env"
-    success "Created .env file. You can edit it to customize your configuration."
+# Check for project root .env file first
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    log "Found .env file in project root: $PROJECT_ROOT/.env"
+    # Copy to project directory
+    cp "$PROJECT_ROOT/.env" "$PROJECT_ROOT/.env"
+    success "Using .env file from project root"
+elif [ ! -f "$PROJECT_ROOT/.env" ]; then
+    if [ -f "$PROJECT_ROOT/.env.template" ]; then
+        log "Creating .env file from template..."
+        cp "$PROJECT_ROOT/.env.template" "$PROJECT_ROOT/.env"
+        success "Created .env file. You can edit it to customize your configuration."
+    else
+        error "No .env file or .env.template found in project root"
+        exit 1
+    fi
 else
-    log ".env file already exists. Skipping creation."
+    log ".env file already exists in project root. Skipping creation."
 fi
 
 # Create config directory

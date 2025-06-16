@@ -42,11 +42,26 @@ if [ "$AS_ROOT" = "true" ]; then
 fi
 
 # Source environment variables if .env file exists
-if [ -f "/opt/airflow/.env" ]; then
-    log "Loading environment from .env file..."
-    set -a
-    source /opt/airflow/.env
-    set +a
+# Check project root first (mounted volume), then container locations
+ENV_LOCATIONS=(
+    "/opt/airflow/../.env"     # Project root mounted as volume parent
+    "/opt/airflow/.env"        # Container .env (copied from project root)
+    "/.env"                    # Root .env
+)
+
+for env_file in "${ENV_LOCATIONS[@]}"; do
+    if [ -f "$env_file" ]; then
+        log "Loading environment from: $env_file"
+        set -a
+        source "$env_file"
+        set +a
+        ENV_LOADED=true
+        break
+    fi
+done
+
+if [ "${ENV_LOADED:-false}" != "true" ]; then
+    log "⚠️ No .env file found in expected locations"
 fi
 
 # Set default GCS environment variables

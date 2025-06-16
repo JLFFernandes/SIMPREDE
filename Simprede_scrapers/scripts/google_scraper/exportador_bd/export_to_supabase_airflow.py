@@ -99,9 +99,12 @@ def get_database_config():
     if not db_config['host'] or not db_config['user'] or not db_config['password']:
         log_progress("🔍 Configuração da base de dados não encontrada no ambiente, procurando ficheiro .env...")
         
-        # Look for .env file only at project root
+        # Look for .env file in project root and container locations
         possible_env_paths = [
-            Path(__file__).resolve().parents[4] / '.env'
+            '/opt/airflow/../.env',  # Project root from container
+            '/opt/airflow/.env',     # Container .env
+            Path(__file__).resolve().parents[5] / '.env',  # Project root from script location
+            '/.env'  # Fallback
         ]
         
         # Remove duplicates while preserving order
