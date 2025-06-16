@@ -16,12 +16,17 @@ st.set_page_config(layout="wide", page_title="SIMPREDE", page_icon="🌍")
 
 def get_base64_image(image_path):
     try:
-        with open(image_path, "rb") as f:
+        # Get the directory where this script is located
+        script_dir = Path(__file__).parent
+        # Create full path to the image
+        full_image_path = script_dir / image_path
+        
+        with open(full_image_path, "rb") as f:
             data = f.read()
         return base64.b64encode(data).decode("utf-8")
     except FileNotFoundError:
         # Return a placeholder or empty string if image not found
-        st.warning(f"Image file {image_path} not found. Using placeholder.")
+        st.warning(f"Image file {image_path} not found at {full_image_path}. Using placeholder.")
         # Create a simple 1x1 transparent PNG as fallback
         import io
         from PIL import Image
