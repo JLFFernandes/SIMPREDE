@@ -66,6 +66,7 @@ cd simprede-airflow
 Execute o script de arranque que configura automaticamente o ambiente:
 
 ```bash
+cp .env.template .env
 chmod +x start_airflow.sh
 ./start_airflow.sh
 ```
@@ -204,6 +205,7 @@ simprede-airflow/
 ├── Dockerfile                     # Configuração Docker Airflow
 ├── docker-compose.yml            # Orquestração de serviços
 ├── requirements.txt               # Dependências Python
+├── .env.template                # Exemplo de configuração
 ├── .env                          # Variáveis de ambiente
 ├── README.md                     # Este ficheiro
 ├── start_airflow.sh              # Script de arranque
