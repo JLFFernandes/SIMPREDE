@@ -378,5 +378,3 @@ def main():
     else:
         print(f"Concelho shapefile not found at: {concelho_shapefile}")
 
-if __name__ == "__main__":
-    main()
