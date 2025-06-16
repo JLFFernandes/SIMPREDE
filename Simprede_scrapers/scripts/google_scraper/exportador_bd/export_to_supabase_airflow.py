@@ -95,26 +95,10 @@ def get_database_config():
     if not db_config['host'] or not db_config['user'] or not db_config['password']:
         log_progress("🔍 Configuração da base de dados não encontrada no ambiente, procurando ficheiro .env...")
         
-        # Look for .env file in multiple locations
+        # Look for .env file only at project root
         possible_env_paths = [
-            '/opt/airflow/.env',  # Airflow container root
-            '/opt/airflow/scripts/google_scraper/.env',
-            '/opt/airflow/scripts/.env',
-            os.path.join(os.path.dirname(__file__), '../../../../.env'),
-            os.path.join(os.path.dirname(__file__), '../../../.env'),
-            os.path.join(os.path.dirname(__file__), '../../.env'),
-            os.path.join(os.path.dirname(__file__), '../.env'),
-            os.path.join(os.path.dirname(__file__), '.env')
+            Path(__file__).resolve().parents[4] / '.env'
         ]
-        
-        # Add absolute path resolution
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        additional_paths = [
-            os.path.join(script_dir, '../../../../.env'),
-            os.path.join(script_dir, '../../../.env'),
-            '/Users/ruicarvalho/Desktop/projects/SIMPREDE/simprede-airflow/.env'  # Absolute fallback
-        ]
-        possible_env_paths.extend(additional_paths)
         
         # Remove duplicates while preserving order
         seen = set()

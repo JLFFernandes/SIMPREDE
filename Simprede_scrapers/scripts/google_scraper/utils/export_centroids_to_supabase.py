@@ -8,10 +8,11 @@ from sqlalchemy import create_engine
 import logging
 from typing import List, Dict, Any, Literal
 from dotenv import load_dotenv
+from pathlib import Path
 import geopandas as gpd
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from the project root .env file
+load_dotenv(Path(__file__).resolve().parents[4] / '.env')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
