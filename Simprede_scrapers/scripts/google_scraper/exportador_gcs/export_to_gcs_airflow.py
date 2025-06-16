@@ -787,5 +787,3 @@ def main():
         log_progress(f"❌ Full traceback: {traceback.format_exc()}", "error")
         return 1
 
-if __name__ == "__main__":
-    sys.exit(main())
