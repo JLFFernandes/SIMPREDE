@@ -185,20 +185,20 @@ start_scrapers() {
     if ! docker version >/dev/null 2>&1 && ! docker ps >/dev/null 2>&1 && ! docker info >/dev/null 2>&1; then
         error "O daemon Docker não está acessível."
         echo ""
-        echo "🔍 Isto normalmente significa que o Docker Desktop não está em execução."
+        echo "Isto normalmente significa que o Docker Desktop não está em execução."
         echo ""
-        echo "📝 Para corrigir isto:"
+        echo "Para corrigir isto:"
         echo "   1. Abra a aplicação Docker Desktop"
         echo "   2. Aguarde que o ícone da baleia do Docker apareça na barra de menu"
         echo "   3. Certifique-se que o Docker Desktop mostra 'Engine running'"
         echo "   4. Tente executar o script novamente"
         echo ""
-        echo "🔧 Resolução de problemas alternativa:"
+        echo "Resolução de problemas alternativa:"
         echo "   • Verifique se o Docker funciona com sudo: sudo docker ps"
         echo "   • Adicione o seu utilizador ao grupo docker: sudo usermod -aG docker \$USER"
         echo "   • Reinicie o Docker Desktop se já estiver aberto"
         echo ""
-        echo "💡 Execute './run_local.sh docker-check' para diagnósticos detalhados"
+        echo "Execute './run_local.sh docker-check' para diagnósticos detalhados"
         exit 1
     fi
     
@@ -366,14 +366,14 @@ show_status() {
     
     # Verificar dashboard
     if check_port $DASHBOARD_PORT; then
-        echo -e "${GREEN}✓${NC} Dashboard: Em execução em http://localhost:$DASHBOARD_PORT"
+        echo -e "${GREEN}[ACTIVO]${NC} Dashboard: Em execução em http://localhost:$DASHBOARD_PORT"
     else
-        echo -e "${RED}✗${NC} Dashboard: Não está em execução"
+        echo -e "${RED}[INACTIVO]${NC} Dashboard: Não está em execução"
     fi
     
     # Verificar Airflow
     if check_port $AIRFLOW_PORT; then
-        echo -e "${GREEN}✓${NC} Airflow: Em execução em http://localhost:$AIRFLOW_PORT"
+        echo -e "${GREEN}[ACTIVO]${NC} Airflow: Em execução em http://localhost:$AIRFLOW_PORT"
         
         # Obter credenciais se o Airflow estiver em execução
         get_airflow_credentials
@@ -382,7 +382,7 @@ show_status() {
         echo -e "${GREEN}Utilizador:${NC} ${AIRFLOW_USERNAME:-admin}"
         echo -e "${GREEN}Password:${NC} ${AIRFLOW_PASSWORD:-<verificar logs>}"
     else
-        echo -e "${RED}✗${NC} Airflow: Não está em execução"
+        echo -e "${RED}[INACTIVO]${NC} Airflow: Não está em execução"
     fi
     
     # Verificar containers Docker
@@ -473,15 +473,15 @@ case ${1:-start} in
         echo ""
         success "Todos os serviços iniciados com sucesso!"
         echo ""
-        echo -e "${GREEN}🚀 Serviços SIMPREDE:${NC}"
-        echo -e "   📊 Dashboard:  http://localhost:$DASHBOARD_PORT"
-        echo -e "   🔄 Airflow:    http://localhost:$AIRFLOW_PORT"
+        echo -e "${GREEN}Serviços SIMPREDE:${NC}"
+        echo -e "   Dashboard:  http://localhost:$DASHBOARD_PORT"
+        echo -e "   Airflow:    http://localhost:$AIRFLOW_PORT"
         echo ""
-        echo -e "${GREEN}🔐 Credenciais do Airflow:${NC}"
+        echo -e "${GREEN}Credenciais do Airflow:${NC}"
         echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
         echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
         echo ""
-        echo -e "${YELLOW}💡 Comandos úteis:${NC}"
+        echo -e "${YELLOW}Comandos úteis:${NC}"
         echo -e "   Verificar estado:  $0 status"
         echo -e "   Ver logs:          $0 logs [dashboard|scrapers]"
         echo -e "   Parar tudo:        $0 stop"
@@ -501,26 +501,26 @@ case ${1:-start} in
         
         # Verificar se o comando docker existe
         if command -v docker >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} Comando Docker encontrado: $(which docker)"
+            echo -e "${GREEN}[OK]${NC} Comando Docker encontrado: $(which docker)"
         else
-            echo -e "${RED}✗${NC} Comando Docker não encontrado"
+            echo -e "${RED}[ERRO]${NC} Comando Docker não encontrado"
             exit 1
         fi
         
         # Verificar versão do Docker
         echo -n "Versão do Docker: "
         if docker --version 2>/dev/null; then
-            echo -e "${GREEN}✓${NC} Versão do Docker acessível"
+            echo -e "${GREEN}[OK]${NC} Versão do Docker acessível"
         else
-            echo -e "${RED}✗${NC} Não é possível obter a versão do Docker"
+            echo -e "${RED}[ERRO]${NC} Não é possível obter a versão do Docker"
         fi
         
         # Verificar ligação ao daemon Docker
         echo -n "Daemon Docker: "
         if docker info >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} Daemon Docker acessível"
+            echo -e "${GREEN}[OK]${NC} Daemon Docker acessível"
         else
-            echo -e "${RED}✗${NC} Daemon Docker não acessível"
+            echo -e "${RED}[ERRO]${NC} Daemon Docker não acessível"
             echo "  Tente: sudo docker info"
             echo "  Ou verifique se o Docker Desktop está em execução"
         fi
@@ -528,32 +528,32 @@ case ${1:-start} in
         # Verificar se conseguimos listar containers
         echo -n "Listagem de containers: "
         if docker ps >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} Consegue listar containers"
+            echo -e "${GREEN}[OK]${NC} Consegue listar containers"
             echo "containers atuais:"
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "Nenhum"
         else
-            echo -e "${RED}✗${NC} Não consegue listar containers"
+            echo -e "${RED}[ERRO]${NC} Não consegue listar containers"
         fi
         
         # Verificar docker-compose
         echo -n "Docker Compose: "
         if command -v docker-compose >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} docker-compose encontrado: $(docker-compose --version)"
+            echo -e "${GREEN}[OK]${NC} docker-compose encontrado: $(docker-compose --version)"
         elif docker compose version >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} plugin docker compose encontrado: $(docker compose version)"
+            echo -e "${GREEN}[OK]${NC} plugin docker compose encontrado: $(docker compose version)"
         else
-            echo -e "${RED}✗${NC} Nem docker-compose nem docker compose encontrados"
+            echo -e "${RED}[ERRO]${NC} Nem docker-compose nem docker compose encontrados"
         fi
         
         # Verificar ficheiro .env
         echo -n "Ficheiro .env: "
         if [ -f "$PROJECT_ROOT/.env" ]; then
-            echo -e "${GREEN}✓${NC} Encontrado em $PROJECT_ROOT/.env"
+            echo -e "${GREEN}[OK]${NC} Encontrado em $PROJECT_ROOT/.env"
             # Mostrar algumas variáveis (sem passwords)
             echo "Variáveis definidas:"
             grep -E '^(DB_HOST|DB_USER|GCS_PROJECT_ID|GCS_BUCKET_NAME)=' "$PROJECT_ROOT/.env" | sed 's/^/  /' || echo "  Nenhuma variável essencial encontrada"
         else
-            echo -e "${RED}✗${NC} Não encontrado em $PROJECT_ROOT/.env"
+            echo -e "${RED}[ERRO]${NC} Não encontrado em $PROJECT_ROOT/.env"
         fi
         
         echo ""
@@ -568,7 +568,7 @@ case ${1:-start} in
         start_dashboard
         success "Todos os serviços reiniciados com sucesso!"
         echo ""
-        echo -e "${GREEN}🔐 Credenciais do Airflow:${NC}"
+        echo -e "${GREEN}Credenciais do Airflow:${NC}"
         echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
         echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
         ;;
@@ -579,7 +579,7 @@ case ${1:-start} in
         if check_port $AIRFLOW_PORT; then
             get_airflow_credentials
             echo ""
-            echo -e "${GREEN}🔐 Credenciais do Airflow:${NC}"
+            echo -e "${GREEN}Credenciais do Airflow:${NC}"
             echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
             echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
             echo -e "   Interface Web: http://localhost:$AIRFLOW_PORT"
@@ -605,7 +605,7 @@ case ${1:-start} in
         start_scrapers
         success "Scrapers iniciados em http://localhost:$AIRFLOW_PORT"
         echo ""
-        echo -e "${GREEN}🔐 Credenciais do Airflow:${NC}"
+        echo -e "${GREEN}Credenciais do Airflow:${NC}"
         echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
         echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
         ;;
