@@ -471,15 +471,3 @@ def get_real_url_and_content(link, driver_path="/usr/bin/chromedriver", max_wait
         driver.quit()
 
     return page_data
-
-
-# Teste
-if __name__ == "__main__":
-    # Update the driver path for Linux
-    driver_path = "/usr/bin/chromedriver"  # Ensure this path is correct for your system
-    google_rss_url = "https://news.google.com/rss/articles/CBMirwFBVV95cUxNUzNzajlfa1poeTdVdEhnSXdlX042NDRueDl1blQ2LW9MT29zWWdvd18zR016T2FZMFdjNnhUUTBkdmlZVFVjV0V2UTMwZTh1NFIyc0xYYl9FX1EzaTdMV2JHT09qSUpIRnEtc3JPd1VrYnFvb2xzb2Rsa2ZRS1J6SUxqNUVnMW1VdVh4eHEyWlZ2QXhBczUxTHhSckhha21Vc0NCTDdmNkhPTDJIUGFr?oc=5"
-
-    # Get the real URL and content
-    result = get_real_url_and_content(google_rss_url, driver_path)
-    print("➡️ URL final:", result["source_url"])
-    print("📝 Conteúdo do artigo:", result["article_content"])

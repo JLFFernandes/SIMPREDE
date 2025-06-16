@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# SIMPREDE Local Development Orchestrator
-# This script runs both the scrapers (Airflow) container and the dashboard locally
+# Orquestrador de Desenvolvimento Local SIMPREDE
+# Este script executa tanto os contentores de scrapers (Airflow) como o dashboard localmente
 
-set -e  # Exit on any error
+set -e  # Sair em caso de erro
 
-# Colors for output
+# Cores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m' # Sem Cor
 
-# Configuration
+# Configuração
 PROJECT_ROOT="/Users/ruicarvalho/Desktop/projects/SIMPREDE"
 SCRAPERS_DIR="$PROJECT_ROOT/Simprede_scrapers"
 DASHBOARD_DIR="$PROJECT_ROOT/Simprede_dashboard"
@@ -20,448 +20,448 @@ DASHBOARD_VENV="$DASHBOARD_DIR/env"
 DASHBOARD_PORT=8501
 AIRFLOW_PORT=8080
 
-# Logging function
+# Função de registo
 log() {
     echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
 }
 
 error() {
-    echo -e "${RED}[ERROR]${NC} $1" >&2
+    echo -e "${RED}[ERRO]${NC} $1" >&2
 }
 
 success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    echo -e "${GREEN}[SUCESSO]${NC} $1"
 }
 
 warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}[AVISO]${NC} $1"
 }
 
-# Function to check if a port is in use
+# Função para verificar se uma porta está em uso
 check_port() {
     local port=$1
     if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
-        return 0  # Port is in use
+        return 0  # Porta está em uso
     else
-        return 1  # Port is free
+        return 1  # Porta está livre
     fi
 }
 
-# Function to kill processes on a specific port
+# Função para terminar processos numa porta específica
 kill_port() {
     local port=$1
-    log "Checking for processes on port $port..."
+    log "A verificar processos na porta $port..."
     if check_port $port; then
-        warning "Port $port is in use. Killing processes..."
+        warning "A porta $port está em uso. A terminar processos..."
         lsof -ti:$port | xargs kill -9 2>/dev/null || true
         sleep 2
     fi
 }
 
-# Function to setup dashboard environment
+# Função para configurar o ambiente do dashboard
 setup_dashboard() {
-    log "Setting up dashboard environment..."
+    log "A configurar ambiente do dashboard..."
     
     cd "$DASHBOARD_DIR"
     
-    # Check if virtual environment exists
+    # Verificar se o ambiente virtual existe
     if [ ! -d "$DASHBOARD_VENV" ]; then
-        log "Creating virtual environment for dashboard..."
+        log "A criar ambiente virtual para o dashboard..."
         python3 -m venv env
     fi
     
-    # Activate virtual environment and install dependencies
-    log "Installing dashboard dependencies..."
+    # Ativar ambiente virtual e instalar dependências
+    log "A instalar dependências do dashboard..."
     source "$DASHBOARD_VENV/bin/activate"
     pip install --upgrade pip
     pip install -r requirements.txt
     
-    success "Dashboard environment setup complete"
+    success "Configuração do ambiente do dashboard concluída"
 }
 
-# Function to start the dashboard
+# Função para iniciar o dashboard
 start_dashboard() {
-    log "Starting Streamlit dashboard..."
+    log "A iniciar dashboard Streamlit..."
     
     cd "$DASHBOARD_DIR"
     
-    # Kill any existing processes on dashboard port
+    # Terminar processos existentes na porta do dashboard
     kill_port $DASHBOARD_PORT
     
-    # Activate virtual environment
+    # Ativar ambiente virtual
     source "$DASHBOARD_VENV/bin/activate"
     
-    # Start Streamlit in background
+    # Iniciar Streamlit em segundo plano
     nohup streamlit run app.py --server.port=$DASHBOARD_PORT --server.address=0.0.0.0 > dashboard.log 2>&1 &
     DASHBOARD_PID=$!
     
-    # Wait a moment and check if the process started successfully
+    # Aguardar um momento e verificar se o processo iniciou com sucesso
     sleep 5
     if ps -p $DASHBOARD_PID > /dev/null; then
-        success "Dashboard started successfully on http://localhost:$DASHBOARD_PORT (PID: $DASHBOARD_PID)"
+        success "Dashboard iniciado com sucesso em http://localhost:$DASHBOARD_PORT (PID: $DASHBOARD_PID)"
         echo $DASHBOARD_PID > dashboard.pid
     else
-        error "Failed to start dashboard. Check dashboard.log for details."
+        error "Falha ao iniciar o dashboard. Verificar dashboard.log para detalhes."
         exit 1
     fi
 }
 
-# Function to stop Docker containers thoroughly
+# Função para parar contentores Docker completamente
 stop_docker_containers() {
-    log "Stopping Docker containers thoroughly..."
+    log "A parar contentores Docker completamente..."
     
     cd "$SCRAPERS_DIR"
     
-    # Check if Docker is accessible before trying to stop containers
+    # Verificar se o Docker está acessível antes de tentar parar contentores
     if ! docker ps >/dev/null 2>&1; then
-        warning "Docker is not accessible - skipping container cleanup"
+        warning "Docker não está acessível - a saltar limpeza de contentores"
         kill_port $AIRFLOW_PORT
         return 0
     fi
     
-    # Stop and remove containers with timeout
-    log "Stopping containers gracefully..."
+    # Parar e remover contentores com timeout
+    log "A parar contentores graciosamente..."
     docker-compose stop --timeout 30 2>/dev/null || true
     
-    # Force remove containers and networks
-    log "Removing containers and networks..."
+    # Forçar remoção de contentores e redes
+    log "A remover contentores e redes..."
     docker-compose down --remove-orphans --volumes --timeout 10 2>/dev/null || true
     
-    # Clean up any remaining containers related to the project
-    log "Cleaning up any remaining SIMPREDE containers..."
+    # Limpar contentores restantes relacionados com o projeto
+    log "A limpar contentores SIMPREDE restantes..."
     docker ps -a --filter "name=simprede" --format "{{.ID}}" | xargs -r docker rm -f 2>/dev/null || true
     docker ps -a --filter "name=airflow" --format "{{.ID}}" | xargs -r docker rm -f 2>/dev/null || true
     
-    # Remove any dangling volumes from this project
-    log "Cleaning up project volumes..."
+    # Remover volumes pendentes deste projeto
+    log "A limpar volumes do projeto..."
     docker volume ls --filter "name=simprede" --format "{{.Name}}" | xargs -r docker volume rm 2>/dev/null || true
     
-    # Kill any processes still using the Airflow port
+    # Terminar processos que ainda usem a porta do Airflow
     kill_port $AIRFLOW_PORT
     
-    success "Docker containers stopped and cleaned up"
+    success "Contentores Docker parados e limpos"
 }
 
-# Function to get Airflow credentials
+# Função para obter credenciais do Airflow
 get_airflow_credentials() {
-    log "Extracting Airflow credentials..."
+    log "A extrair credenciais do Airflow..."
     
     cd "$SCRAPERS_DIR"
     
-    # Default username
+    # Nome de utilizador padrão
     AIRFLOW_USERNAME="admin"
     
-    # Try to extract password from logs
+    # Tentar extrair password dos logs
     AIRFLOW_PASSWORD=$(docker-compose logs airflow-standalone 2>/dev/null | grep -i "Password for user 'admin'" | tail -1 | sed -n "s/.*Password for user 'admin': \([^ ]*\).*/\1/p" 2>/dev/null || echo "")
     
-    # If not found in logs, try the generated file
+    # Se não encontrado nos logs, tentar o ficheiro gerado
     if [ -z "$AIRFLOW_PASSWORD" ]; then
         AIRFLOW_PASSWORD=$(docker-compose exec -T airflow-standalone cat /opt/airflow/simple_auth_manager_passwords.json.generated 2>/dev/null | grep -o '"admin": "[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "")
     fi
     
-    # If still not found, provide fallback message
+    # Se ainda não encontrado, fornecer mensagem de fallback
     if [ -z "$AIRFLOW_PASSWORD" ]; then
-        AIRFLOW_PASSWORD="<check logs with: docker-compose -f $SCRAPERS_DIR/docker-compose.yml logs airflow-standalone | grep -i password>"
+        AIRFLOW_PASSWORD="<verificar logs com: docker-compose -f $SCRAPERS_DIR/docker-compose.yml logs airflow-standalone | grep -i password>"
     fi
 }
 
-# Function to start the scrapers container
+# Função para iniciar o contentor de scrapers
 start_scrapers() {
-    log "Starting scrapers container (Airflow)..."
+    log "A iniciar contentor de scrapers (Airflow)..."
     
     cd "$SCRAPERS_DIR"
     
-    # Check if Docker is available and running
-    log "Checking Docker availability..."
+    # Verificar se o Docker está disponível e em execução
+    log "A verificar disponibilidade do Docker..."
     if ! command -v docker >/dev/null 2>&1; then
-        error "Docker command not found. Please install Docker and try again."
+        error "Comando Docker não encontrado. Por favor instale Docker e tente novamente."
         exit 1
     fi
     
-    # Try multiple ways to check if Docker is running
+    # Tentar várias formas de verificar se o Docker está em execução
     if ! docker version >/dev/null 2>&1 && ! docker ps >/dev/null 2>&1 && ! docker info >/dev/null 2>&1; then
-        error "Docker daemon is not accessible."
+        error "O daemon Docker não está acessível."
         echo ""
-        echo "🔍 This usually means Docker Desktop is not running."
+        echo "🔍 Isto normalmente significa que o Docker Desktop não está em execução."
         echo ""
-        echo "📝 To fix this:"
-        echo "   1. Open Docker Desktop application"
-        echo "   2. Wait for the Docker whale icon to appear in your menu bar"
-        echo "   3. Make sure Docker Desktop shows 'Engine running'"
-        echo "   4. Try running the script again"
+        echo "📝 Para corrigir isto:"
+        echo "   1. Abra a aplicação Docker Desktop"
+        echo "   2. Aguarde que o ícone da baleia do Docker apareça na barra de menu"
+        echo "   3. Certifique-se que o Docker Desktop mostra 'Engine running'"
+        echo "   4. Tente executar o script novamente"
         echo ""
-        echo "🔧 Alternative troubleshooting:"
-        echo "   • Check if Docker works with sudo: sudo docker ps"
-        echo "   • Add your user to docker group: sudo usermod -aG docker \$USER"
-        echo "   • Restart Docker Desktop if it's already open"
+        echo "🔧 Resolução de problemas alternativa:"
+        echo "   • Verifique se o Docker funciona com sudo: sudo docker ps"
+        echo "   • Adicione o seu utilizador ao grupo docker: sudo usermod -aG docker \$USER"
+        echo "   • Reinicie o Docker Desktop se já estiver aberto"
         echo ""
-        echo "💡 Run './run_local.sh docker-check' for detailed diagnostics"
+        echo "💡 Execute './run_local.sh docker-check' para diagnósticos detalhados"
         exit 1
     fi
     
-    success "Docker is available and running"
+    success "Docker está disponível e em execução"
     
-    # Thoroughly stop any existing containers
+    # Parar completamente quaisquer contentores existentes
     stop_docker_containers
     
-    # Wait a moment for cleanup to complete
+    # Aguardar um momento para a limpeza terminar
     sleep 3
     
-    # Build and start the containers
-    log "Building and starting scrapers containers..."
+    # Construir e iniciar os contentores
+    log "A construir e iniciar contentores de scrapers..."
     docker-compose up --build -d
     
-    # Wait for Airflow to be ready
-    log "Waiting for Airflow to be ready..."
+    # Aguardar que o Airflow esteja pronto
+    log "A aguardar que o Airflow esteja pronto..."
     local max_attempts=60
     local attempt=0
     
     while [ $attempt -lt $max_attempts ]; do
         if curl -s http://localhost:$AIRFLOW_PORT/api/v1/health >/dev/null 2>&1; then
-            success "Airflow is ready and accessible on http://localhost:$AIRFLOW_PORT"
+            success "Airflow está pronto e acessível em http://localhost:$AIRFLOW_PORT"
             break
         fi
         
         attempt=$((attempt + 1))
         if [ $((attempt % 10)) -eq 0 ]; then
-            log "Still waiting for Airflow... (attempt $attempt/$max_attempts)"
+            log "Ainda a aguardar o Airflow... (tentativa $attempt/$max_attempts)"
         fi
         sleep 5
     done
     
     if [ $attempt -eq $max_attempts ]; then
-        warning "Airflow health check timeout. It might still be starting up."
-        log "Check logs with: docker-compose -f $SCRAPERS_DIR/docker-compose.yml logs -f"
+        warning "Timeout na verificação de saúde do Airflow. Pode ainda estar a iniciar."
+        log "Verificar logs com: docker-compose -f $SCRAPERS_DIR/docker-compose.yml logs -f"
     fi
     
-    # Get Airflow credentials after startup
+    # Obter credenciais do Airflow após o arranque
     get_airflow_credentials
 }
 
-# Function to stop all services
+# Função para parar todos os serviços
 stop_services() {
-    log "Stopping all services..."
+    log "A parar todos os serviços..."
     
-    # Stop dashboard
+    # Parar dashboard
     if [ -f "$DASHBOARD_DIR/dashboard.pid" ]; then
         local dashboard_pid=$(cat "$DASHBOARD_DIR/dashboard.pid")
         if ps -p $dashboard_pid > /dev/null; then
-            log "Stopping dashboard (PID: $dashboard_pid)..."
+            log "A parar dashboard (PID: $dashboard_pid)..."
             kill $dashboard_pid 2>/dev/null || true
         fi
         rm -f "$DASHBOARD_DIR/dashboard.pid"
     fi
     
-    # Kill any remaining processes on dashboard port
+    # Terminar processos restantes na porta do dashboard
     kill_port $DASHBOARD_PORT
     
-    # Stop scrapers containers thoroughly
+    # Parar contentores de scrapers completamente
     stop_docker_containers
     
-    success "All services stopped"
+    success "Todos os serviços parados"
 }
 
-# Function to show status
+# Função para mostrar estado
 show_status() {
-    log "Checking service status..."
+    log "A verificar estado dos serviços..."
     
     echo ""
-    echo "=== Service Status ==="
+    echo "=== Estado dos Serviços ==="
     
-    # Check dashboard
+    # Verificar dashboard
     if check_port $DASHBOARD_PORT; then
-        echo -e "${GREEN}✓${NC} Dashboard: Running on http://localhost:$DASHBOARD_PORT"
+        echo -e "${GREEN}✓${NC} Dashboard: Em execução em http://localhost:$DASHBOARD_PORT"
     else
-        echo -e "${RED}✗${NC} Dashboard: Not running"
+        echo -e "${RED}✗${NC} Dashboard: Não está em execução"
     fi
     
-    # Check Airflow
+    # Verificar Airflow
     if check_port $AIRFLOW_PORT; then
-        echo -e "${GREEN}✓${NC} Airflow: Running on http://localhost:$AIRFLOW_PORT"
+        echo -e "${GREEN}✓${NC} Airflow: Em execução em http://localhost:$AIRFLOW_PORT"
         
-        # Get credentials if Airflow is running
+        # Obter credenciais se o Airflow estiver em execução
         get_airflow_credentials
         echo ""
-        echo "=== Airflow Credentials ==="
-        echo -e "${GREEN}Username:${NC} ${AIRFLOW_USERNAME:-admin}"
-        echo -e "${GREEN}Password:${NC} ${AIRFLOW_PASSWORD:-<check logs>}"
+        echo "=== Credenciais do Airflow ==="
+        echo -e "${GREEN}Utilizador:${NC} ${AIRFLOW_USERNAME:-admin}"
+        echo -e "${GREEN}Password:${NC} ${AIRFLOW_PASSWORD:-<verificar logs>}"
     else
-        echo -e "${RED}✗${NC} Airflow: Not running"
+        echo -e "${RED}✗${NC} Airflow: Não está em execução"
     fi
     
-    # Check Docker containers
+    # Verificar contentores Docker
     cd "$SCRAPERS_DIR"
     echo ""
-    echo "=== Docker Containers ==="
-    docker-compose ps 2>/dev/null || echo "No containers running"
+    echo "=== Contentores Docker ==="
+    docker-compose ps 2>/dev/null || echo "Nenhum contentor em execução"
     
     echo ""
 }
 
-# Function to show logs
+# Função para mostrar logs
 show_logs() {
     local service=$1
     
     case $service in
         "dashboard")
-            log "Showing dashboard logs..."
+            log "A mostrar logs do dashboard..."
             if [ -f "$DASHBOARD_DIR/dashboard.log" ]; then
                 tail -f "$DASHBOARD_DIR/dashboard.log"
             else
-                error "Dashboard log file not found"
+                error "Ficheiro de log do dashboard não encontrado"
             fi
             ;;
         "scrapers"|"airflow")
-            log "Showing scrapers/Airflow logs..."
+            log "A mostrar logs dos scrapers/Airflow..."
             cd "$SCRAPERS_DIR"
             docker-compose logs -f
             ;;
         *)
-            error "Unknown service: $service. Use 'dashboard' or 'scrapers'"
+            error "Serviço desconhecido: $service. Use 'dashboard' ou 'scrapers'"
             ;;
     esac
 }
 
-# Function to show usage
+# Função para mostrar utilização
 show_usage() {
     cat << EOF
-SIMPREDE Local Development Orchestrator
+Orquestrador de Desenvolvimento Local SIMPREDE
 
-Usage: $0 [COMMAND]
+Utilização: $0 [COMANDO]
 
-Commands:
-    start           Start both dashboard and scrapers
-    stop            Stop all services
-    clean           Stop and clean up Docker containers and volumes
-    restart         Restart all services
-    status          Show status of all services
-    credentials     Show Airflow login credentials (alias: creds)
-    logs [service]  Show logs (service: dashboard, scrapers)
-    setup           Setup dashboard environment only
-    dashboard       Start only the dashboard
-    scrapers        Start only the scrapers
-    docker-check    Run Docker diagnostics (alias: check-docker)
-    help            Show this help message
+Comandos:
+    start           Iniciar dashboard e scrapers
+    stop            Parar todos os serviços
+    clean           Parar e limpar contentores e volumes Docker
+    restart         Reiniciar todos os serviços
+    status          Mostrar estado de todos os serviços
+    credentials     Mostrar credenciais de login do Airflow (alias: creds)
+    logs [serviço]  Mostrar logs (serviço: dashboard, scrapers)
+    setup           Configurar apenas o ambiente do dashboard
+    dashboard       Iniciar apenas o dashboard
+    scrapers        Iniciar apenas os scrapers
+    docker-check    Executar diagnósticos Docker (alias: check-docker)
+    help            Mostrar esta mensagem de ajuda
 
-Examples:
-    $0 start                    # Start both services
-    $0 docker-check             # Diagnose Docker issues
-    $0 clean                    # Clean up Docker containers/volumes
-    $0 credentials              # Show Airflow credentials
-    $0 logs dashboard          # Show dashboard logs
-    $0 logs scrapers           # Show scrapers logs
-    $0 status                  # Check service status
+Exemplos:
+    $0 start                    # Iniciar ambos os serviços
+    $0 docker-check             # Diagnosticar problemas do Docker
+    $0 clean                    # Limpar contentores/volumes Docker
+    $0 credentials              # Mostrar credenciais do Airflow
+    $0 logs dashboard          # Mostrar logs do dashboard
+    $0 logs scrapers           # Mostrar logs dos scrapers
+    $0 status                  # Verificar estado dos serviços
 
-Ports:
+Portas:
     Dashboard (Streamlit): http://localhost:$DASHBOARD_PORT
     Airflow (Scrapers):   http://localhost:$AIRFLOW_PORT
 
-Airflow Login:
-    Default username: admin
-    Password: Generated automatically (use '$0 credentials' to view)
+Login do Airflow:
+    Utilizador padrão: admin
+    Password: Gerada automaticamente (use '$0 credentials' para ver)
 
-Troubleshooting:
-    If Docker errors occur, run: $0 docker-check
+Resolução de problemas:
+    Se ocorrerem erros do Docker, execute: $0 docker-check
 
 EOF
 }
 
-# Main script logic
+# Lógica principal do script
 case ${1:-start} in
     "start")
-        log "Starting SIMPREDE local development environment..."
+        log "A iniciar ambiente de desenvolvimento local SIMPREDE..."
         setup_dashboard
         start_scrapers
         start_dashboard
         echo ""
-        success "All services started successfully!"
+        success "Todos os serviços iniciados com sucesso!"
         echo ""
-        echo -e "${GREEN}🚀 SIMPREDE Services:${NC}"
+        echo -e "${GREEN}🚀 Serviços SIMPREDE:${NC}"
         echo -e "   📊 Dashboard:  http://localhost:$DASHBOARD_PORT"
         echo -e "   🔄 Airflow:    http://localhost:$AIRFLOW_PORT"
         echo ""
-        echo -e "${GREEN}🔐 Airflow Credentials:${NC}"
-        echo -e "   Username: ${AIRFLOW_USERNAME:-admin}"
-        echo -e "   Password: ${AIRFLOW_PASSWORD:-<check logs>}"
+        echo -e "${GREEN}🔐 Credenciais do Airflow:${NC}"
+        echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
+        echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
         echo ""
-        echo -e "${YELLOW}💡 Useful commands:${NC}"
-        echo -e "   Check status:  $0 status"
-        echo -e "   View logs:     $0 logs [dashboard|scrapers]"
-        echo -e "   Stop all:      $0 stop"
+        echo -e "${YELLOW}💡 Comandos úteis:${NC}"
+        echo -e "   Verificar estado:  $0 status"
+        echo -e "   Ver logs:          $0 logs [dashboard|scrapers]"
+        echo -e "   Parar tudo:        $0 stop"
         ;;
     "stop")
         stop_services
         ;;
     "clean")
-        log "Cleaning up Docker containers and volumes..."
+        log "A limpar contentores e volumes Docker..."
         stop_docker_containers
-        success "Docker cleanup completed"
+        success "Limpeza Docker concluída"
         ;;
     "docker-check"|"check-docker")
-        log "Running Docker diagnostics..."
+        log "A executar diagnósticos Docker..."
         echo ""
-        echo "=== Docker Diagnostics ==="
+        echo "=== Diagnósticos Docker ==="
         
-        # Check if docker command exists
+        # Verificar se o comando docker existe
         if command -v docker >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} Docker command found: $(which docker)"
+            echo -e "${GREEN}✓${NC} Comando Docker encontrado: $(which docker)"
         else
-            echo -e "${RED}✗${NC} Docker command not found"
+            echo -e "${RED}✗${NC} Comando Docker não encontrado"
             exit 1
         fi
         
-        # Check Docker version
-        echo -n "Docker version: "
+        # Verificar versão do Docker
+        echo -n "Versão do Docker: "
         if docker --version 2>/dev/null; then
-            echo -e "${GREEN}✓${NC} Docker version accessible"
+            echo -e "${GREEN}✓${NC} Versão do Docker acessível"
         else
-            echo -e "${RED}✗${NC} Cannot get Docker version"
+            echo -e "${RED}✗${NC} Não é possível obter a versão do Docker"
         fi
         
-        # Check Docker daemon connection
-        echo -n "Docker daemon: "
+        # Verificar ligação ao daemon Docker
+        echo -n "Daemon Docker: "
         if docker info >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} Docker daemon accessible"
+            echo -e "${GREEN}✓${NC} Daemon Docker acessível"
         else
-            echo -e "${RED}✗${NC} Docker daemon not accessible"
-            echo "  Try: sudo docker info"
-            echo "  Or check if Docker Desktop is running"
+            echo -e "${RED}✗${NC} Daemon Docker não acessível"
+            echo "  Tente: sudo docker info"
+            echo "  Ou verifique se o Docker Desktop está em execução"
         fi
         
-        # Check if we can list containers
-        echo -n "Container listing: "
+        # Verificar se conseguimos listar contentores
+        echo -n "Listagem de contentores: "
         if docker ps >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} Can list containers"
-            echo "Current containers:"
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "None"
+            echo -e "${GREEN}✓${NC} Consegue listar contentores"
+            echo "Contentores atuais:"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "Nenhum"
         else
-            echo -e "${RED}✗${NC} Cannot list containers"
+            echo -e "${RED}✗${NC} Não consegue listar contentores"
         fi
         
-        # Check docker-compose
+        # Verificar docker-compose
         echo -n "Docker Compose: "
         if command -v docker-compose >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} docker-compose found: $(docker-compose --version)"
+            echo -e "${GREEN}✓${NC} docker-compose encontrado: $(docker-compose --version)"
         elif docker compose version >/dev/null 2>&1; then
-            echo -e "${GREEN}✓${NC} docker compose plugin found: $(docker compose version)"
+            echo -e "${GREEN}✓${NC} plugin docker compose encontrado: $(docker compose version)"
         else
-            echo -e "${RED}✗${NC} Neither docker-compose nor docker compose found"
+            echo -e "${RED}✗${NC} Nem docker-compose nem docker compose encontrados"
         fi
         
         echo ""
         ;;
     "restart")
-        log "Restarting all services..."
+        log "A reiniciar todos os serviços..."
         stop_services
         sleep 3
         setup_dashboard
         start_scrapers
         start_dashboard
-        success "All services restarted successfully!"
+        success "Todos os serviços reiniciados com sucesso!"
         echo ""
-        echo -e "${GREEN}🔐 Airflow Credentials:${NC}"
-        echo -e "   Username: ${AIRFLOW_USERNAME:-admin}"
-        echo -e "   Password: ${AIRFLOW_PASSWORD:-<check logs>}"
+        echo -e "${GREEN}🔐 Credenciais do Airflow:${NC}"
+        echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
+        echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
         ;;
     "status")
         show_status
@@ -470,12 +470,12 @@ case ${1:-start} in
         if check_port $AIRFLOW_PORT; then
             get_airflow_credentials
             echo ""
-            echo -e "${GREEN}🔐 Airflow Credentials:${NC}"
-            echo -e "   Username: ${AIRFLOW_USERNAME:-admin}"
-            echo -e "   Password: ${AIRFLOW_PASSWORD:-<check logs>}"
-            echo -e "   Web UI:   http://localhost:$AIRFLOW_PORT"
+            echo -e "${GREEN}🔐 Credenciais do Airflow:${NC}"
+            echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
+            echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
+            echo -e "   Interface Web: http://localhost:$AIRFLOW_PORT"
         else
-            error "Airflow is not running. Start it first with: $0 start"
+            error "Airflow não está em execução. Inicie-o primeiro com: $0 start"
         fi
         ;;
     "logs")
@@ -487,21 +487,21 @@ case ${1:-start} in
     "dashboard")
         setup_dashboard
         start_dashboard
-        success "Dashboard started on http://localhost:$DASHBOARD_PORT"
+        success "Dashboard iniciado em http://localhost:$DASHBOARD_PORT"
         ;;
     "scrapers")
         start_scrapers
-        success "Scrapers started on http://localhost:$AIRFLOW_PORT"
+        success "Scrapers iniciados em http://localhost:$AIRFLOW_PORT"
         echo ""
-        echo -e "${GREEN}🔐 Airflow Credentials:${NC}"
-        echo -e "   Username: ${AIRFLOW_USERNAME:-admin}"
-        echo -e "   Password: ${AIRFLOW_PASSWORD:-<check logs>}"
+        echo -e "${GREEN}🔐 Credenciais do Airflow:${NC}"
+        echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
+        echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
         ;;
     "help"|"-h"|"--help")
         show_usage
         ;;
     *)
-        error "Unknown command: $1"
+        error "Comando desconhecido: $1"
         echo ""
         show_usage
         exit 1

@@ -7,6 +7,7 @@ import psycopg2
 from sqlalchemy import create_engine
 import logging
 from typing import List, Dict, Any, Literal
+
 from dotenv import load_dotenv
 from pathlib import Path
 import geopandas as gpd
@@ -379,5 +380,3 @@ def main():
     else:
         print(f"Concelho shapefile not found at: {concelho_shapefile}")
 
-if __name__ == "__main__":
-    main()

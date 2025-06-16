@@ -240,8 +240,3 @@ def verificar_localizacao(texto, MAPA_LOCALIZACOES):
 def is_potentially_disaster_related(text: str, keywords: list[str]) -> bool:
     text = normalize(text)
     return any(keyword in text for keyword in keywords)
-
-
-def is_potentially_disaster_related(text: str, keywords: list[str]) -> bool:
-    text = normalize(text)
-    return any(keyword in text for keyword in keywords)
