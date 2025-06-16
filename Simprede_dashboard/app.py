@@ -11,6 +11,9 @@ from sklearn.ensemble import RandomForestRegressor
 import base64
 from pathlib import Path
 
+# --- Configuração da página (DEVE SER A PRIMEIRA COMANDO STREAMLIT) ---
+st.set_page_config(layout="wide", page_title="SIMPREDE", page_icon="🌍")
+
 def get_base64_image(image_path):
     try:
         with open(image_path, "rb") as f:
@@ -36,13 +39,9 @@ except Exception as e:
     logo_uab = ""
     logo_lei = ""
 
-# --- Configuração Supabase ---
 url = "https://kyrfsylobmsdjlrrpful.supabase.co"
 key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUzNTY4MzEsImV4cCI6MjA2MDkzMjgzMX0.DkPGAw89OH6MPNnCvimfsVJICr5J9n9hcgdgF17cP34"
 supabase: Client = create_client(url, key)
-
-# --- Configuração da página ---
-st.set_page_config(layout="wide", page_title="SIMPREDE", page_icon="🌍")
 
 
 # Definir cores globais consistentes
