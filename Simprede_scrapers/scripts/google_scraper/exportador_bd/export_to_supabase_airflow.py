@@ -9,6 +9,7 @@ import argparse
 import pandas as pd
 import psycopg2
 import re
+from dotenv import load_dotenv, find_dotenv
 from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
@@ -20,12 +21,15 @@ try:
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(line_buffering=True)  # type: ignore
     if hasattr(sys.stderr, 'reconfigure'):
-        sys.stderr.reconfigure(line_buffering=True)  # type: ignore
+    sys.stderr.reconfigure(line_buffering=True)  # type: ignore
 except AttributeError:
     # Fallback for older Python versions
     import io
     sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
     sys.stderr = io.TextIOWrapper(open(sys.stderr.fileno(), 'wb', 0), write_through=True)
+
+# Load environment variables from the project root
+load_dotenv(find_dotenv())
 
 # Configure logging for Airflow compatibility
 def setup_airflow_logging():
@@ -778,5 +782,3 @@ def main():
         log_progress(f"❌ Traceback completo: {traceback.format_exc()}", "error")
         return 1
 
-if __name__ == "__main__":
-    sys.exit(main())

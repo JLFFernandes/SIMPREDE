@@ -7,11 +7,11 @@ import psycopg2
 from sqlalchemy import create_engine
 import logging
 from typing import List, Dict, Any, Literal
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import geopandas as gpd
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from the project root
+load_dotenv(find_dotenv())
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -378,5 +378,3 @@ def main():
     else:
         print(f"Concelho shapefile not found at: {concelho_shapefile}")
 
-if __name__ == "__main__":
-    main()
