@@ -17,9 +17,13 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from pathlib import Path
 import shutil
+from dotenv import load_dotenv, find_dotenv
 
 # Add the google_scraper directory to Python path for imports
 sys.path.insert(0, '/opt/airflow/scripts/google_scraper')
+
+# Load environment variables from the project root
+load_dotenv(find_dotenv())
 
 try:
     from google.cloud import storage

@@ -4,10 +4,10 @@
 import os
 import psycopg2
 import time
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-# 🔐 Carregar variáveis do .env
-load_dotenv()
+# 🔐 Carregar variáveis do .env raiz
+load_dotenv(find_dotenv())
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")

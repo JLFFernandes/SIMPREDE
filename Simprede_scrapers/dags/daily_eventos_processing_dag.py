@@ -6,8 +6,12 @@
 SIMPREDE Daily Eventos Processing Pipeline
 """
 import os
+from dotenv import load_dotenv, find_dotenv
 from datetime import datetime, timedelta
 from airflow import DAG
+
+# Load environment variables from the project root
+load_dotenv(find_dotenv())
 from airflow.operators.python import PythonOperator
 
 # Configuração de importações seguras
