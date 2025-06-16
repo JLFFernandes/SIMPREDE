@@ -32,7 +32,6 @@ mkdir -p /opt/airflow/config
 mkdir -p /opt/airflow/logs/gcs_export
 mkdir -p /opt/airflow/data/{raw,structured,processed}
 mkdir -p /opt/airflow/dags
-mkdir -p /opt/airflow/plugins
 
 # Set proper permissions if running as root
 if [ "$AS_ROOT" = "true" ]; then
@@ -40,7 +39,6 @@ if [ "$AS_ROOT" = "true" ]; then
     chown -R airflow:root /opt/airflow/logs/gcs_export
     chown -R airflow:root /opt/airflow/data
     chown -R airflow:root /opt/airflow/dags
-    chown -R airflow:root /opt/airflow/plugins
 fi
 
 # Source environment variables if .env file exists
