@@ -12,12 +12,29 @@ import base64
 from pathlib import Path
 
 def get_base64_image(image_path):
-    with open(image_path, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode("utf-8")
+    try:
+        with open(image_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode("utf-8")
+    except FileNotFoundError:
+        # Return a placeholder or empty string if image not found
+        st.warning(f"Image file {image_path} not found. Using placeholder.")
+        # Create a simple 1x1 transparent PNG as fallback
+        import io
+        from PIL import Image
+        img = Image.new('RGBA', (1, 1), (0, 0, 0, 0))
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-logo_uab = get_base64_image("UAB.png")
-logo_lei = get_base64_image("LEI.png")
+try:
+    logo_uab = get_base64_image("UAB.png")
+    logo_lei = get_base64_image("LEI.png")
+except Exception as e:
+    st.error(f"Error loading images: {e}")
+    # Use empty placeholders
+    logo_uab = ""
+    logo_lei = ""
 
 # --- Configuração Supabase ---
 url = "https://kyrfsylobmsdjlrrpful.supabase.co"
@@ -154,7 +171,7 @@ st.markdown(f"""
 
     <div class="title-box">
         <div class="logo-img logo-left">
-            <img src="data:image/png;base64,{logo_lei}" alt="Logotipo LEI">
+            {f'<img src="data:image/png;base64,{logo_lei}" alt="Logotipo LEI">' if logo_lei else '<div style="width: 170px; height: 170px;"></div>'}
         </div>
         <div class="title-text">
             <h1>SIMPREDE</h1>
@@ -162,7 +179,7 @@ st.markdown(f"""
             <div class="subtitle-small">Universidade Aberta</div>
         </div>
         <div class="logo-img logo-right">
-            <img src="data:image/png;base64,{logo_uab}" alt="Logotipo UAb">
+            {f'<img src="data:image/png;base64,{logo_uab}" alt="Logotipo UAb">' if logo_uab else '<div style="width: 170px; height: 170px;"></div>'}
         </div>
     </div>
     <hr>
