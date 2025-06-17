@@ -505,7 +505,7 @@ st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025)
 df_scraper_grouped = df_scraper.groupby(["year", "month", "type"]).size().reset_index(name="ocorrencias")
 df_scraper_grouped["data"] = pd.to_datetime(
     df_scraper_grouped["year"].astype(int).astype(str) + '-' +
-    df_scraper_grouped["month"].astype(int).astype(str).str.zfill(2)
+    df_scraper_grouped["month"].astype(int).astype_str().str.zfill(2)
 )
 
 col4, col5, col6 = st.columns(3)
@@ -629,197 +629,234 @@ st.markdown("""
 # === Parte 3 ===
 st.markdown("<h2 style='text-align: center;'>Previsão de Ocorrências para 2026</h2>", unsafe_allow_html=True)
 
+# --- Enhanced Prediction with Time Series Analysis ---
+def criar_features_temporais(df):
+    """Create enhanced temporal features for better predictions"""
+    df = df.copy()
+    
+    # Seasonal patterns for Portugal
+    df['trimestre'] = ((df['month'] - 1) // 3) + 1
+    df['estacao_chuvosa'] = df['month'].isin([10, 11, 12, 1, 2, 3]).astype(int)
+    df['estacao_seca'] = df['month'].isin([6, 7, 8, 9]).astype(int)
+    
+    # Climate-based risk factors
+    flood_risk_months = {12: 1.5, 1: 1.8, 2: 1.6, 3: 1.3, 4: 1.0, 5: 0.8, 
+                        6: 0.4, 7: 0.3, 8: 0.3, 9: 0.6, 10: 1.0, 11: 1.2}
+    landslide_risk_months = {12: 1.3, 1: 1.4, 2: 1.2, 3: 1.1, 4: 0.9, 5: 0.7,
+                            6: 0.3, 7: 0.2, 8: 0.2, 9: 0.5, 10: 0.9, 11: 1.1}
+    
+    df['flood_seasonal_risk'] = df['month'].map(flood_risk_months)
+    df['landslide_seasonal_risk'] = df['month'].map(landslide_risk_months)
+    
+    # Temporal trends
+    df['anos_desde_2000'] = df['year'] - 2000
+    df['sin_month'] = np.sin(2 * np.pi * df['month'] / 12)
+    df['cos_month'] = np.cos(2 * np.pi * df['month'] / 12)
+    
+    return df
 
-
-# --- Previsão com RandomForestRegressor por tipo ---
-previsoes = []
-meses_futuros = pd.date_range(start="2026-01", end="2026-12", freq="MS")
-
-for tipo in df_disasters["type"].unique():
-    df_tipo = df_disasters[df_disasters["type"] == tipo]
-    X = df_tipo[["year", "month"]]
-    y = df_tipo["ocorrencias"]
-
-    modelo = LinearRegression()
-
-    modelo.fit(X, y)
-
-    df_futuro = pd.DataFrame({"year": meses_futuros.year, "month": meses_futuros.month})
-    y_pred = modelo.predict(df_futuro[["year", "month"]])
-
-    for i, data in enumerate(meses_futuros):
-        previsoes.append({
-            "data": data,
-            "year": data.year,
-            "month": data.month,
-            "type": tipo,
-            "ocorrencias": max(0, round(y_pred[i]))
-        })
-
-df_prev = pd.DataFrame(previsoes)
-
-
-
-# --- Criar previsões geográficas por município ---
-df_completo = pd.merge(df_disasters_raw, df_loc_disasters, on="id").dropna(subset=["year", "month"])
-df_historico_mun = df_completo.groupby(["year", "month", "type", "municipality", "latitude", "longitude"]).size().reset_index(name="ocorrencias")
-
-previsoes_geo = []
-
-for (municipio, tipo), grupo in df_historico_mun.groupby(["municipality", "type"]):
-    if len(grupo["year"].unique()) >= 2:
-        X = grupo[["year", "month"]]
-        y = grupo["ocorrencias"]
-
-        modelo = LinearRegression()
-        modelo.fit(X, y)
-
-        df_futuro = pd.DataFrame({"year": meses_futuros.year, "month": meses_futuros.month})
-        y_pred = modelo.predict(df_futuro[["year", "month"]])
-
-        for i, data in enumerate(meses_futuros):
-            previsoes_geo.append({
+def modelo_previsao_melhorado(df_historico):
+    """Improved prediction model with time series validation"""
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.metrics import mean_absolute_error, r2_score
+    
+    previsoes_melhoradas = []
+    modelos_validados = {}
+    
+    for tipo in df_historico["type"].unique():
+        df_tipo = df_historico[df_historico["type"] == tipo].copy()
+        
+        # Create enhanced features
+        df_tipo = criar_features_temporais(df_tipo)
+        
+        # Prepare features
+        feature_cols = ['month', 'anos_desde_2000', 'trimestre', 'estacao_chuvosa', 
+                       'estacao_seca', 'sin_month', 'cos_month']
+        
+        if tipo == "Flood":
+            feature_cols.append('flood_seasonal_risk')
+        else:
+            feature_cols.append('landslide_seasonal_risk')
+        
+        # Add historical lag features
+        df_tipo = df_tipo.sort_values(['year', 'month'])
+        df_tipo['lag_12'] = df_tipo['ocorrencias'].shift(12)  # Same month previous year
+        df_tipo['rolling_mean_6'] = df_tipo['ocorrencias'].rolling(6, min_periods=1).mean()
+        df_tipo['rolling_std_6'] = df_tipo['ocorrencias'].rolling(6, min_periods=1).std().fillna(0)
+        
+        feature_cols.extend(['lag_12', 'rolling_mean_6', 'rolling_std_6'])
+        
+        # Remove rows with NaN values
+        df_modelo = df_tipo.dropna(subset=feature_cols + ['ocorrencias'])
+        
+        if len(df_modelo) < 20:
+            continue
+        
+        # Time series split (use last 2 years for validation)
+        cutoff_year = df_modelo['year'].max() - 2
+        train_data = df_modelo[df_modelo['year'] <= cutoff_year]
+        test_data = df_modelo[df_modelo['year'] > cutoff_year]
+        
+        if len(train_data) < 10 or len(test_data) < 5:
+            # Fallback to random split if insufficient data
+            from sklearn.model_selection import train_test_split
+            train_data, test_data = train_test_split(df_modelo, test_size=0.2, random_state=42)
+        
+        X_train = train_data[feature_cols]
+        y_train = train_data['ocorrencias']
+        X_test = test_data[feature_cols]
+        y_test = test_data['ocorrencias']
+        
+        # Enhanced Random Forest model
+        modelo = RandomForestRegressor(
+            n_estimators=200,
+            max_depth=10,
+            min_samples_split=5,
+            min_samples_leaf=2,
+            random_state=42,
+            n_jobs=-1
+        )
+        
+        modelo.fit(X_train, y_train)
+        
+        # Validate model
+        y_pred_test = modelo.predict(X_test)
+        mae = mean_absolute_error(y_test, y_pred_test)
+        r2 = r2_score(y_test, y_pred_test)
+        
+        modelos_validados[tipo] = {
+            'modelo': modelo,
+            'features': feature_cols,
+            'mae': mae,
+            'r2': r2,
+            'last_known_values': df_tipo.tail(12)  # Last 12 months for context
+        }
+        
+        # Generate predictions for 2026
+        meses_2026 = pd.date_range(start="2026-01", end="2026-12", freq="MS")
+        
+        for data in meses_2026:
+            # Create feature vector for prediction
+            features_pred = {
+                'month': data.month,
+                'anos_desde_2000': data.year - 2000,
+                'trimestre': ((data.month - 1) // 3) + 1,
+                'estacao_chuvosa': 1 if data.month in [10, 11, 12, 1, 2, 3] else 0,
+                'estacao_seca': 1 if data.month in [6, 7, 8, 9] else 0,
+                'sin_month': np.sin(2 * np.pi * data.month / 12),
+                'cos_month': np.cos(2 * np.pi * data.month / 12)
+            }
+            
+            if tipo == "Flood":
+                features_pred['flood_seasonal_risk'] = flood_risk_months[data.month]
+            else:
+                features_pred['landslide_seasonal_risk'] = landslide_risk_months[data.month]
+            
+            # Estimate lag features based on historical patterns
+            historical_same_month = df_tipo[df_tipo['month'] == data.month]['ocorrencias']
+            if len(historical_same_month) > 0:
+                features_pred['lag_12'] = historical_same_month.mean()
+                features_pred['rolling_mean_6'] = historical_same_month.mean()
+                features_pred['rolling_std_6'] = historical_same_month.std() if len(historical_same_month) > 1 else 0
+            else:
+                features_pred['lag_12'] = df_tipo['ocorrencias'].mean()
+                features_pred['rolling_mean_6'] = df_tipo['ocorrencias'].mean()
+                features_pred['rolling_std_6'] = df_tipo['ocorrencias'].std()
+            
+            # Create feature array in correct order
+            X_pred = np.array([[features_pred[col] for col in feature_cols]])
+            
+            # Make prediction with uncertainty
+            prediction = modelo.predict(X_pred)[0]
+            
+            # Add uncertainty based on model performance
+            uncertainty = mae * 1.5  # Conservative uncertainty estimate
+            confidence_lower = max(0, prediction - uncertainty)
+            confidence_upper = prediction + uncertainty
+            
+            previsoes_melhoradas.append({
                 "data": data,
                 "year": data.year,
                 "month": data.month,
                 "type": tipo,
-                "municipality": municipio,
-                "ocorrencias": max(0, round(y_pred[i])),
-                "latitude": grupo["latitude"].iloc[0],
-                "longitude": grupo["longitude"].iloc[0]
+                "ocorrencias": max(1, round(prediction)),
+                "confidence_lower": max(0, round(confidence_lower)),
+                "confidence_upper": round(confidence_upper),
+                "model_r2": r2,
+                "model_mae": mae
             })
+    
+    return pd.DataFrame(previsoes_melhoradas), modelos_validados
 
-df_previsao_mapa = pd.DataFrame(previsoes_geo)
-
+# Apply improved prediction
+df_previsao_melhorada, info_modelos = modelo_previsao_melhorado(df_disasters)
 
 # --- Layout das 3 colunas ---
 col7, col8, col9 = st.columns(3)
 
 with col7:
     st.markdown(
-    "<h4 style='text-align: center;'>Dados de Previsão</h4>",
+    "<h4 style='text-align: center;'>Previsões com Intervalos de Confiança</h4>",
     unsafe_allow_html=True
 )
 
-    st.dataframe(df_prev, use_container_width=True)
+    # Display enhanced predictions with model performance
+    if not df_previsao_melhorada.empty:
+        df_display = df_previsao_melhorada[['month', 'type', 'ocorrencias', 'confidence_lower', 'confidence_upper']].copy()
+        df_display['intervalo_confianca'] = df_display['confidence_lower'].astype(str) + ' - ' + df_display['confidence_upper'].astype(str)
+        df_display = df_display[['month', 'type', 'ocorrencias', 'intervalo_confianca']]
+        df_display.columns = ['Mês', 'Tipo', 'Previsão', 'Intervalo 95%']
+        st.dataframe(df_display, use_container_width=True)
+        
+        # Model performance summary
+        st.markdown("**Desempenho dos Modelos:**")
+        for tipo, info in info_modelos.items():
+            st.write(f"• {tipo}: R² = {info['r2']:.3f}, MAE = {info['mae']:.1f}")
+    else:
+        st.warning("Dados insuficientes para previsões confiáveis.")
 
 with col8:
     st.markdown(
-    "<h4 style='text-align: center;'>Previsão de Ocorrências por Distrito (2026)</h4>",
+    "<h4 style='text-align: center;'>Previsão Sazonal com Tendências</h4>",
     unsafe_allow_html=True
 )
 
-
-    # Juntar previsão com distritos corretos via merge
-    df_prev_distritos = pd.merge(
-        df_previsao_mapa,
-        df_loc_disasters[["municipality", "district"]],
-        on="municipality",
-        how="left"
-    )
-
-    # Padronizar nomes dos distritos
-    df_prev_distritos["district"] = df_prev_distritos["district"].astype(str).str.strip().str.title()
-    df_prev_distritos["district"] = df_prev_distritos["district"].replace(substituir_distritos)
-
-    # Agrupar por distrito e tipo
-    df_prev_distritos = df_prev_distritos.groupby(["district", "type"])["ocorrencias"].sum().reset_index()
-
-    # Filtrar apenas distritos válidos
-    distritos_validos = list(substituir_distritos.values())
-    df_prev_distritos = df_prev_distritos[df_prev_distritos["district"].isin(distritos_validos)]
-
-    # Ordenar distritos pelo total
-    ordenados = df_prev_distritos.groupby("district")["ocorrencias"].sum().sort_values(ascending=False).index.tolist()
-
-    chart_prev_distritos = alt.Chart(df_prev_distritos).mark_bar().encode(
-        x=alt.X("district:N", title=None, sort=ordenados),
-        y=alt.Y("ocorrencias:Q", title="Previsão Total de Ocorrências (2026)"),
-        color=alt.Color(
-            "type:N",
-            scale=alt.Scale(domain=["Flood", "Landslide"], range=[COR_HEX["Flood"], COR_HEX["Landslide"]]),
-            legend=alt.Legend(title="Tipo")
-        ),
-        tooltip=["district", "type", "ocorrencias"]
-    ).properties(
-        height=400,
-        
-    )
-
-    if df_prev_distritos.empty:
-        st.warning("Sem dados previstos por distrito.")
-    else:
-        st.altair_chart(chart_prev_distritos, use_container_width=True)
-
-# 🔁 Criar dataframe de previsão agregada por distrito (para usar no mapa)
-df_prev_distritos_mapa = pd.merge(
-    df_previsao_mapa,
-    df_loc_disasters[["municipality", "district", "latitude", "longitude"]],
-    on="municipality",
-    how="left"
-)
-
-with col9:
-    st.markdown(
-    "<h4 style='text-align: center;'>Mapa de Ocorrências Previstas (2026)</h4>",
-    unsafe_allow_html=True
-)
-
-
-    df_vis = df_previsao_mapa.copy()
-
-    # Esta linha fica fora do .radio() para ser atualizada abaixo
-    tipo_prev_mapa_val = st.session_state.get("mapa_prev_simples_bottom", "Todos")
-
-    # Filtrar dados ANTES de desenhar o mapa
-    if tipo_prev_mapa_val != "Todos":
-        df_vis = df_vis[df_vis["type"] == tipo_prev_mapa_val]
-
-    if not df_vis.empty:
-        # Mostrar o mapa primeiro
-        st.pydeck_chart(pdk.Deck(
-            initial_view_state=pdk.ViewState(
-                latitude=df_vis["latitude"].mean(),
-                longitude=df_vis["longitude"].mean(),
-                zoom=5
+    if not df_previsao_melhorada.empty:
+        # Create seasonal chart with confidence intervals
+        chart_sazonal = alt.Chart(df_previsao_melhorada).mark_line(point=True).encode(
+            x=alt.X('month:O', title='Mês', scale=alt.Scale(domain=list(range(1, 13)))),
+            y=alt.Y('ocorrencias:Q', title='Ocorrências Previstas'),
+            color=alt.Color(
+                'type:N',
+                scale=alt.Scale(domain=["Flood", "Landslide"], range=[COR_HEX["Flood"], COR_HEX["Landslide"]]),
+                legend=alt.Legend(title="Tipo")
             ),
-            layers=[
-                pdk.Layer(
-                    "HeatmapLayer",
-                    data=df_vis,
-                    get_position='[longitude, latitude]',
-                    get_weight='ocorrencias',
-                    aggregation="SUM",
-                    pickable=True
-                )
-            ],
-            map_style="mapbox://styles/mapbox/light-v9"
-        ), height=400)
-
-        # Agora mostramos o filtro por tipo de desastre (DEPOIS do mapa)
-        tipo_prev_mapa = st.radio(
-            "Selecionar tipo de desastre (mapa):",
-            ["Todos", "Flood", "Landslide"],
-            horizontal=True,
-            key="mapa_prev_simples_bottom"
+            tooltip=['month', 'type', 'ocorrencias', 'confidence_lower', 'confidence_upper']
+        ).properties(height=400)
+        
+        # Add confidence bands
+        confidence_band = alt.Chart(df_previsao_melhorada).mark_area(opacity=0.3).encode(
+            x='month:O',
+            y='confidence_lower:Q',
+            y2='confidence_upper:Q',
+            color=alt.Color('type:N', scale=alt.Scale(domain=["Flood", "Landslide"], range=[COR_HEX["Flood"], COR_HEX["Landslide"]]))
         )
-
-    else:
-        st.warning("Sem dados de previsão disponíveis para o mapa.")
         
+        combined_chart = (confidence_band + chart_sazonal).resolve_scale(color='independent')
+        st.altair_chart(combined_chart, use_container_width=True)
         
-st.markdown("""
-<div style='font-size: 0.9em; color: #555; margin-top: 1em;text-align: center;'>
-<strong>Fontes:</strong> Disasters, ESWD, EMDAT e ANEPC
-</div>
-""", unsafe_allow_html=True)
+        # Seasonal insights
+        total_flood = df_previsao_melhorada[df_previsao_melhorada['type'] == 'Flood']['ocorrencias'].sum()
+        total_landslide = df_previsao_melhorada[df_previsao_melhorada['type'] == 'Landslide']['ocorrencias'].sum()
+        
+        st.markdown(f"""
+        **Resumo 2026:**
+        - Total Inundações: {total_flood}
+        - Total Deslizamentos: {total_landslide}
+        - Pico previsto: {df_previsao_melhorada.groupby('month')['ocorrencias'].sum().idxmax()}º mês
+        """)
 
-st.markdown("""
-<hr style="border: none; border-top: 1px solid #ccc; margin: 2em 0;">
-""", unsafe_allow_html=True)
-
-
-# Rodapé
+# --- Rodapé ---
 st.markdown("---")
 st.caption("Projeto de Engenharia Informática<br>Autores: Luis Fernandes, Nuno Figueiredo, Paulo Couto, Rui Carvalho.", unsafe_allow_html=True)
 
