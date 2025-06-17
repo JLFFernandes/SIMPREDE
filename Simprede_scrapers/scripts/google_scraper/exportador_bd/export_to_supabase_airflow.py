@@ -21,7 +21,7 @@ try:
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(line_buffering=True)  # type: ignore
     if hasattr(sys.stderr, 'reconfigure'):
-    sys.stderr.reconfigure(line_buffering=True)  # type: ignore
+        sys.stderr.reconfigure(line_buffering=True)  # type: ignore
 except AttributeError:
     # Fallback for older Python versions
     import io
