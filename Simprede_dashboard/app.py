@@ -16,18 +16,18 @@ st.set_page_config(layout="wide", page_title="SIMPREDE", page_icon="🌍")
 
 def get_base64_image(image_path):
     try:
-        # Get the directory where this script is located
+        # Obter o diretório onde este script está localizado
         script_dir = Path(__file__).parent
-        # Create full path to the image
+        # Criar caminho completo para a imagem
         full_image_path = script_dir / image_path
         
         with open(full_image_path, "rb") as f:
             data = f.read()
         return base64.b64encode(data).decode("utf-8")
     except FileNotFoundError:
-        # Return a placeholder or empty string if image not found
+        # Retornar um placeholder ou string vazia se a imagem não for encontrada
         st.warning(f"Image file {image_path} not found at {full_image_path}. Using placeholder.")
-        # Create a simple 1x1 transparent PNG as fallback
+        # Criar um PNG transparente simples 1x1 como alternativa
         import io
         from PIL import Image
         img = Image.new('RGBA', (1, 1), (0, 0, 0, 0))
@@ -40,7 +40,7 @@ try:
     logo_lei = get_base64_image("LEI.png")
 except Exception as e:
     st.error(f"Error loading images: {e}")
-    # Use empty placeholders
+    # Usar placeholders vazios
     logo_uab = ""
     logo_lei = ""
 
@@ -631,15 +631,15 @@ st.markdown("<h2 style='text-align: center;'>Previsão de Ocorrências para 2026
 
 # --- Enhanced Prediction with Time Series Analysis ---
 def criar_features_temporais(df):
-    """Create enhanced temporal features for better predictions"""
+    """Criar características temporais melhoradas para melhores previsões"""
     df = df.copy()
     
-    # Seasonal patterns for Portugal
+    # Padrões sazonais para Portugal
     df['trimestre'] = ((df['month'] - 1) // 3) + 1
     df['estacao_chuvosa'] = df['month'].isin([10, 11, 12, 1, 2, 3]).astype(int)
     df['estacao_seca'] = df['month'].isin([6, 7, 8, 9]).astype(int)
     
-    # Climate-based risk factors
+    # Fatores de risco baseados no clima
     flood_risk_months = {12: 1.5, 1: 1.8, 2: 1.6, 3: 1.3, 4: 1.0, 5: 0.8, 
                         6: 0.4, 7: 0.3, 8: 0.3, 9: 0.6, 10: 1.0, 11: 1.2}
     landslide_risk_months = {12: 1.3, 1: 1.4, 2: 1.2, 3: 1.1, 4: 0.9, 5: 0.7,
@@ -648,7 +648,7 @@ def criar_features_temporais(df):
     df['flood_seasonal_risk'] = df['month'].map(flood_risk_months)
     df['landslide_seasonal_risk'] = df['month'].map(landslide_risk_months)
     
-    # Temporal trends
+    # Tendências temporais
     df['anos_desde_2000'] = df['year'] - 2000
     df['sin_month'] = np.sin(2 * np.pi * df['month'] / 12)
     df['cos_month'] = np.cos(2 * np.pi * df['month'] / 12)
@@ -656,14 +656,14 @@ def criar_features_temporais(df):
     return df
 
 def modelo_previsao_melhorado(df_historico):
-    """Improved prediction model with time series validation"""
+    """Modelo de previsão melhorado com validação de séries temporais"""
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.metrics import mean_absolute_error, r2_score
     
     previsoes_melhoradas = []
     modelos_validados = {}
     
-    # Define flood and landslide risk by month - moved this variable inside function scope
+    # Definir risco de inundação e deslizamento por mês - variável movida para dentro do escopo da função
     flood_risk_months = {12: 1.5, 1: 1.8, 2: 1.6, 3: 1.3, 4: 1.0, 5: 0.8, 
                         6: 0.4, 7: 0.3, 8: 0.3, 9: 0.6, 10: 1.0, 11: 1.2}
     landslide_risk_months = {
@@ -674,10 +674,10 @@ def modelo_previsao_melhorado(df_historico):
     for tipo in df_historico["type"].unique():
         df_tipo = df_historico[df_historico["type"] == tipo].copy()
         
-        # Create enhanced features
+        # Criar características melhoradas
         df_tipo = criar_features_temporais(df_tipo)
         
-        # Prepare features
+        # Preparar características
         feature_cols = ['month', 'anos_desde_2000', 'trimestre', 'estacao_chuvosa', 
                        'estacao_seca', 'sin_month', 'cos_month']
         
@@ -686,27 +686,27 @@ def modelo_previsao_melhorado(df_historico):
         else:
             feature_cols.append('landslide_seasonal_risk')
         
-        # Add historical lag features
+        # Adicionar características de atraso histórico
         df_tipo = df_tipo.sort_values(['year', 'month'])
-        df_tipo['lag_12'] = df_tipo['ocorrencias'].shift(12)  # Same month previous year
+        df_tipo['lag_12'] = df_tipo['ocorrencias'].shift(12)  # Mesmo mês do ano anterior
         df_tipo['rolling_mean_6'] = df_tipo['ocorrencias'].rolling(6, min_periods=1).mean()
         df_tipo['rolling_std_6'] = df_tipo['ocorrencias'].rolling(6, min_periods=1).std().fillna(0)
         
         feature_cols.extend(['lag_12', 'rolling_mean_6', 'rolling_std_6'])
         
-        # Remove rows with NaN values
+        # Remover linhas com valores NaN
         df_modelo = df_tipo.dropna(subset=feature_cols + ['ocorrencias'])
         
         if len(df_modelo) < 20:
             continue
         
-        # Time series split (use last 2 years for validation)
+        # Divisão de séries temporais (usar os últimos 2 anos para validação)
         cutoff_year = df_modelo['year'].max() - 2
         train_data = df_modelo[df_modelo['year'] <= cutoff_year]
         test_data = df_modelo[df_modelo['year'] > cutoff_year]
         
         if len(train_data) < 10 or len(test_data) < 5:
-            # Fallback to random split if insufficient data
+            # Recorrer a divisão aleatória se os dados forem insuficientes
             from sklearn.model_selection import train_test_split
             train_data, test_data = train_test_split(df_modelo, test_size=0.2, random_state=42)
         
@@ -715,7 +715,7 @@ def modelo_previsao_melhorado(df_historico):
         X_test = test_data[feature_cols]
         y_test = test_data['ocorrencias']
         
-        # Enhanced Random Forest model
+        # Modelo Random Forest melhorado
         modelo = RandomForestRegressor(
             n_estimators=200,
             max_depth=10,
@@ -727,7 +727,7 @@ def modelo_previsao_melhorado(df_historico):
         
         modelo.fit(X_train, y_train)
         
-        # Validate model
+        # Validar modelo
         y_pred_test = modelo.predict(X_test)
         mae = mean_absolute_error(y_test, y_pred_test)
         r2 = r2_score(y_test, y_pred_test)
@@ -737,14 +737,14 @@ def modelo_previsao_melhorado(df_historico):
             'features': feature_cols,
             'mae': mae,
             'r2': r2,
-            'last_known_values': df_tipo.tail(12)  # Last 12 months for context
+            'last_known_values': df_tipo.tail(12)  # Últimos 12 meses para contexto
         }
         
-        # Generate predictions for 2026
+        # Gerar previsões para 2026
         meses_2026 = pd.date_range(start="2026-01", end="2026-12", freq="MS")
         
         for data in meses_2026:
-            # Create feature vector for prediction
+            # Criar vetor de características para previsão
             features_pred = {
                 'month': data.month,
                 'anos_desde_2000': data.year - 2000,
@@ -760,7 +760,7 @@ def modelo_previsao_melhorado(df_historico):
             else:
                 features_pred['landslide_seasonal_risk'] = landslide_risk_months[data.month]
             
-            # Estimate lag features based on historical patterns
+            # Estimar características de atraso com base em padrões históricos
             historical_same_month = df_tipo[df_tipo['month'] == data.month]['ocorrencias']
             if len(historical_same_month) > 0:
                 features_pred['lag_12'] = historical_same_month.mean()
@@ -771,14 +771,14 @@ def modelo_previsao_melhorado(df_historico):
                 features_pred['rolling_mean_6'] = df_tipo['ocorrencias'].mean()
                 features_pred['rolling_std_6'] = df_tipo['ocorrencias'].std()
             
-            # Create feature array in correct order
+            # Criar array de características na ordem correta
             X_pred = np.array([[features_pred[col] for col in feature_cols]])
             
-            # Make prediction with uncertainty
+            # Fazer previsão com incerteza
             prediction = modelo.predict(X_pred)[0]
             
-            # Add uncertainty based on model performance
-            uncertainty = mae * 1.5  # Conservative uncertainty estimate
+            # Adicionar incerteza com base no desempenho do modelo
+            uncertainty = mae * 1.5  # Estimativa conservadora de incerteza
             confidence_lower = max(0, prediction - uncertainty)
             confidence_upper = prediction + uncertainty
             
@@ -808,7 +808,7 @@ with col7:
     unsafe_allow_html=True
 )
 
-    # Display enhanced predictions with model performance
+    # Exibir previsões melhoradas com desempenho do modelo
     if not df_previsao_melhorada.empty:
         df_display = df_previsao_melhorada[['month', 'type', 'ocorrencias', 'confidence_lower', 'confidence_upper']].copy()
         df_display['intervalo_confianca'] = df_display['confidence_lower'].astype(str) + ' - ' + df_display['confidence_upper'].astype(str)
@@ -816,12 +816,6 @@ with col7:
         df_display.columns = ['Mês', 'Tipo', 'Previsão', 'Intervalo 95%']
         st.dataframe(df_display, use_container_width=True)
         
-        # Model performance summary
-        st.markdown("**Desempenho dos Modelos:**")
-        for tipo, info in info_modelos.items():
-            st.write(f"• {tipo}: R² = {info['r2']:.3f}, MAE = {info['mae']:.1f}")
-    else:
-        st.warning("Dados insuficientes para previsões confiáveis.")
 
 with col8:
     st.markdown(
@@ -871,19 +865,19 @@ with col9:
     )
 
     if not df_previsao_melhorada.empty:
-        # Create a sample of prediction locations based on historical data
-        # Use locations from df_scraper as a basis for future predictions
+        # Criar uma amostra de locais de previsão com base em dados históricos
+        # Usar locais de df_scraper como base para previsões futuras
         if not df_scraper.empty:
-            # Sample representative locations for predictions
+            # Amostrar locais representativos para previsões
             sample_locations = df_scraper.groupby(['district', 'type']).agg({
                 'latitude': 'mean',
                 'longitude': 'mean'
             }).reset_index()
             
-            # Merge with predictions to show expected occurrences by location
+            # Mesclar com previsões para mostrar ocorrências esperadas por local
             df_pred_map = []
             for _, pred_row in df_previsao_melhorada.iterrows():
-                # Get locations for this disaster type
+                # Obter locais para este tipo de desastre
                 type_locations = sample_locations[sample_locations['type'] == pred_row['type']]
                 
                 for _, loc in type_locations.iterrows():
@@ -899,7 +893,7 @@ with col9:
             if df_pred_map:
                 df_pred_map = pd.DataFrame(df_pred_map)
                 
-                # Create prediction map
+                # Criar mapa de previsão
                 fig_pred_map = px.scatter_map(
                     df_pred_map,
                     lat="latitude",
