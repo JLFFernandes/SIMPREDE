@@ -6,9 +6,10 @@
 SIMPREDE Daily Eventos Processing Pipeline
 """
 import os
-from dotenv import load_dotenv, find_dotenv
 from datetime import datetime, timedelta
+
 from airflow import DAG
+from dotenv import find_dotenv, load_dotenv
 
 # Load environment variables from the project root
 load_dotenv(find_dotenv())
@@ -527,135 +528,3 @@ atualizar_geometria_task = PythonOperator(
 # Define dependências de forma limpa
 configurar_ligacao_task >> verificar_staging_task >> processar_dados_task
 processar_dados_task >> atualizar_coordenadas_task >> atualizar_geometria_task
-
-# Documentation
-dag.doc_md = """
-# SIMPREDE Daily Eventos Processing Pipeline
-
-## Overview
-This DAG processes daily staging data from Google Scraper results and appends it to the main eventos table with proper georeference data.
-
-## Schedule
-- **Runs daily at 6:00 AM**
-- **Processes yesterday's staging data** (based on execution date)
-
-## Workflow
-
-### 1. Setup Connection (`setup_connection`)
-- Establishes database connection using environment variables
-- Creates connection for subsequent tasks
-
-### 2. Check Staging Table (`check_staging_table`)
-- Verifies that today's staging table exists
-- Checks data availability
-- Format: `google_scraper.artigos_filtrados_YYYYMMDD_staging`
-
-### 3. Append Data (`append_staging_to_eventos`)
-- Inserts new records from staging to eventos table
-- **Avoids duplicates** using source, date, and location matching
-- Creates unique IDs for new events
-- **Preserves data integrity**
-
-### 4. Update Coordinates (`update_coordinates`)
-- Adds latitude/longitude from centroids table
-- Uses hierarchy: freguesia → concelho → distrito
-- **Enables mapping and spatial analysis**
-
-### 5. Update Geometry (`update_geometry`)
-- Creates PostGIS geometry or WKT format
-- **Enables GIS operations and visualization**
-
-### 6. Cleanup (`cleanup_old_staging_tables`)
-- Removes staging tables older than 7 days
-- **Keeps database clean and manageable**
-
-### 7. Copy to Public Schema (`copy_to_public_schema`)
-- Copies processed eventos data to a public schema table
-- **Simplifies access** for querying and integration with other tools
-
-## Configuration
-
-### Default Execution
-The DAG automatically processes the staging table for the execution date:
-```
-google_scraper.artigos_filtrados_20250115_staging
-```
-
-### Custom Configuration
-Pass parameters via DAG configuration:
-```json
-{
-  "staging_table": "google_scraper.artigos_filtrados_20250114_staging"
-}
-```
-
-## Integration with Google Scraper
-
-### Typical Daily Flow:
-1. **Google Scraper DAG runs** (creates staging table)
-2. **This DAG runs at 6 AM** (processes staging data)
-3. **Main eventos table updated** with new georeferenced events
-
-### Staging Table Requirements:
-The staging table should have these columns:
-- `ID`, `date`, `year`, `month`, `day`, `hour`
-- `type`, `subtype`, `evento_nome`
-- `district`, `municipali`, `parish`, `georef`, `DICOFREG`
-- `fatalities`, `injured`, `evacuated`, `displaced`, `missing`
-- `source`, `sourcedate`, `sourcetype`, `page`
-
-## Monitoring
-
-### Key Metrics Tracked:
-- Staging table row count
-- New records inserted
-- Duplicate records skipped
-- Coordinate matching success rate
-- Geometry creation success
-
-### XCom Data Available:
-- `append_results`: Insert statistics
-- `coordinate_update_results`: Georeferencing stats
-- `geometry_update_results`: Geometry creation stats
-- `cleanup_results`: Table cleanup stats
-- `copy_to_public_results`: Public schema copy stats
-
-## Error Handling
-
-### Resilient Design:
-- **2 retries** with 5-minute delays
-- **Continues processing** even if staging table is empty
-- **Graceful handling** of missing centroids data
-- **Detailed logging** for troubleshooting
-
-### Common Scenarios:
-- **No staging table**: Logs error and fails (expected behavior)
-- **Empty staging table**: Logs warning and continues
-- **Missing centroids**: Events created without coordinates
-- **No PostGIS**: Falls back to simple WKT geometry
-
-## Performance Considerations
-
-### Optimizations:
-- **Duplicate detection** using EXISTS clause (efficient)
-- **Batch operations** for coordinate updates
-- **Indexed lookups** for centroids matching
-- **Cleanup routine** prevents database bloat
-
-### Expected Processing Times:
-- Small datasets (< 1000 events): 2-5 minutes
-- Medium datasets (1000-10000 events): 5-15 minutes
-- Large datasets (> 10000 events): 15-30 minutes
-
-## Maintenance
-
-### Weekly Tasks:
-- Monitor staging table creation patterns
-- Check coordinate matching success rates
-- Verify geometry data quality
-
-### Monthly Tasks:
-- Review cleanup effectiveness
-- Analyze processing performance trends
-- Update centroids data if needed
-"""

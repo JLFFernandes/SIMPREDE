@@ -527,3 +527,102 @@ print('Providers instalados correctamente')
 **SIMPREDE** - Sistema Integrado de Monitorização e Prevenção de Desastres  
 Desenvolvido para automatização de pipelines de dados de eventos de desastres naturais.
 
+## Instalação no Windows
+
+Para executar o SIMPREDE no Windows, recomendamos utilizar o Windows Subsystem for Linux 2 (WSL2), pois o sistema foi desenvolvido para ambientes Unix/Linux.
+
+### Requisitos para Windows
+
+- Windows 10 versão 1903 ou superior (build 18362 ou superior)
+- Acesso de administrador ao seu computador
+- Mínimo de 8GB de RAM recomendado
+- 10GB de espaço livre em disco
+
+### Instalação Automática com WSL2 (Recomendado)
+
+1. **Download do Script de Instalação**:
+   - Baixe o [script de instalação automática](scripts/instalar-wsl2-para-simprede.ps1)
+   - Salve como `instalar-wsl2-para-simprede.ps1`
+
+2. **Executar o Script como Administrador**:
+   - Clique com o botão direito no PowerShell e selecione "Executar como administrador"
+   - Navegue até a pasta onde salvou o script
+   - Execute: 
+     ```powershell
+     Set-ExecutionPolicy Bypass -Scope Process -Force
+     .\instalar-wsl2-para-simprede.ps1
+     ```
+   - Siga as instruções na tela
+
+3. **Reiniciar o Computador**:
+   - Quando solicitado, reinicie o computador para finalizar a instalação
+
+4. **Finalizar a Configuração**:
+   - Após reiniciar, abra o Ubuntu pelo menu Iniciar
+   - Execute o script de configuração: `~/simprede_wsl_setup.sh`
+
+### Instalação Manual no Windows
+
+Se preferir realizar a instalação manualmente, siga estes passos:
+
+#### 1. Instalar o WSL2
+1. Abra o PowerShell como Administrador
+2. Execute:
+   ```powershell
+   dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+   dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+   ```
+3. Reinicie o computador
+4. Baixe e instale o [pacote de atualização do kernel do WSL2](https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi)
+5. Defina o WSL2 como versão padrão:
+   ```powershell
+   wsl --set-default-version 2
+   ```
+
+#### 2. Instalar o Ubuntu
+1. Abra a Microsoft Store
+2. Pesquise por "Ubuntu"
+3. Selecione "Ubuntu" (sem versão específica) ou "Ubuntu 22.04 LTS"
+4. Clique em "Obter" e aguarde a instalação
+5. Inicie o Ubuntu e crie seu nome de usuário e senha
+
+#### 3. Configurar o ambiente no Ubuntu
+1. Atualize o sistema:
+   ```bash
+   sudo apt update && sudo apt upgrade -y
+   ```
+2. Instale as dependências:
+   ```bash
+   sudo apt install -y git python3-pip python3-venv build-essential libssl-dev libffi-dev python3-dev docker-compose
+   ```
+
+#### 4. Instalar o Docker Desktop
+1. Baixe o [Docker Desktop para Windows](https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe)
+2. Execute o instalador
+3. Durante a instalação, certifique-se de que a opção "Use WSL 2 instead of Hyper-V" está selecionada
+4. Conclua a instalação e reinicie se solicitado
+
+#### 5. Configurar o projeto SIMPREDE
+1. Clone o repositório e configure conforme instruções gerais na seção anterior
+
+### Executando o SIMPREDE no Windows
+
+1. Inicie o Docker Desktop no Windows
+2. Abra o Ubuntu pelo menu Iniciar ou execute `wsl` no PowerShell
+3. Navegue até a pasta do projeto e execute conforme instruções gerais
+
+### Solução de Problemas no Windows
+
+#### Problema: Docker não está disponível no WSL2
+1. Abra o Docker Desktop
+2. Acesse Configurações > Resources > WSL Integration
+3. Ative a integração para sua distribuição Ubuntu
+
+#### Problema: Permissões de arquivo
+Se encontrar problemas de permissão:
+```bash
+sudo chmod -R 755 ~/projects/SIMPREDE/Simprede_scrapers/data
+sudo chmod -R 755 ~/projects/SIMPREDE/Simprede_scrapers/logs
+sudo chmod -R 755 ~/projects/SIMPREDE/Simprede_scrapers/config
+```
+
