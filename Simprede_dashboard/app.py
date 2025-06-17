@@ -505,7 +505,7 @@ st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025)
 df_scraper_grouped = df_scraper.groupby(["year", "month", "type"]).size().reset_index(name="ocorrencias")
 df_scraper_grouped["data"] = pd.to_datetime(
     df_scraper_grouped["year"].astype(int).astype(str) + '-' +
-    df_scraper_grouped["month"].astype(int).astype_str().str.zfill(2)
+    df_scraper_grouped["month"].astype(int).astype(str).str.zfill(2)
 )
 
 col4, col5, col6 = st.columns(3)
@@ -662,6 +662,14 @@ def modelo_previsao_melhorado(df_historico):
     
     previsoes_melhoradas = []
     modelos_validados = {}
+    
+    # Define flood and landslide risk by month - moved this variable inside function scope
+    flood_risk_months = {12: 1.5, 1: 1.8, 2: 1.6, 3: 1.3, 4: 1.0, 5: 0.8, 
+                        6: 0.4, 7: 0.3, 8: 0.3, 9: 0.6, 10: 1.0, 11: 1.2}
+    landslide_risk_months = {
+        1: 0.8, 2: 0.9, 3: 0.7, 4: 0.6, 5: 0.5, 6: 0.3,
+        7: 0.2, 8: 0.2, 9: 0.4, 10: 0.6, 11: 0.7, 12: 0.8
+    }
     
     for tipo in df_historico["type"].unique():
         df_tipo = df_historico[df_historico["type"] == tipo].copy()
@@ -855,6 +863,74 @@ with col8:
         - Total Deslizamentos: {total_landslide}
         - Pico previsto: {df_previsao_melhorada.groupby('month')['ocorrencias'].sum().idxmax()}º mês
         """)
+
+with col9:
+    st.markdown(
+        "<h4 style='text-align: center;'>Mapa de Previsões 2026</h4>",
+        unsafe_allow_html=True
+    )
+
+    if not df_previsao_melhorada.empty:
+        # Create a sample of prediction locations based on historical data
+        # Use locations from df_scraper as a basis for future predictions
+        if not df_scraper.empty:
+            # Sample representative locations for predictions
+            sample_locations = df_scraper.groupby(['district', 'type']).agg({
+                'latitude': 'mean',
+                'longitude': 'mean'
+            }).reset_index()
+            
+            # Merge with predictions to show expected occurrences by location
+            df_pred_map = []
+            for _, pred_row in df_previsao_melhorada.iterrows():
+                # Get locations for this disaster type
+                type_locations = sample_locations[sample_locations['type'] == pred_row['type']]
+                
+                for _, loc in type_locations.iterrows():
+                    df_pred_map.append({
+                        'district': loc['district'],
+                        'type': pred_row['type'],
+                        'month': pred_row['month'],
+                        'predicted_occurrences': pred_row['ocorrencias'],
+                        'latitude': loc['latitude'],
+                        'longitude': loc['longitude']
+                    })
+            
+            if df_pred_map:
+                df_pred_map = pd.DataFrame(df_pred_map)
+                
+                # Create prediction map
+                fig_pred_map = px.scatter_map(
+                    df_pred_map,
+                    lat="latitude",
+                    lon="longitude",
+                    color="type",
+                    size="predicted_occurrences",
+                    hover_data=["district", "month", "predicted_occurrences"],
+                    zoom=4.5,
+                    height=400,
+                    title="Previsões por Localização",
+                    center={"lat": 39.5, "lon": -8.0},
+                    color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
+                )
+                fig_pred_map.update_layout(
+                    mapbox_style="stamen-terrain",
+                    showlegend=True,
+                    margin={"r":0,"t":30,"l":0,"b":0}
+                )
+                st.plotly_chart(fig_pred_map, use_container_width=True)
+                
+                st.markdown("""
+                **Nota:** As localizações são baseadas em padrões históricos.
+                O tamanho dos pontos representa a intensidade prevista.
+                """)
+            else:
+                st.warning("Sem dados de localização para previsões.")
+        else:
+            st.warning("Sem dados históricos de localização disponíveis.")
+    else:
+        st.warning("Sem previsões disponíveis para visualização no mapa.")
+
 
 # --- Rodapé ---
 st.markdown("---")
