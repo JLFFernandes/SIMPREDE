@@ -900,3 +900,20 @@ def main():
         import traceback
         log_progress(f"❌ Full traceback: {traceback.format_exc()}", "error")
         return 1
+
+if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Filter articles with victim information')
+    parser.add_argument('--dias', type=int, default=1, help='Number of days to process')
+    parser.add_argument('--input_file', type=str, help='Input CSV file path')
+    parser.add_argument('--output_dir', type=str, help='Output directory path')
+    parser.add_argument('--date_str', type=str, help='Date string for file naming')
+    parser.add_argument('--date', type=str, help='Target date (YYYY-MM-DD)')
+    parser.add_argument('--ml_threshold', type=float, default=0.6, help='ML relevance threshold')
+    parser.add_argument('--use_ml_filtering', type=str, default='true', help='Enable ML filtering')
+    
+    args = parser.parse_args()
+    
+    # Convert string to boolean for ML filtering
+    use_ml = args.use_ml_filtering.lower() == 'true'

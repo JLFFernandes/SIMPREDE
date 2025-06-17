@@ -1222,4 +1222,6 @@ def main():
     finally:
         loop.close()
 
+if __name__ == "__main__":
+    sys.exit(main())
 

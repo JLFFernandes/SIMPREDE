@@ -565,6 +565,7 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
         
         # Generate a fallback ID if missing
         if not article_id:
+            import hashlib
             article_id = hashlib.md5(f"{original_url}{titulo}".encode()).hexdigest()[:16]
         
         # Validate required fields
@@ -607,17 +608,27 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
             rate_limiter.wait_if_needed(original_url)
             resolved_url = resolve_google_news_url(original_url)
             if not resolved_url or not resolved_url.startswith("http"):
-                resolved_url = original_url
+                log_progress(f"⚠️ Link não resolvido: {original_url[:100]}...", "warning")
+                # If we have victims and disaster type from title, create partial record
+                if has_victims_in_title and potential_tipo_from_title != "unknown":
+                    log_progress(f"💡 Criando registro parcial baseado apenas no título")
+                    return create_partial_article_record(
+                        article_id, titulo, original_url, localidade, keyword, publicado,
+                        potential_tipo_from_title, subtipo_from_title, vitimas_do_titulo,
+                        LOCALIDADES, FREGUESIAS_COM_CODIGOS
+                    )
+                return None
         except Exception as e:
             log_progress(f"❌ Erro de conexão ao resolver URL: {str(e)[:100]}...", "error")
-            resolved_url = original_url
             # If we have victims and disaster type from title, create partial record
             if has_victims_in_title and potential_tipo_from_title != "unknown":
+                log_progress(f"💡 Criando registro parcial baseado apenas no título")
                 return create_partial_article_record(
                     article_id, titulo, original_url, localidade, keyword, publicado,
-                    potential_tipo_from_title, subtipo_from_title, vitimas_do_titulo, 
+                    potential_tipo_from_title, subtipo_from_title, vitimas_do_titulo,
                     LOCALIDADES, FREGUESIAS_COM_CODIGOS
                 )
+            return None
 
         # Fetch article text with better error handling
         texto = ""
@@ -625,8 +636,12 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
             try:
                 rate_limiter.wait_if_needed(resolved_url)
                 texto = fetch_and_extract_article_text(resolved_url)
+                if not texto or not is_potentially_disaster_related(texto, KEYWORDS):
+                    log_progress(f"⚠️ Artigo ignorado após extração: {titulo[:50]}...", "warning")
+                    return None
             except Exception as e:
-                log_progress(f"❌ Erro ao extrair texto do artigo: {str(e)[:100]}...", "error")
+                log_progress(f"❌ Erro de conexão ao extrair texto: {str(e)[:100]}...", "error")
+                return None
         
         # Determine disaster type
         if potential_tipo_from_title and potential_tipo_from_title != "unknown":
@@ -638,267 +653,252 @@ def processar_artigo(row, rate_limiter, LOCALIDADES, KEYWORDS, FREGUESIAS_COM_CO
         if has_victims_in_title:
             vitimas = vitimas_do_titulo
         else:
-            vitimas = extract_victim_counts(texto or titulo)
+            vitimas = extract_victim_counts(texto)
+            if not any(vitimas.values()):
+                vitimas = extract_victims_from_title(titulo)
 
         # Geographic detection
         loc = detect_municipality(texto or titulo, LOCALIDADES) or localidade
         district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
+        concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
+        parish_normalized = normalize(loc.lower())
+        dicofreg = FREGUESIAS_COM_CODIGOS.get(parish_normalized, "")
 
-        # Create article record
-        return create_article_record(
-            article_id, titulo, resolved_url, loc, district, keyword, publicado,
-            tipo, subtipo, vitimas, texto, LOCALIDADES, FREGUESIAS_COM_CODIGOS
-        )
+        # Date formatting
+        data_evt_formatada, ano, mes, dia, hora_evt = formatar_data_para_ddmmyyyy(publicado)
+        fonte = extrair_nome_fonte(resolved_url)
+
+        # Create clean result record
+        result = {
+            "ID": article_id,
+            "title": clean_text_for_csv(titulo),
+            "type": tipo,
+            "subtype": subtipo,
+            "date": data_evt_formatada,
+            "year": ano,
+            "month": mes,
+            "day": dia,
+            "hour": hora_evt,
+            "georef": clean_text_for_csv(loc),
+            "district": clean_text_for_csv(district),
+            "municipali": clean_text_for_csv(concelho),
+            "parish": clean_text_for_csv(loc),
+            "DICOFREG": dicofreg,
+            "source": clean_text_for_csv(fonte),
+            "sourcedate": datetime.today().date().isoformat(),
+            "sourcetype": "web",
+            "page": clean_text_for_csv(resolved_url),
+            "fatalities": vitimas["fatalities"],
+            "injured": vitimas["injured"],
+            "evacuated": vitimas["evacuated"],
+            "displaced": vitimas["displaced"],
+            "missing": vitimas["missing"]
+        }
+
+        log_progress(f"🔄 Processado: {titulo[:50]}...")
+        return result
         
     except Exception as e:
-        log_progress(f"❌ Erro ao processar artigo: {str(e)[:100]}...", "error")
+        log_progress(f"❌ Erro inesperado ao processar artigo: {e}", "error")
         return None
-
-def extract_victims_from_title(title):
-    """Extract victim counts from article title using Portuguese patterns"""
-    vitimas = {
-        "fatalities": 0,
-        "injured": 0,
-        "evacuated": 0,
-        "displaced": 0,
-        "missing": 0
-    }
-    
-    if not title or pd.isna(title):
-        return vitimas
-    
-    title_lower = title.lower()
-    
-    # Portuguese victim patterns
-    fatalities_patterns = [
-        r'(\d+)\s*mort[oa]s?',
-        r'(\d+)\s*vítimas?\s*mortais?',
-        r'(\d+)\s*óbitos?',
-        r'(?:mata|matou|morr[eu])\s*(\d+)',
-        r'(\d+)\s*pessoa[s]?\s*(?:morr[eu]|falec[eu])',
-        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*mort[oa]s?',
-        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*vítimas?\s*mortais?'
-    ]
-    
-    injured_patterns = [
-        r'(\d+)\s*ferid[oa]s?',
-        r'(\d+)\s*pessoa[s]?\s*ferid[ao]s?',
-        r'(?:fere|deixa)\s*(\d+)',
-        r'(\d+)\s*ferimento[s]?',
-        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*ferid[oa]s?'
-    ]
-    
-    evacuated_patterns = [
-        r'(\d+)\s*evacuad[oa]s?',
-        r'(\d+)\s*pessoa[s]?\s*evacuad[ao]s?',
-        r'evacuação\s*de\s*(\d+)',
-        r'(?:retirou|retirad[oa]s?)\s*(\d+)',
-        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*evacuad[oa]s?'
-    ]
-    
-    displaced_patterns = [
-        r'(\d+)\s*desalojad[oa]s?',
-        r'(\d+)\s*pessoa[s]?\s*desalojad[ao]s?',
-        r'(\d+)\s*(?:sem\s*casa|sem\s*abrigo)',
-        r'(?:realojad[oa]s?|realojamento)\s*(\d+)',
-        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*desalojad[oa]s?'
-    ]
-    
-    missing_patterns = [
-        r'(\d+)\s*desaparecid[oa]s?',
-        r'(\d+)\s*pessoa[s]?\s*desaparecid[ao]s?',
-        r'(?:procuram?|procura[s]?)\s*(\d+)',
-        r'(\d+)\s*(?:em\s*falta|dado[s]?\s*como\s*desaparecid[oa]s?)',
-        r'(?:um|uma|dois|duas|três|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*desaparecid[oa]s?'
-    ]
-    
-    # Number word mappings
-    num_words = {
-        "um": 1, "uma": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3,
-        "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8,
-        "nove": 9, "dez": 10, "onze": 11, "doze": 12, "vinte": 20
-    }
-    
-    def extract_number(match_text):
-        """Extract number from match, handling both digits and words"""
-        if match_text.isdigit():
-            return int(match_text)
-        elif match_text.lower() in num_words:
-            return num_words[match_text.lower()]
-        return 0
-    
-    # Extract fatalities
-    for pattern in fatalities_patterns:
-        matches = re.finditer(pattern, title_lower)
-        for match in matches:
-            try:
-                if match.group(1):  # If there's a capture group
-                    num = extract_number(match.group(1))
-                else:
-                    # Handle patterns without capture groups
-                    for word, number in num_words.items():
-                        if word in match.group(0):
-                            num = number
-                            break
-                    else:
-                        continue
-                vitimas["fatalities"] = max(vitimas["fatalities"], num)
-            except (ValueError, IndexError):
-                pass
-    
-    # Extract injured
-    for pattern in injured_patterns:
-        matches = re.finditer(pattern, title_lower)
-        for match in matches:
-            try:
-                if match.group(1):
-                    num = extract_number(match.group(1))
-                else:
-                    for word, number in num_words.items():
-                        if word in match.group(0):
-                            num = number
-                            break
-                    else:
-                        continue
-                vitimas["injured"] = max(vitimas["injured"], num)
-            except (ValueError, IndexError):
-                pass
-    
-    # Extract evacuated
-    for pattern in evacuated_patterns:
-        matches = re.finditer(pattern, title_lower)
-        for match in matches:
-            try:
-                if match.group(1):
-                    num = extract_number(match.group(1))
-                else:
-                    for word, number in num_words.items():
-                        if word in match.group(0):
-                            num = number
-                            break
-                    else:
-                        continue
-                vitimas["evacuated"] = max(vitimas["evacuated"], num)
-            except (ValueError, IndexError):
-                pass
-    
-    # Extract displaced
-    for pattern in displaced_patterns:
-        matches = re.finditer(pattern, title_lower)
-        for match in matches:
-            try:
-                if match.group(1):
-                    num = extract_number(match.group(1))
-                else:
-                    for word, number in num_words.items():
-                        if word in match.group(0):
-                            num = number
-                            break
-                    else:
-                        continue
-                vitimas["displaced"] = max(vitimas["displaced"], num)
-            except (ValueError, IndexError):
-                pass
-    
-    # Extract missing
-    for pattern in missing_patterns:
-        matches = re.finditer(pattern, title_lower)
-        for match in matches:
-            try:
-                if match.group(1):
-                    num = extract_number(match.group(1))
-                else:
-                    for word, number in num_words.items():
-                        if word in match.group(0):
-                            num = number
-                            break
-                    else:
-                        continue
-                vitimas["missing"] = max(vitimas["missing"], num)
-            except (ValueError, IndexError):
-                pass
-    
-    return vitimas
 
 def clean_text_for_csv(text):
     """Clean text to avoid CSV parsing issues"""
-    if not text:
+    if not text or pd.isna(text):
         return ""
-    # Remove newlines, tabs, and excessive whitespace
-    cleaned = re.sub(r'[\n\r\t]+', ' ', str(text))
-    cleaned = re.sub(r'\s+', ' ', cleaned)
-    return cleaned.strip()
+    
+    text = str(text).strip()
+    # Remove problematic characters that can break CSV parsing
+    text = text.replace('"', "'").replace('\n', ' ').replace('\r', ' ')
+    # Remove multiple spaces
+    text = ' '.join(text.split())
+    return text
 
 def create_partial_article_record(article_id, titulo, original_url, localidade, keyword, publicado,
                                  tipo, subtipo, vitimas, LOCALIDADES, FREGUESIAS_COM_CODIGOS):
-    """Create a partial article record when full processing isn't possible"""
-    # Format date
-    date_formatted, year, month, day, hour = formatar_data_para_ddmmyyyy(publicado)
+    """Create a partial article record based on title information only"""
     
-    # Get district
-    district = LOCALIDADES.get(localidade.lower(), {}).get("district", "")
-    
-    # Get source
-    source = extrair_nome_fonte(original_url)
-    
-    return {
-        "ID": article_id,
-        "title": clean_text_for_csv(titulo),
-        "snippet": clean_text_for_csv(titulo[:200]),  # Use title as snippet
-        "source": source,
-        "page": original_url,
-        "date": date_formatted,
-        "year": year,
-        "month": month,
-        "day": day,
-        "hour": hour,
-        "parish": localidade,
-        "district": district,
-        "DICOFREG": FREGUESIAS_COM_CODIGOS.get(localidade.lower(), None),
-        "evento_nome": tipo,
-        "evento_subtipo": subtipo,
-        "fatalities": vitimas.get("fatalities", 0),
-        "injured": vitimas.get("injured", 0),
-        "evacuated": vitimas.get("evacuated", 0),
-        "displaced": vitimas.get("displaced", 0),
-        "missing": vitimas.get("missing", 0),
-        "relevance_score": 0.8,  # High score since it has victims and disaster type
-        "processing_notes": "Partial processing - URL resolution failed"
-    }
+    loc = localidade
+    district = LOCALIDADES.get(loc.lower(), {}).get("district", "")
+    concelho = LOCALIDADES.get(loc.lower(), {}).get("municipality", "")
+    parish_normalized = normalize(loc.lower())
+    dicofreg = FREGUESIAS_COM_CODIGOS.get(parish_normalized, "")
 
-def create_article_record(article_id, titulo, url, localidade, district, keyword, publicado,
-                         tipo, subtipo, vitimas, texto, LOCALIDADES, FREGUESIAS_COM_CODIGOS):
-    """Create a complete article record"""
-    # Format date
-    date_formatted, year, month, day, hour = formatar_data_para_ddmmyyyy(publicado)
-    
-    # Get source
-    source = extrair_nome_fonte(url)
-    
+    data_evt_formatada, ano, mes, dia, hora_evt = formatar_data_para_ddmmyyyy(publicado)
+    fonte = extrair_nome_fonte(original_url)
+
     return {
         "ID": article_id,
         "title": clean_text_for_csv(titulo),
-        "snippet": clean_text_for_csv(texto[:300] if texto else titulo[:200]),
-        "source": source,
-        "page": url,
-        "date": date_formatted,
-        "year": year,
-        "month": month,
-        "day": day,
-        "hour": hour,
-        "parish": localidade,
-        "district": district,
-        "DICOFREG": FREGUESIAS_COM_CODIGOS.get(localidade.lower(), None),
-        "evento_nome": tipo,
-        "evento_subtipo": subtipo,
-        "fatalities": vitimas.get("fatalities", 0),
-        "injured": vitimas.get("injured", 0),
-        "evacuated": vitimas.get("evacuated", 0),
-        "displaced": vitimas.get("displaced", 0),
-        "missing": vitimas.get("missing", 0),
-        "relevance_score": 0.9 if any(vitimas.values()) else 0.7,
-        "processing_notes": "Complete processing"
+        "type": tipo,
+        "subtype": subtipo,
+        "date": data_evt_formatada,
+        "year": ano,
+        "month": mes,
+        "day": dia,
+        "hour": hora_evt,
+        "georef": clean_text_for_csv(loc),
+        "district": clean_text_for_csv(district),
+        "municipali": clean_text_for_csv(concelho),
+        "parish": clean_text_for_csv(loc),
+        "DICOFREG": dicofreg,
+        "source": clean_text_for_csv(fonte),
+        "sourcedate": datetime.today().date().isoformat(),
+        "sourcetype": "web",
+        "page": clean_text_for_csv(original_url),
+        "fatalities": vitimas["fatalities"],
+        "injured": vitimas["injured"],
+        "evacuated": vitimas["evacuated"],
+        "displaced": vitimas["displaced"],
+        "missing": vitimas["missing"]
     }
+    
+# Carregar links já importados
+def carregar_links_existentes(output_csv):
+    if not os.path.exists(output_csv):
+        return set()
+    try:
+        df_existente = pd.read_csv(output_csv)
+        return set(df_existente["page"].dropna().unique())
+    except Exception:
+        return set()
+
+def is_duplicate_content(title, url, existing_titles, existing_urls):
+    """Check if content is likely duplicate based on title similarity or URL patterns"""
+    title_hash = hashlib.md5(title.lower().encode()).hexdigest()
+    
+    # Check for exact title match
+    if title_hash in existing_titles:
+        return True
+    
+    # Check for URL pattern match (removing query parameters)
+    base_url = url.split('?')[0]
+    if base_url in existing_urls:
+        return True
+    
+    # Update caches
+    existing_titles.add(title_hash)
+    existing_urls.add(base_url)
+    return False
+
+def check_internet_connection():
+    """Check if internet connection is available"""
+    try:
+        # Try to connect to a reliable server
+        requests.get("https://www.google.com", timeout=5)
+        return True
+    except requests.RequestException:
+        return False
+
+def create_optimized_session():
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=5,  # Increased from 3
+        backoff_factor=2,  # Increased from 1
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "HEAD"]
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy, 
+                          pool_connections=10, 
+                          pool_maxsize=10)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0'
+    })
+    # Add timeouts to prevent hanging
+    session.timeout = (10, 30)  # (connect, read) timeouts
+    return session
+
+def guardar_csv_incremental_with_date(output_csv, default_output_csv, artigos):
+    """
+    Save to date-specific file in the raw data directory with year/month/day structure
+    and also maintain backward compatibility with structured directory
+    """
+    # Save to raw data directory (this will be organized by year/month/day)
+    guardar_csv_incremental(output_csv, artigos)
+    
+    # Also save to standard file for backward compatibility
+    guardar_csv_incremental(default_output_csv, artigos)
+    
+    log_progress(f"✅ Files saved with year/month/day organization")
+
+def guardar_csv_incremental_with_controlled_paths(paths, artigos, irrelevant_articles=None):
+    """
+    Save to controlled output paths with better organization
+    """
+    # Save relevant articles to both raw and structured directories
+    if artigos:
+        guardar_csv_incremental(paths['output_csv'], artigos)
+        guardar_csv_incremental(paths['default_output_csv'], artigos)
+        log_progress(f"✅ Relevant articles saved: {len(artigos)} articles")
+    
+    # Save irrelevant articles separately if provided
+    if irrelevant_articles:
+        guardar_csv_incremental(paths['irrelevant_csv'], irrelevant_articles)
+        log_progress(f"✅ Irrelevant articles saved: {len(irrelevant_articles)} articles")
+    
+    # Save processing statistics
+    if artigos or irrelevant_articles:
+        stats = {
+            "processing_date": datetime.now().isoformat(),
+            "relevant_articles": len(artigos) if artigos else 0,
+            "irrelevant_articles": len(irrelevant_articles) if irrelevant_articles else 0,
+            "total_processed": (len(artigos) if artigos else 0) + (len(irrelevant_articles) if irrelevant_articles else 0),
+            "output_files": {
+                "relevant_raw": paths['output_csv'],
+                "relevant_structured": paths['default_output_csv'],
+                "irrelevant": paths['irrelevant_csv'] if irrelevant_articles else None
+            }
+        }
+        
+        try:
+            with open(paths['stats_json'], 'w', encoding='utf-8') as f:
+                json.dump(stats, f, indent=2, ensure_ascii=False)
+            log_progress(f"✅ Processing statistics saved: {paths['stats_json']}")
+        except Exception as e:
+            log_progress(f"⚠️ Could not save statistics: {e}", "warning")
+
+# Add a progress callback function
+def progress_update(message):
+    """Progress callback for article processing"""
+    log_progress(f"🔄 {message}")
+
+def apply_ml_pre_filtering(df, project_root):
+    """Apply ML filtering before detailed processing to save time"""
+    if not ML_AVAILABLE or MLEnhancedFilter is None:
+        log_progress("⚠️ ML Enhanced Filter not available, continuing with original order")
+        return df
+    
+    try:
+        # Try to import and use ML filtering
+        ml_filter = MLEnhancedFilter()
+        if ml_filter.load_models():
+            log_progress("🤖 Applying ML pre-filtering to prioritize relevant articles...")
+            
+            ml_predictions, ml_scores = ml_filter.predict_relevance(
+                df, 
+                threshold=0.3  # Lower threshold for pre-filtering
+            )
+            
+            # Sort by ML score (highest first)
+            df['ml_temp_score'] = ml_scores
+            df_sorted = df.sort_values('ml_temp_score', ascending=False)
+            df_sorted = df_sorted.drop('ml_temp_score', axis=1)
+            
+            log_progress(f"📊 Articles sorted by ML relevance score")
+            return df_sorted
+        else:
+            log_progress("⚠️ ML models not available, skipping ML pre-filtering")
+            return df
+            
+    except Exception as e:
+        log_progress(f"⚠️ ML pre-filtering failed: {e}, continuing with original order")
         return df
 
 def airflow_main(target_date=None, dias=1, input_file=None, output_dir=None, date_str=None):
@@ -1277,3 +1277,46 @@ def extract_victims_from_title(title):
                 pass
     
     return vitimas
+
+# Add the main entry point at the end of the file
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process relevant articles from scraper output")
+    parser.add_argument("--dias", type=int, default=1, help="Number of days to process")
+    parser.add_argument("--input_file", type=str, help="Input CSV file path")
+    parser.add_argument("--output_dir", type=str, help="Output directory path")
+    parser.add_argument("--date_str", type=str, help="Date string for file naming")
+    parser.add_argument("--date", type=str, help="Target date (YYYY-MM-DD)")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    
+    args = parser.parse_args()
+    
+    # Configure logging level
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+        log_progress("🔍 DEBUG logging enabled", "debug")
+    
+    log_progress("Starting processar_relevantes_airflow")
+    log_progress(f"Parameters: dias={args.dias}, date={args.date}")
+    log_progress(f"Paths: input_file={args.input_file}, output_dir={args.output_dir}, date_str={args.date_str}")
+    
+    try:
+        result = airflow_main(
+            target_date=args.date,
+            dias=args.dias,
+            input_file=args.input_file,
+            output_dir=args.output_dir,
+            date_str=args.date_str
+        )
+        
+        if result:
+            log_progress("✅ Processing completed successfully")
+            sys.exit(0)
+        else:
+            log_progress("❌ Processing failed", "error")
+            sys.exit(1)
+            
+    except Exception as e:
+        log_progress(f"❌ Processing failed with exception: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
