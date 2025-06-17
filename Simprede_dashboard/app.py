@@ -504,7 +504,7 @@ st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025)
 df_scraper_grouped = df_scraper.groupby(["year", "month", "type"]).size().reset_index(name="ocorrencias")
 df_scraper_grouped["data"] = pd.to_datetime(
     df_scraper_grouped["year"].astype(int).astype(str) + '-' +
-    df_scraper_grouped["month"].astype(int).astype_str().str.zfill(2)
+    df_scraper_grouped["month"].astype(int).astype(str).str.zfill(2)
 )
 
 col4, col5, col6 = st.columns(3)
@@ -822,7 +822,7 @@ with col7:
                 unsafe_allow_html=True
             )
 
-            if not df_previsao_melhorada.empty and not df_scraper.empty:
+                  if not df_previsao_melhorada.empty and not df_scraper.empty:
                 # Obter distritos históricos por tipo
                 distritos_tipo = df_scraper.groupby(['district', 'type']).size().reset_index(name='count')
                 distritos_tipo = distritos_tipo[distritos_tipo['district'].notna() & (distritos_tipo['district'] != "")]
@@ -924,6 +924,7 @@ with col9:
             st.warning("Sem dados históricos de localização disponíveis.")
     else:
         st.warning("Sem previsões disponíveis para visualização no mapa.")
+
 
 
 # --- Rodapé ---
