@@ -414,7 +414,7 @@ with col2:
                 domain=["Flood", "Landslide"],
                 range=[COR_HEX["Flood"], COR_HEX["Landslide"]]
             ),
-            legend=alt.Legend(title="Tipo de Desastre")
+            legend=alt.Legend(title="type")
         ),
         tooltip=["district", "type", "fatalities"]
     ).properties(
