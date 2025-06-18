@@ -892,7 +892,6 @@ with col9:
                     hover_data=["district", "month", "predicted_occurrences"],
                     zoom=4.5,
                     height=400,
-                    title="Previsões por Localização",
                     center={"lat": 39.5, "lon": -8.0},
                     color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
                 )
