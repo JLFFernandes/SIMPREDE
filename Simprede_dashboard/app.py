@@ -462,7 +462,6 @@ with col3:
             hover_data=["district", "municipality", "year", "month"],
             zoom=4.5, 
             height=400,
-            title="Ocorrências Históricas",
             center={"lat": 39.5, "lon": -8.0},  # Center on Portugal mainland
             color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
         )
@@ -546,12 +545,11 @@ with col5:
         color=alt.Color(
             "type:N",
             scale=alt.Scale(domain=["Flood", "Landslide"], range=[COR_HEX["Flood"], COR_HEX["Landslide"]]),
-            legend=alt.Legend(title="Tipo")
+            legend=alt.Legend(title="type")
         ),
         tooltip=["district", "type", "ocorrencias"]
     ).properties(
         height=400,
-        title="Distribuição de Ocorrências por Distrito"
     )
 
     if df_distritos.empty:
@@ -591,7 +589,7 @@ with col6:
             hover_data=["district", "year", "month"],
             zoom=4.5,  
             height=400,
-            title="Ocorrências Recentes (Scraper)",
+          
             center={"lat": 39.5, "lon": -8.0},  
             color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
         )
@@ -812,51 +810,42 @@ with col7:
     if not df_previsao_melhorada.empty:
         df_display = df_previsao_melhorada[['month', 'type', 'ocorrencias', 'confidence_lower', 'confidence_upper']].copy()
         df_display['intervalo_confianca'] = df_display['confidence_lower'].astype(str) + ' - ' + df_display['confidence_upper'].astype(str)
-        df_display = df_display[['month', 'type', 'ocorrencias', 'intervalo_confianca']]
-        df_display.columns = ['Mês', 'Tipo', 'Previsão', 'Intervalo 95%']
+        df_display = df_display[['month', 'type', 'ocorrencias']]
+        df_display.columns = ['Mês', 'Tipo', 'Previsão']
         st.dataframe(df_display, use_container_width=True)
         
 
-with col8:
-    st.markdown(
-    "<h4 style='text-align: center;'>Previsão Sazonal com Tendências</h4>",
-    unsafe_allow_html=True
-)
-
-    if not df_previsao_melhorada.empty:
-        # Create seasonal chart with confidence intervals
-        chart_sazonal = alt.Chart(df_previsao_melhorada).mark_line(point=True).encode(
-            x=alt.X('month:O', title='Mês', scale=alt.Scale(domain=list(range(1, 13)))),
-            y=alt.Y('ocorrencias:Q', title='Ocorrências Previstas'),
-            color=alt.Color(
-                'type:N',
-                scale=alt.Scale(domain=["Flood", "Landslide"], range=[COR_HEX["Flood"], COR_HEX["Landslide"]]),
-                legend=alt.Legend(title="Tipo")
-            ),
-            tooltip=['month', 'type', 'ocorrencias', 'confidence_lower', 'confidence_upper']
-        ).properties(height=400)
-        
-        # Add confidence bands
-        confidence_band = alt.Chart(df_previsao_melhorada).mark_area(opacity=0.3).encode(
-            x='month:O',
-            y='confidence_lower:Q',
-            y2='confidence_upper:Q',
-            color=alt.Color('type:N', scale=alt.Scale(domain=["Flood", "Landslide"], range=[COR_HEX["Flood"], COR_HEX["Landslide"]]))
+        with col8:
+            st.markdown(
+            "<h4 style='text-align: center;'>Previsão Sazonal com Tendências</h4>",
+            unsafe_allow_html=True
         )
-        
-        combined_chart = (confidence_band + chart_sazonal).resolve_scale(color='independent')
-        st.altair_chart(combined_chart, use_container_width=True)
-        
-        # Seasonal insights
-        total_flood = df_previsao_melhorada[df_previsao_melhorada['type'] == 'Flood']['ocorrencias'].sum()
-        total_landslide = df_previsao_melhorada[df_previsao_melhorada['type'] == 'Landslide']['ocorrencias'].sum()
-        
-        st.markdown(f"""
-        **Resumo 2026:**
-        - Total Inundações: {total_flood}
-        - Total Deslizamentos: {total_landslide}
-        - Pico previsto: {df_previsao_melhorada.groupby('month')['ocorrencias'].sum().idxmax()}º mês
-        """)
+
+            if not df_previsao_melhorada.empty:
+                # Criar gráfico sazonal com previsões
+                chart_sazonal = alt.Chart(df_previsao_melhorada).mark_line(point=True).encode(
+                    x=alt.X('month:O', title='Mês', scale=alt.Scale(domain=list(range(1, 13)))),
+                    y=alt.Y('ocorrencias:Q', title='Ocorrências Previstas'),
+                    color=alt.Color(
+                        'type:N',
+                        scale=alt.Scale(domain=["Flood", "Landslide"], range=[COR_HEX["Flood"], COR_HEX["Landslide"]]),
+                        legend=alt.Legend(title="type")
+                    ),
+                    tooltip=['month', 'type', 'ocorrencias']
+                ).properties(height=400)
+                
+                st.altair_chart(chart_sazonal, use_container_width=True)
+                
+                # Seasonal insights
+                total_flood = df_previsao_melhorada[df_previsao_melhorada['type'] == 'Flood']['ocorrencias'].sum()
+                total_landslide = df_previsao_melhorada[df_previsao_melhorada['type'] == 'Landslide']['ocorrencias'].sum()
+                
+                st.markdown(f"""
+                **Resumo 2026:**
+                - Total Floods: {total_flood}
+                - Total Landslides: {total_landslide}
+                - Peak: {df_previsao_melhorada.groupby('month')['ocorrencias'].sum().idxmax()}º mês
+                """)
 
 with col9:
     st.markdown(
