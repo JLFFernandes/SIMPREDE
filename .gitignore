@@ -6,12 +6,27 @@
 .venv
 venv
 .env
+!.env.template
 .venv*/
 
 #backups
 old_vs
 
-
 news_scraper/scrapers/backup
 
 news_scraper_mz
+
+Simprede_dashboard/env
+Simprede_dashboard/.streamlit/secrets.toml
+
+# Airflow specific ignores
+Simprede_scrapers/.env
+Simprede_scrapers/logs/
+Simprede_scrapers/data/
+Simprede_scrapers/*.pid
+Simprede_scrapers/*.log
+
+# Temporary files
+*.tmp
+*.log
+*.pid
