@@ -504,7 +504,7 @@ st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025)
 df_scraper_grouped = df_scraper.groupby(["year", "month", "type"]).size().reset_index(name="ocorrencias")
 df_scraper_grouped["data"] = pd.to_datetime(
     df_scraper_grouped["year"].astype(int).astype(str) + '-' +
-    df_scraper_grouped["month"].astype(int).astype(str).str.zfill(2)
+    df_scraper_grouped["month"].astype(int).astype_str().str.zfill(2)
 )
 
 col4, col5, col6 = st.columns(3)

@@ -627,5 +627,3 @@ sudo chmod -R 755 ~/projects/SIMPREDE/Simprede_scrapers/logs
 sudo chmod -R 755 ~/projects/SIMPREDE/Simprede_scrapers/config
 ```
 
-=======
->>>>>>> 1e31b9bf (criado o arquivo readme.md)
