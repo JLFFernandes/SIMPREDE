@@ -508,30 +508,18 @@ case ${1:-start} in
         log "A executar diagnósticos Docker..."
         echo ""
         echo "=== Diagnósticos Docker ==="
-        
+        echo ""
+        echo "Para instalar o Docker e o Docker Compose, siga as instruções oficiais em:"
+        echo "    https://docs.docker.com/compose/install/"
+        echo ""
+        echo "Esta página contém orientações detalhadas para Linux, MacOS e Windows."
+        echo "Após instalar, reinicie o terminal e execute novamente este script."
+        echo ""
         # Verificar se o comando docker existe
         if command -v docker >/dev/null 2>&1; then
             echo -e "${GREEN}[OK]${NC} Comando Docker encontrado: $(which docker)"
         else
             echo -e "${RED}[ERRO]${NC} Comando Docker não encontrado"
-            echo ""
-            echo "Para instalar o Docker:"
-            echo "  - No Ubuntu/Debian:"
-            echo "      sudo apt-get update"
-            echo "      sudo apt-get install ca-certificates curl gnupg"
-            echo "      sudo install -m 0755 -d /etc/apt/keyrings"
-            echo "      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg"
-            echo "      echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null"
-            echo "      sudo apt-get update"
-            echo "      sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
-            echo ""
-            echo "  - No MacOS:"
-            echo "      Baixe e instale o Docker Desktop de https://www.docker.com/products/docker-desktop/"
-            echo ""
-            echo "  - No Windows:"
-            echo "      Baixe e instale o Docker Desktop de https://www.docker.com/products/docker-desktop/"
-            echo ""
-            echo "Após instalar, reinicie o terminal e execute novamente este script."
             exit 1
         fi
         
@@ -635,6 +623,18 @@ case ${1:-start} in
         echo ""
         echo -e "${GREEN}Credenciais do Airflow:${NC}"
         echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
+        echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
+        ;;
+    "help"|"-h"|"--help")
+        show_usage
+        ;;
+    *)
+        error "Comando desconhecido: $1"
+        echo ""
+        show_usage
+        exit 1
+        ;;
+esac
         echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
         ;;
     "help"|"-h"|"--help")
