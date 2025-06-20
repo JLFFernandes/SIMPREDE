@@ -527,7 +527,6 @@ print('Providers instalados correctamente')
 **SIMPREDE** - Sistema Integrado de Monitorização e Prevenção de Desastres  
 Desenvolvido para automatização de pipelines de dados de eventos de desastres naturais.
 
-<<<<<<< HEAD
 ## Instalação no Windows
 
 Para executar o SIMPREDE no Windows, recomendamos utilizar o Windows Subsystem for Linux 2 (WSL2), pois o sistema foi desenvolvido para ambientes Unix/Linux.
