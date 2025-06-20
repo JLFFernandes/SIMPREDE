@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # Sem Cor
 
 # Configuração
-PROJECT_ROOT="/Users/ruicarvalho/Desktop/projects/SIMPREDE"
+PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 SCRAPERS_DIR="$PROJECT_ROOT/Simprede_scrapers"
 DASHBOARD_DIR="$PROJECT_ROOT/Simprede_dashboard"
 DASHBOARD_VENV="$DASHBOARD_DIR/env"
@@ -125,7 +125,9 @@ setup_env_file() {
             echo ""
             read -p "Pressione Enter depois de configurar o ficheiro .env..." -r
         else
-            error "Nem .env nem .env.template encontrados na raiz do projeto: $PROJECT_ROOT"
+            # Show relative path instead of full path
+            local rel_project_root="$(realpath --relative-to="$(pwd)" "$PROJECT_ROOT" 2>/dev/null || python3 -c "import os.path; print(os.path.relpath('$PROJECT_ROOT'))")"
+            error "Nem .env nem .env.template encontrados na raiz do projeto: ${rel_project_root}"
             echo "Por favor, crie um ficheiro .env na raiz do projeto com as configurações necessárias."
             exit 1
         fi
