@@ -64,9 +64,9 @@ setup_dashboard() {
     
     cd "$DASHBOARD_DIR"
     
-    # Verificar se o ambiente virtual existe
+    # Garantir que o ambiente virtual existe
     if [ ! -d "$DASHBOARD_VENV" ]; then
-        log "A criar ambiente virtual para o dashboard..."
+        log "Ambiente virtual não encontrado. A criar ambiente virtual para o dashboard..."
         python3 -m venv env
     fi
     
@@ -85,6 +85,12 @@ start_dashboard() {
     
     cd "$DASHBOARD_DIR"
     
+    # Garantir que o ambiente virtual existe antes de ativar
+    if [ ! -d "$DASHBOARD_VENV" ]; then
+        log "Ambiente virtual não encontrado. A criar ambiente virtual para o dashboard..."
+        python3 -m venv env
+    fi
+
     # Terminar processos existentes na porta do dashboard
     kill_port $DASHBOARD_PORT
     
@@ -635,12 +641,6 @@ case ${1:-start} in
         exit 1
         ;;
 esac
-        echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
-        ;;
-    "help"|"-h"|"--help")
-        show_usage
-        ;;
-    *)
         error "Comando desconhecido: $1"
         echo ""
         show_usage
