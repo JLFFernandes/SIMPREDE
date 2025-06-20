@@ -508,7 +508,13 @@ case ${1:-start} in
         log "A executar diagnósticos Docker..."
         echo ""
         echo "=== Diagnósticos Docker ==="
-        
+        echo ""
+        echo "Para instalar o Docker e o Docker Compose, siga as instruções oficiais em:"
+        echo "    https://docs.docker.com/compose/install/"
+        echo ""
+        echo "Esta página contém orientações detalhadas para Linux, MacOS e Windows."
+        echo "Após instalar, reinicie o terminal e execute novamente este script."
+        echo ""
         # Verificar se o comando docker existe
         if command -v docker >/dev/null 2>&1; then
             echo -e "${GREEN}[OK]${NC} Comando Docker encontrado: $(which docker)"
@@ -617,6 +623,18 @@ case ${1:-start} in
         echo ""
         echo -e "${GREEN}Credenciais do Airflow:${NC}"
         echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
+        echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
+        ;;
+    "help"|"-h"|"--help")
+        show_usage
+        ;;
+    *)
+        error "Comando desconhecido: $1"
+        echo ""
+        show_usage
+        exit 1
+        ;;
+esac
         echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
         ;;
     "help"|"-h"|"--help")
