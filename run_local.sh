@@ -109,7 +109,7 @@ start_dashboard() {
 # Função para verificar e configurar .env
 setup_env_file() {
     log "A verificar configuração do ficheiro .env..."
-    
+
     # Verificar se o .env existe na raiz do projeto
     if [ ! -f "$PROJECT_ROOT/.env" ]; then
         if [ -f "$PROJECT_ROOT/.env.template" ]; then
@@ -125,14 +125,22 @@ setup_env_file() {
             echo ""
             read -p "Pressione Enter depois de configurar o ficheiro .env..." -r
         else
-            # Show relative path instead of full path
-            local rel_project_root="$(realpath --relative-to="$(pwd)" "$PROJECT_ROOT" 2>/dev/null || python3 -c "import os.path; print(os.path.relpath('$PROJECT_ROOT'))")"
+            # Use a more portable way to get relative path
+            local rel_project_root
+            if command -v realpath >/dev/null 2>&1; then
+                rel_project_root=$(realpath "$PROJECT_ROOT" 2>/dev/null)
+            else
+                rel_project_root=$(cd "$PROJECT_ROOT" && pwd)
+            fi
             error "Nem .env nem .env.template encontrados na raiz do projeto: ${rel_project_root}"
             echo "Por favor, crie um ficheiro .env na raiz do projeto com as configurações necessárias."
             exit 1
         fi
     fi
-    
+
+    # Debug: mostrar caminho absoluto do .env
+    log "Caminho absoluto do .env: $(cd "$PROJECT_ROOT" && pwd)/.env"
+
     # Copiar .env para o diretório dos scrapers se necessário
     if [ ! -f "$SCRAPERS_DIR/.env" ] || ! cmp -s "$PROJECT_ROOT/.env" "$SCRAPERS_DIR/.env"; then
         log "A copiar .env da raiz do projeto para o diretório dos scrapers..."
