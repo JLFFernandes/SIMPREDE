@@ -814,50 +814,51 @@ with col7:
         df_display = df_display[['month', 'type', 'ocorrencias']]
         df_display.columns = ['Mês', 'Tipo', 'Previsão']
         st.dataframe(df_display, use_container_width=True)
-        
+    else:
+        st.warning("Sem dados suficientes para previsão anual por distrito.")
 
-        with col8:
-            st.markdown(
-                "<h4 style='text-align: center;'>Previsão Anual por Distrito e Tipo</h4>",
-                unsafe_allow_html=True
-            )
+with col8:
+    st.markdown(
+        "<h4 style='text-align: center;'>Previsão Anual por Distrito e Tipo</h4>",
+        unsafe_allow_html=True
+    )
 
-                  if not df_previsao_melhorada.empty and not df_scraper.empty:
-                # Obter distritos históricos por tipo
-                distritos_tipo = df_scraper.groupby(['district', 'type']).size().reset_index(name='count')
-                distritos_tipo = distritos_tipo[distritos_tipo['district'].notna() & (distritos_tipo['district'] != "")]
-                distritos_tipo['district'] = distritos_tipo['district'].astype(str).str.strip().str.title()
-                distritos_tipo['district'] = distritos_tipo['district'].replace(substituir_distritos)
+    if not df_previsao_melhorada.empty and not df_scraper.empty:
+        # Obter distritos históricos por tipo
+        distritos_tipo = df_scraper.groupby(['district', 'type']).size().reset_index(name='count')
+        distritos_tipo = distritos_tipo[distritos_tipo['district'].notna() & (distritos_tipo['district'] != "")]
+        distritos_tipo['district'] = distritos_tipo['district'].astype(str).str.strip().str.title()
+        distritos_tipo['district'] = distritos_tipo['district'].replace(substituir_distritos)
 
-                # Previsão anual total por tipo
-                previsao_anual_tipo = df_previsao_melhorada.groupby('type')['ocorrencias'].sum().reset_index()
+        # Previsão anual total por tipo
+        previsao_anual_tipo = df_previsao_melhorada.groupby('type')['ocorrencias'].sum().reset_index()
 
-                # Distribuir previsões anuais pelos distritos históricos proporcionalmente
-                distritos_tipo = distritos_tipo.merge(previsao_anual_tipo, on='type', how='left')
-                distritos_tipo['ocorrencias_previstas'] = distritos_tipo['ocorrencias'] * distritos_tipo['count'] / distritos_tipo.groupby('type')['count'].transform('sum')
-                distritos_tipo['ocorrencias_previstas'] = distritos_tipo['ocorrencias_previstas'].round().astype(int)
+        # Distribuir previsões anuais pelos distritos históricos proporcionalmente
+        distritos_tipo = distritos_tipo.merge(previsao_anual_tipo, on='type', how='left')
+        distritos_tipo['ocorrencias_previstas'] = distritos_tipo['ocorrencias'] * distritos_tipo['count'] / distritos_tipo.groupby('type')['count'].transform('sum')
+        distritos_tipo['ocorrencias_previstas'] = distritos_tipo['ocorrencias_previstas'].round().astype(int)
 
-                # Gráfico de barras por distrito e tipo
-                distritos_ordenados_prev = distritos_tipo.groupby("district")["ocorrencias_previstas"].sum().sort_values(ascending=False).index.tolist()
-                chart_prev_distritos = alt.Chart(distritos_tipo).mark_bar().encode(
-                    x=alt.X("district:N", title="Distrito", sort=distritos_ordenados_prev),
-                    y=alt.Y("ocorrencias_previstas:Q", title="Ocorrências Previstas (2026)"),
-                    color=alt.Color(
-                        "type:N",
-                        scale=alt.Scale(domain=["Flood", "Landslide"], range=[COR_HEX["Flood"], COR_HEX["Landslide"]]),
-                        legend=alt.Legend(title="type")
-                    ),
-                    tooltip=["district", "type", "ocorrencias_previstas"]
-                ).properties(
-                    height=400,
-                )
+        # Gráfico de barras por distrito e tipo
+        distritos_ordenados_prev = distritos_tipo.groupby("district")["ocorrencias_previstas"].sum().sort_values(ascending=False).index.tolist()
+        chart_prev_distritos = alt.Chart(distritos_tipo).mark_bar().encode(
+            x=alt.X("district:N", title="Distrito", sort=distritos_ordenados_prev),
+            y=alt.Y("ocorrencias_previstas:Q", title="Ocorrências Previstas (2026)"),
+            color=alt.Color(
+                "type:N",
+                scale=alt.Scale(domain=["Flood", "Landslide"], range=[COR_HEX["Flood"], COR_HEX["Landslide"]]),
+                legend=alt.Legend(title="type")
+            ),
+            tooltip=["district", "type", "ocorrencias_previstas"]
+        ).properties(
+            height=400,
+        )
 
-                if distritos_tipo.empty:
-                    st.warning("Sem dados históricos de distritos para previsão.")
-                else:
-                    st.altair_chart(chart_prev_distritos, use_container_width=True)
-            else:
-                st.warning("Sem dados suficientes para previsão anual por distrito.")
+        if distritos_tipo.empty:
+            st.warning("Sem dados históricos de distritos para previsão.")
+        else:
+            st.altair_chart(chart_prev_distritos, use_container_width=True)
+    else:
+        st.warning("Sem dados suficientes para previsão anual por distrito.")
 
 with col9:
     st.markdown(
