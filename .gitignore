@@ -8,12 +8,13 @@ venv
 .env
 !.env.template
 .venv*/
+__pycache__
 
 #backups
 old_vs
 
 news_scraper/scrapers/backup
-
+*.log
 news_scraper_mz
 
 Simprede_dashboard/env

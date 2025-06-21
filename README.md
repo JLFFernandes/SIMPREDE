@@ -325,44 +325,68 @@ Execute ambos os componentes (scrapers + dashboard) automaticamente:
    ```
 
 ## Estrutura do Projeto
+## b4. Estrutura do Projeto
 
 ```
 SIMPREDE/
-├── README.md                     ← Este ficheiro
-├── .env                         ← Configuração principal (OBRIGATÓRIO)
-├── .env.template               ← Template de configuração
-├── .gitignore                  ← Ficheiros ignorados pelo Git
-├── run_local.sh               ← Script principal de execução
+├── instalar-wsl2-para-simprede.ps1      ← Instalação WSL2 (Windows)
+├── README.md                            ← Este ficheiro
+├── run_local.sh                         ← Script principal de execução local
 │
-├── Simprede_scrapers/         ← Pipeline de dados (Airflow)
-│   ├── docker-compose.yml    ← Configuração Docker
-│   ├── Dockerfile            ← Imagem personalizada
-│   ├── requirements.txt      ← Dependências Python
-│   ├── start_airflow.sh      ← Script de arranque
-│   ├── config/               ← Configurações
-│   │   ├── gcs-credentials.json    ← Credenciais GCS (opcional)
-│   │   └── gcs_env.sh             ← Variáveis ambiente GCS
-│   ├── dags/                 ← DAGs Airflow
-│   │   ├── daily_eventos_processing_dag.py
-│   │   ├── pipeline_scraper_google.py
-│   │   └── debug_coordinates_dag.py
-│   ├── scripts/              ← Scripts de apoio
-│   │   ├── google_scraper/   ← Módulos de scraping
-│   │   ├── init_gcs.sh      ← Inicialização GCS
-│   │   └── docker-entrypoint.sh
-│   ├── data/                 ← Dados processados
-│   │   ├── raw/             ← Dados brutos
-│   │   ├── structured/      ← Dados estruturados
-│   │   └── processed/       ← Dados finais
-│   └── logs/                ← Logs Airflow
+├── Simprede_dashboard/                  ← Interface visual (Streamlit)
+│   ├── app.py                           ← Aplicação principal
+│   ├── dashboard.log                    ← Log da aplicação
+│   ├── LEI.png                          ← Logo/Imagem
+│   ├── requirements.txt                 ← Dependências Python
+│   └── UAB.png                          ← Logo/Imagem
 │
-└── Simprede_dashboard/        ← Interface visual (Streamlit)
-    ├── app.py                ← Aplicação principal
-    ├── requirements.txt      ← Dependências Python
-    ├── .streamlit/          ← Configuração Streamlit
-    │   └── secrets.toml     ← Credenciais (criar manualmente)
-    └── env/                 ← Ambiente virtual Python
+├── Simprede_data_base/
+│   └── simprede_db.sql                  ← Script SQL da base de dados
+│
+└── Simprede_scrapers/                   ← Pipeline de dados (Airflow)
+    ├── config/                          ← Configurações
+    │   ├── airflow.cfg
+    │   ├── gcs_env.sh
+    │   └── gcs-credentials.json
+    ├── dags/                            ← DAGs Airflow
+    │   ├── daily_eventos_processing_dag.py
+    │   ├── emdat_final_dag.py
+    │   ├── eswd_final_dag.py
+    │   ├── geomai_dag.py
+    │   ├── google_scraper_dag.py
+    │   └── pts_disaster_dag.py
+    ├── docker-compose.yml               ← Configuração Docker
+    ├── Dockerfile                       ← Imagem personalizada
+    ├── include/                         ← Dados geográficos e outros
+    ├── README.md                        ← Documentação do módulo
+    ├── requirements.txt                 ← Dependências Python
+    ├── reset_admin_user.sh              ← Script de reset do utilizador admin
+    ├── scripts/                         ← Scripts de apoio e módulos
+    │   ├── docker-entrypoint.sh
+    │   ├── EM-DAT_final.py
+    │   ├── ESWD_final.py
+    │   ├── geomai_final.py
+    │   ├── google_scraper/
+    │   │   ├── config/
+    │   │   ├── exportador_bd/
+    │   │   ├── exportador_gcs/
+    │   │   ├── extracao/
+    │   │   ├── models/
+    │   │   ├── processador/
+    │   │   ├── scraping/
+    │   │   ├── tests/
+    │   │   └── utils/
+    │   ├── init_gcs.sh
+    │   └── pts_disaster_export.py
+    ├── setup_gcs_complete.sh            ← Script de setup GCS
+    ├── start_airflow.sh                 ← Script de arranque do Airflow
+    └── stop_airflow.sh                  ← Script para parar o Airflow
 ```
+
+**Notas:**
+- Todos os scripts de processamento, scraping e apoio estão em `Simprede_scrapers/scripts/`.
+- As DAGs em `Simprede_scrapers/dags/` controlam os pipelines de dados no Airflow.
+- Scripts de setup, arranque e reset encontram-se na raiz
 
 ## Resolução de Problemas
 

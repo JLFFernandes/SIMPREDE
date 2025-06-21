@@ -58,23 +58,120 @@ kill_port() {
     fi
 }
 
+# Função para setup do ambiente Python
+setup_python_env() {
+    local env_path="$1"
+    local requirements_file="$2"
+    
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Verificando ambiente virtual em: $env_path"
+    
+    # Verificar se o módulo venv está instalado
+    if ! python3 -c "import venv" >/dev/null 2>&1; then
+        echo "[ERRO] Módulo 'venv' do Python3 não está instalado."
+        echo "Por favor, instale com: sudo apt-get install python3-venv"
+        exit 1
+    fi
+    
+    # Criar diretório pai se não existir
+    mkdir -p "$(dirname "$env_path")"
+    
+    # Verificar se o ambiente existe e está corretamente configurado
+    if [ -d "$env_path" ] && [ ! -f "$env_path/bin/activate" ]; then
+        echo "[AVISO] O ambiente virtual existe mas parece estar corrompido (falta bin/activate)"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Removendo ambiente virtual corrompido..."
+        rm -rf "$env_path"
+        echo "[SUCESSO] Ambiente virtual removido para recriação"
+    fi
+    
+    # Criar ambiente virtual se não existir ou foi removido
+    if [ ! -d "$env_path" ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] A criar ambiente virtual Python em: $env_path"
+        python3 -m venv "$env_path"
+        
+        # Verificar se a criação foi bem-sucedida
+        if [ $? -ne 0 ]; then
+            echo "[ERRO] Falha ao criar ambiente virtual"
+            echo "Tentando diagnosticar o problema..."
+            python3 --version
+            echo "Diretório de destino ($env_path) permissões:"
+            ls -ld "$(dirname "$env_path")"
+            echo "Tentando criar com -m venv verboso:"
+            python3 -v -m venv "$env_path"
+            exit 1
+        fi
+        
+        # Verificar se os arquivos esperados foram criados
+        if [ ! -f "$env_path/bin/activate" ]; then
+            echo "[ERRO] Arquivo de ativação não foi criado em $env_path/bin/activate"
+            echo "Conteúdo do diretório $env_path:"
+            ls -la "$env_path"
+            echo "Conteúdo do diretório $env_path/bin (se existir):"
+            ls -la "$env_path/bin" 2>/dev/null || echo "Diretório bin não existe"
+            exit 1
+        fi
+        
+        echo "[SUCESSO] Ambiente virtual criado em $env_path"
+    else
+        echo "[INFO] Usando ambiente virtual existente em: $env_path"
+    fi
+    
+    # Verificar se o arquivo de ativação existe antes de tentar usá-lo
+    if [ ! -f "$env_path/bin/activate" ]; then
+        echo "[ERRO] Arquivo de ativação não encontrado em $env_path/bin/activate"
+        echo "O ambiente virtual parece estar corrompido. Execute o script novamente para remover e recriar."
+        exit 1
+    fi
+    
+    # Ativar ambiente virtual
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Ativando ambiente virtual: source $env_path/bin/activate"
+    source "$env_path/bin/activate"
+    
+    if [ $? -ne 0 ]; then
+        echo "[ERRO] Falha ao ativar ambiente virtual"
+        exit 1
+    fi
+    
+    # Verificar se a ativação funcionou
+    if [ -z "$VIRTUAL_ENV" ]; then
+        echo "[ERRO] Ambiente virtual não foi ativado corretamente"
+        exit 1
+    fi
+    
+    echo "[SUCESSO] Ambiente virtual ativado: $VIRTUAL_ENV"
+    
+    # Instalar/atualizar requisitos se o ficheiro existir
+    if [ -f "$requirements_file" ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] A instalar/atualizar dependências Python..."
+        pip install --upgrade pip
+        pip install -r "$requirements_file"
+        if [ $? -ne 0 ]; then
+            echo "[ERRO] Falha ao instalar dependências"
+            exit 1
+        fi
+        echo "[SUCESSO] Dependências instaladas"
+    fi
+}
+
 # Função para configurar o ambiente do dashboard
 setup_dashboard() {
     log "A configurar ambiente do dashboard..."
     
     cd "$DASHBOARD_DIR"
     
-    # Verificar se o ambiente virtual existe
-    if [ ! -d "$DASHBOARD_VENV" ]; then
-        log "A criar ambiente virtual para o dashboard..."
-        python3 -m venv env
+    # Verificar se Python3 está disponível
+    if ! command -v python3 >/dev/null 2>&1; then
+        error "Python3 não encontrado. Por favor instale Python3 e tente novamente."
+        exit 1
     fi
     
-    # Ativar ambiente virtual e instalar dependências
-    log "A instalar dependências do dashboard..."
-    source "$DASHBOARD_VENV/bin/activate"
-    pip install --upgrade pip
-    pip install -r requirements.txt
+    # Verificar se requirements.txt existe
+    if [ ! -f "requirements.txt" ]; then
+        error "Ficheiro requirements.txt não encontrado em $DASHBOARD_DIR"
+        exit 1
+    fi
+    
+    # Usar a função setup_python_env para configurar o ambiente
+    setup_python_env "$DASHBOARD_VENV" "requirements.txt"
     
     success "Configuração do ambiente do dashboard concluída"
 }
@@ -85,11 +182,11 @@ start_dashboard() {
     
     cd "$DASHBOARD_DIR"
     
+    # Usar setup_python_env para garantir que o ambiente está configurado
+    setup_python_env "$DASHBOARD_VENV" "requirements.txt"
+
     # Terminar processos existentes na porta do dashboard
     kill_port $DASHBOARD_PORT
-    
-    # Ativar ambiente virtual
-    source "$DASHBOARD_VENV/bin/activate"
     
     # Iniciar Streamlit em segundo plano
     nohup streamlit run app.py --server.port=$DASHBOARD_PORT --server.address=0.0.0.0 > dashboard.log 2>&1 &
@@ -472,29 +569,34 @@ Resolução de problemas:
 EOF
 }
 
+# Função para iniciar o ambiente
+start_environment() {
+    log "A iniciar ambiente de desenvolvimento local SIMPREDE..."
+    setup_env_file
+    setup_dashboard
+    start_scrapers
+    start_dashboard
+    echo ""
+    success "Todos os serviços iniciados com sucesso!"
+    echo ""
+    echo -e "${GREEN}Serviços SIMPREDE:${NC}"
+    echo -e "   Dashboard:  http://localhost:$DASHBOARD_PORT"
+    echo -e "   Airflow:    http://localhost:$AIRFLOW_PORT"
+    echo ""
+    echo -e "${GREEN}Credenciais do Airflow:${NC}"
+    echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
+    echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
+    echo ""
+    echo -e "${YELLOW}Comandos úteis:${NC}"
+    echo -e "   Verificar estado:  $0 status"
+    echo -e "   Ver logs:          $0 logs [dashboard|scrapers]"
+    echo -e "   Parar tudo:        $0 stop"
+}
+
 # Lógica principal do script
 case ${1:-start} in
     "start")
-        log "A iniciar ambiente de desenvolvimento local SIMPREDE..."
-        setup_env_file
-        setup_dashboard
-        start_scrapers
-        start_dashboard
-        echo ""
-        success "Todos os serviços iniciados com sucesso!"
-        echo ""
-        echo -e "${GREEN}Serviços SIMPREDE:${NC}"
-        echo -e "   Dashboard:  http://localhost:$DASHBOARD_PORT"
-        echo -e "   Airflow:    http://localhost:$AIRFLOW_PORT"
-        echo ""
-        echo -e "${GREEN}Credenciais do Airflow:${NC}"
-        echo -e "   Utilizador: ${AIRFLOW_USERNAME:-admin}"
-        echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
-        echo ""
-        echo -e "${YELLOW}Comandos úteis:${NC}"
-        echo -e "   Verificar estado:  $0 status"
-        echo -e "   Ver logs:          $0 logs [dashboard|scrapers]"
-        echo -e "   Parar tudo:        $0 stop"
+        start_environment
         ;;
     "stop")
         stop_services
@@ -607,8 +709,12 @@ case ${1:-start} in
         show_logs ${2:-scrapers}
         ;;
     "setup")
+        log "A configurar apenas o ambiente do dashboard..."
         setup_env_file
         setup_dashboard
+        success "Ambiente do dashboard configurado com sucesso!"
+        echo ""
+        echo "Para iniciar o dashboard execute: $0 dashboard"
         ;;
     "dashboard")
         setup_env_file
@@ -635,15 +741,5 @@ case ${1:-start} in
         exit 1
         ;;
 esac
-        echo -e "   Password: ${AIRFLOW_PASSWORD:-<verificar logs>}"
-        ;;
-    "help"|"-h"|"--help")
-        show_usage
-        ;;
-    *)
-        error "Comando desconhecido: $1"
-        echo ""
-        show_usage
-        exit 1
-        ;;
-esac
+
+# Fim do script
