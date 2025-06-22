@@ -803,7 +803,7 @@ col7, col8, col9 = st.columns(3)
 
 with col7:
     st.markdown(
-    "<h4 style='text-align: center;'>Previsões com Intervalos de Confiança</h4>",
+    "<h4 style='text-align: center;'>Previsões de Ocorrencias Mensais</h4>",
     unsafe_allow_html=True
 )
 
