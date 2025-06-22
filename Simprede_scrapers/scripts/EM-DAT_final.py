@@ -1,4 +1,5 @@
-# EM-DAT_final.py (versão corrigida com validação reforçada e sem atribuições erradas)
+# EM-DAT_final.py (com divisão proporcional dos impactos humanos sem perdas)
+
 import os
 import time
 import json
@@ -33,11 +34,9 @@ DB_PARAMS = {
     "sslmode": "require"
 }
 
-# Caminho para shapefile dos concelhos
 CENTROIDES_SHP = "/usr/local/airflow/include/centroides/centroide_concel/shape_conc_centroide.shp"
 gdf_concelhos = gpd.read_file(CENTROIDES_SHP).to_crs(epsg=4326)
 
-# Mapeamento manual definitivo
 MANUAL_REGION_MAP = {
     "Douro": ("Vila Real", "Vila Real"),
     "Baixo Vouga": ("Aveiro", "Aveiro"),
@@ -78,7 +77,6 @@ MANUAL_REGION_MAP = {
     "Sacavem": ("Lisboa", "Loures")
 }
 
-# Funções auxiliares
 def safe_int(x):
     try:
         i = int(float(x))
@@ -93,6 +91,11 @@ def safe_str(x, max_length=100):
     except:
         return ""
 
+def distribuir_valores(total, n):
+    base = total // n
+    resto = total % n
+    return [base + 1 if i < resto else base for i in range(n)]
+
 def get_centroid_coords(district, municipality):
     try:
         match = gdf_concelhos[
@@ -101,37 +104,32 @@ def get_centroid_coords(district, municipality):
         ]
         if not match.empty:
             geom = match.iloc[0].geometry
-            return geom.y, geom.x  # lat, lon
+            return geom.y, geom.x
     except:
         pass
     return None, None
 
 def expand_location_rows(df):
-    df = df.copy()
-    df['Location'] = df['Location'].astype(str)
-    rows = []
+    expanded = []
     for _, row in df.iterrows():
-        loc_text = row['Location']
-
-        # Remover parêntesis e conteúdo entre parêntesis (complementos)
-        loc_text = re.sub(r'\([^)]*\)', '', loc_text)
-
-        # Limpeza antes do split
-        loc_text = re.sub(r'\bdistricts?\b', '', loc_text)
-        loc_text = re.sub(r'\bprovinces?\b', '', loc_text)
+        loc_text = re.sub(r'\([^)]*\)', '', str(row['Location']))
+        loc_text = re.sub(r'\bdistricts?\b|\bprovinces?\b', '', loc_text)
         loc_text = loc_text.replace('Ilha Da Madeira', 'Funchal')
         loc_text = re.sub(r'\bLoure\b', 'Loures', loc_text)
-
-        parts = re.split(r',\s*|\band\b', loc_text)
-        for loc in parts:
-            clean = loc.strip()
-            if clean and len(clean) > 1:
-                new_row = row.copy()
-                new_row['Location'] = clean
-                rows.append(new_row)
-    return pd.DataFrame(rows)
-
-
+        parts = [p.strip() for p in re.split(r',\s*|\band\b', loc_text) if p.strip()]
+        n = len(parts) or 1
+        deaths = distribuir_valores(safe_int(row["Total Deaths"]), n)
+        injured = distribuir_valores(safe_int(row["No. Injured"]), n)
+        homeless = distribuir_valores(safe_int(row["No. Homeless"]), n)
+        for i, loc in enumerate(parts):
+            new_row = row.copy()
+            new_row["Location"] = loc
+            new_row["split_count"] = n
+            new_row["split_deaths"] = deaths[i]
+            new_row["split_injured"] = injured[i]
+            new_row["split_homeless"] = homeless[i]
+            expanded.append(new_row)
+    return pd.DataFrame(expanded)
 
 def atribuir_distrito_municipio(row):
     loc = row['Location']
@@ -150,7 +148,6 @@ def atribuir_distrito_municipio(row):
             row['georef_class'] = 0
     return row
 
-# Download com Selenium
 CHROMEDRIVER_PATH = "/usr/bin/chromedriver"
 def tentar_download_com_selenium():
     print("A aceder ao site EM-DAT via Selenium...")
@@ -167,26 +164,20 @@ def tentar_download_com_selenium():
     options.add_argument('--disable-dev-shm-usage')
     service = Service(executable_path=CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=options)
-
     try:
         driver.get('https://public.emdat.be/login')
         WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.ID, 'username')))
         driver.find_element(By.ID, 'username').send_keys('joselffernandes@gmail.com')
         driver.find_element(By.ID, 'password').send_keys('Middle_1985', Keys.RETURN)
-
         WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//a[@href='/data']/button"))).click()
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "(//div[contains(@class,'ant-select-selector')])[1]"))).click()
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[normalize-space(text())='Natural']"))).click()
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "(//div[contains(@class,'ant-select-selector')])[2]"))).click()
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[@class='ant-select-tree-title' and normalize-space(text())='Europe']"))).click()
-
         hist_btn = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, 'include_hist')))
         if hist_btn.get_attribute('aria-checked') != 'true':
             hist_btn.click()
-
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[@aria-label='download']"))).click()
-
-        print("Download iniciado com sucesso!")
         timeout = time.time() + 120
         while time.time() < timeout:
             files = [f for f in os.listdir(download_dir) if f.lower().endswith(('.xlsx', '.xls'))]
@@ -207,7 +198,6 @@ except Exception as err:
 print("A ler ficheiro:", excel_path)
 df = pd.read_excel(excel_path)
 df = df[(df["Country"].str.lower() == "portugal") & (df["Disaster Type"].str.lower() == "flood")]
-
 if df.empty:
     print("Sem registos relevantes.")
     exit(0)
@@ -238,7 +228,6 @@ for _, row in df.iterrows():
 
     lat, lon = get_centroid_coords(row['district'], row['municipality'])
     georef_class = row['georef_class']
-
     if lat is None or lon is None:
         lat, lon = 39.5, -8.0
         georef_class = 0
@@ -252,8 +241,12 @@ for _, row in df.iterrows():
         INSERT INTO human_impacts (id, fatalities, injured, evacuated, displaced, missing)
         VALUES (%s, %s, %s, %s, %s, %s)
     """, (
-        did, safe_int(row["Total Deaths"]), safe_int(row["No. Injured"]),
-        0, safe_int(row["No. Homeless"]), 0
+        did,
+        row["split_deaths"],
+        row["split_injured"],
+        0,
+        row["split_homeless"],
+        0
     ))
 
     try:
