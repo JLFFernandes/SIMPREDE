@@ -175,15 +175,19 @@ services:
           export DB_SCHEMA=google_scraper
           export SUPABASE_URL=https://kyrfsylobmsdjlrrpful.supabase.co
           export SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9zZSI6ImFub24iLCJpYXQiOjE3MzQ0NDc2MDQsImV4cCI6MjA1MDAyMzYwNH0.NyHaKt2SV0zg0e7FHhYTdZ8WVp3BN_Ls2Q3uQwp4pCE
-          
+
+          # Ensure DAGs are not paused at creation
+          export AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=false
+
           # Verify environment variables are set for airflow user
           echo '=== Airflow User Environment Check ==='
           echo \"DB_USER: \${DB_USER:-NOT_SET}\"
           echo \"DB_HOST: \${DB_HOST:-NOT_SET}\"
           echo \"DB_PASSWORD: \${DB_PASSWORD:+SET}\"
           echo \"SUPABASE_URL: \${SUPABASE_URL:-NOT_SET}\"
+          echo \"AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: \${AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION:-NOT_SET}\"
           echo '======================================'
-          
+
           cd /opt/airflow
           airflow standalone
         "
