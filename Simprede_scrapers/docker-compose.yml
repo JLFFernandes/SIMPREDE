@@ -9,7 +9,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     AIRFLOW__CORE__FERNET_KEY: ''
-    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: 'false'
     AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'false'
@@ -158,7 +158,7 @@ services:
         export DB_NAME=postgres
         export DB_SCHEMA=google_scraper
         export SUPABASE_URL=https://kyrfsylobmsdjlrrpful.supabase.co
-        export SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ0NDc2MDQsImV4cCI6MjA1MDAyMzYwNH0.NyHaKt2SV0zg0e7FHhYTdZ8WVp3BN_Ls2Q3uQwp4pCE
+        export SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9zZSI6ImFub24iLCJpYXQiOjE3MzQ0NDc2MDQsImV4cCI6MjA1MDAyMzYwNH0.NyHaKt2SV0zg0e7FHhYTdZ8WVp3BN_Ls2Q3uQwp4pCE
         
         # Pass through all environment variables to airflow user
         ALL_ENV_VARS=$(env | grep -E '^(DB_|SUPABASE_|GCS_|SQL_|AIRFLOW)' | sed 's/^/export /')
