@@ -866,63 +866,51 @@ with col9:
         unsafe_allow_html=True
     )
 
-    if not df_previsao_melhorada.empty:
-        # Criar uma amostra de locais de previsão com base em dados históricos
-        # Usar locais de df_scraper como base para previsões futuras
-        if not df_scraper.empty:
-            # Amostrar locais representativos para previsões
-            sample_locations = df_scraper.groupby(['district', 'type']).agg({
-                'latitude': 'mean',
-                'longitude': 'mean'
-            }).reset_index()
-            
-            # Mesclar com previsões para mostrar ocorrências esperadas por local
-            df_pred_map = []
-            for _, pred_row in df_previsao_melhorada.iterrows():
-                # Obter locais para este tipo de desastre
-                type_locations = sample_locations[sample_locations['type'] == pred_row['type']]
-                
-                for _, loc in type_locations.iterrows():
-                    df_pred_map.append({
-                        'district': loc['district'],
-                        'type': pred_row['type'],
-                        'month': pred_row['month'],
-                        'predicted_occurrences': pred_row['ocorrencias'],
-                        'latitude': loc['latitude'],
-                        'longitude': loc['longitude']
-                    })
-            
-            if df_pred_map:
-                df_pred_map = pd.DataFrame(df_pred_map)
-                
-                # Criar mapa de previsão
-                fig_pred_map = px.scatter_map(
-                    df_pred_map,
-                    lat="latitude",
-                    lon="longitude",
-                    color="type",
-                    size="predicted_occurrences",
-                    hover_data=["district", "month", "predicted_occurrences"],
-                    zoom=4.5,
-                    height=400,
-                    center={"lat": 39.5, "lon": -8.0},
-                    color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
-                )
-                fig_pred_map.update_layout(
-                    mapbox_style="stamen-terrain",
-                    showlegend=True,
-                    margin={"r":0,"t":30,"l":0,"b":0}
-                )
-                st.plotly_chart(fig_pred_map, use_container_width=True)
-                
-                st.markdown("""
-                **Nota:** As localizações são baseadas em padrões históricos.
-                O tamanho dos pontos representa a intensidade prevista.
-                """)
-            else:
-                st.warning("Sem dados de localização para previsões.")
-        else:
-            st.warning("Sem dados históricos de localização disponíveis.")
+    if not df_previsao_melhorada.empty and not df_scraper.empty:
+        # Construir mapa com previsões proporcionais por distrito
+        df_map_annual = distritos_tipo[["district", "type", "ocorrencias_previstas"]].copy()
+        df_map_annual.rename(columns={"ocorrencias_previstas": "predicted_occurrences"}, inplace=True)
+
+        # Coordenadas médias por distrito e tipo
+        coord_por_distrito = df_scraper.groupby(["district", "type"]).agg({
+            "latitude": "mean",
+            "longitude": "mean"
+        }).reset_index()
+
+        df_map_annual = pd.merge(df_map_annual, coord_por_distrito, on=["district", "type"], how="left")
+        df_map_annual = df_map_annual.dropna(subset=["latitude", "longitude"])
+
+        # Usar o mesmo estilo de mapa que os outros mapas do dashboard
+        fig_pred_map = px.scatter_map(
+            df_map_annual,
+            lat="latitude",
+            lon="longitude",
+            color="type",
+            size="predicted_occurrences",
+            hover_data=["district", "predicted_occurrences"],
+            zoom=4.5,
+            height=400,
+            center={"lat": 39.5, "lon": -8.0},
+            color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
+        )
+        
+        fig_pred_map.update_layout(
+            mapbox_style="stamen-terrain",
+            showlegend=True,
+            margin={"r":0,"t":30,"l":0,"b":0}
+        )
+
+        max_occurrences = df_map_annual['predicted_occurrences'].max()
+        min_occurrences = df_map_annual['predicted_occurrences'].min()
+        
+        st.plotly_chart(fig_pred_map, use_container_width=True)
+        
+        st.markdown(f"""
+        **Nota:** As localizações são baseadas em padrões históricos.
+        O tamanho dos círculos representa o número total de ocorrências previstas para 2026 (min: {min_occurrences}, max: {max_occurrences}).
+        """)
+    elif not df_previsao_melhorada.empty and df_scraper.empty:
+        st.warning("Sem dados históricos de localização disponíveis.")
     else:
         st.warning("Sem previsões disponíveis para visualização no mapa.")
 
