@@ -941,6 +941,11 @@ with col_left:
             Este dashboard apresenta uma análise abrangente de desastres naturais em Portugal, combinando dados históricos 
             com ocorrências recentes e previsões baseadas em machine learning para apoiar a tomada de decisões em gestão de riscos.
         </p>
+        <p style='margin-bottom: 0; line-height: 1.6; font-size: 0.85em; color: #666; font-style: italic;'>
+            Trabalho de âmbito académico, proposta na unidade curricular 21184 - Projeto de Engenharia Informática.
+            <br><br>
+            Autores: Luis Fernandes, Nuno Figueiredo, Paulo Couto, Rui Carvalho.
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -988,12 +993,10 @@ with col_right:
             <strong>Backend:</strong> Python, Scikit-learn, Pandas<br>
             <strong>Frontend:</strong> Streamlit, Plotly, Altair<br>
             <strong>Dados:</strong> Supabase, PostgreSQL<br>
-            <strong>Deployment:</strong> Cloud Computing
+            <strong>Deployment:</strong> Streamlit Cloud<br>
         </p>
     </div>
     """, unsafe_allow_html=True)
-
-st.caption("Projeto de Engenharia Informática<br>Autores: Luis Fernandes, Nuno Figueiredo, Paulo Couto, Rui Carvalho.", unsafe_allow_html=True)
 
 # Carregar dados das tabelas
 df_disasters = carregar_disasters()

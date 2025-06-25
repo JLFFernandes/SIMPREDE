@@ -95,3 +95,22 @@ Traceback (most recent call last):
     return object.__getattribute__(self, name)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'Series' object has no attribute 'astype_str'
+2025-06-25 12:32:18.834 Script compilation error
+Traceback (most recent call last):
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 571, in _run_script
+    code = self._script_cache.get_bytecode(script_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_cache.py", line 72, in get_bytecode
+    filebody = magic.add_magic(filebody, script_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/magic.py", line 45, in add_magic
+    tree = ast.parse(code, script_path, "exec")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/ast.py", line 50, in parse
+    return compile(source, filename, mode, flags,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/app.py", line 1043
+    df_scraper to=excel(writer, sheet_name="google_scraper", index=False)
+               ^^
+SyntaxError: invalid syntax
+2025-06-25 12:32:18.836 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
