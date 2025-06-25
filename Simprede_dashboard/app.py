@@ -346,7 +346,7 @@ df_human_impacts = carregar_human_impacts()
 
 
 # === Parte 1 ===
-st.markdown("<h2 style='text-align: center;'>Ocorrências Históricas de Desastres (1865 - 2025)</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Ocorrências Históricas de Desastres (1865 - 2025)<br><span style='font-size: 0.8em; color: #777;'>(Historical Disaster Occurrences 1865 - 2025)</span></h2>", unsafe_allow_html=True)
 
 
 # --- Agrupar dados históricos por mês/tipo ---
@@ -359,7 +359,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown(
-    "<h4 style='text-align: center;'>Dados históricos agregados por ano e tipologia</h4>",
+    "<h4 style='text-align: center;'>Dados históricos agregados por ano e tipologia<br><span style='font-size: 0.7em; color: #777;'>(Historical data aggregated by year and type)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -368,7 +368,7 @@ with col1:
 
 with col2:
     st.markdown(
-    "<h4 style='text-align: center;'>Vítimas mortais por distrito e tipologia de desastre</h4>",
+    "<h4 style='text-align: center;'>Vítimas mortais por distrito e tipologia de desastre<br><span style='font-size: 0.7em; color: #777;'>(Fatalities by district and disaster type)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -435,7 +435,7 @@ COR_LANDSLIDE = [255, 127, 14, 160]   # Laranja
 
 with col3:
     st.markdown(
-    "<h4 style='text-align: center;'>Ocorrências Históricas no Mapa</h4>",
+    "<h4 style='text-align: center;'>Ocorrências Históricas no Mapa<br><span style='font-size: 0.7em; color: #777;'>(Historical Occurrences on Map)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -484,8 +484,12 @@ with col3:
 
 
 st.markdown("""
-<div style='font-size: 0.9em; color: #555; margin-top: 1em;text-align: center;'>
-<strong>Fontes:</strong> Disasters, ESWD, EMDAT e ANEPC
+<div style='font-size: 0.9em; color: #555; margin-top: 1em; text-align: center;'>
+<strong>Fontes:</strong><br>
+<a href="https://idlcc.fc.ul.pt/pdf/Zezere_2014_DISASTER.pdf" target="_blank">Disaster (Zêzere et al., 2014)</a> |
+<a href="https://eswd.eu/" target="_blank">ESWD</a> |
+<a href="https://www.emdat.be/" target="_blank">EM-DAT</a> |
+<a href="https://prociv.gov.pt/" target="_blank">ANEPC</a>
 </div>
 """, unsafe_allow_html=True)
 
@@ -496,7 +500,7 @@ st.markdown("""
 
 
 # === Parte 2 ===
-st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025) - Webscraping</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025) - Webscraping<br><span style='font-size: 0.8em; color: #777;'>(Recent Occurrences 2024 - 2025 - Webscraping)</span></h2>", unsafe_allow_html=True)
 
 
 
@@ -511,7 +515,7 @@ col4, col5, col6 = st.columns(3)
 
 with col4:
     st.markdown(
-    "<h4 style='text-align: center;'>Ocorrências agregadas por mês e tipologia</h4>",
+    "<h4 style='text-align: center;'>Ocorrências agregadas por mês e tipologia<br><span style='font-size: 0.7em; color: #777;'>(Occurrences aggregated by month and type)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -521,7 +525,7 @@ with col4:
 
 with col5:
     st.markdown(
-    "<h4 style='text-align: center;'>Ocorrências por distrito e tipo</h4>",
+    "<h4 style='text-align: center;'>Ocorrências por distrito e tipo<br><span style='font-size: 0.7em; color: #777;'>(Occurrences by district and type)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -561,7 +565,7 @@ with col5:
 
 with col6:
     st.markdown(
-    "<h4 style='text-align: center;'>Ocorrências Recentes no Mapa (Scraper)</h4>",
+    "<h4 style='text-align: center;'>Ocorrências Recentes no Mapa (Scraper)<br><span style='font-size: 0.7em; color: #777;'>(Recent Occurrences on Map - Scraper)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -613,8 +617,9 @@ with col6:
 
 
 st.markdown("""
-<div style='font-size: 0.9em; color: #555; margin-top: 1em;text-align: center;'>
-<strong>Fontes:</strong> Jornais nacionais - Google News 
+<div style='font-size: 0.9em; color: #555; margin-top: 1em; text-align: center;'>
+<strong>Fontes:</strong> Jornais nacionais - 
+<a href="https://news.google.com/rss" target="_blank">Google News RSS</a>
 </div>
 """, unsafe_allow_html=True)
 
@@ -625,7 +630,7 @@ st.markdown("""
 
 
 # === Parte 3 ===
-st.markdown("<h2 style='text-align: center;'>Previsão de Ocorrências para 2026</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Previsão de Ocorrências para 2026<br><span style='font-size: 0.8em; color: #777;'>(Occurrence Predictions for 2026)</span></h2>", unsafe_allow_html=True)
 
 # --- Enhanced Prediction with Time Series Analysis ---
 def criar_features_temporais(df):
@@ -803,7 +808,7 @@ col7, col8, col9 = st.columns(3)
 
 with col7:
     st.markdown(
-    "<h4 style='text-align: center;'>Previsões de Ocorrencias Mensais</h4>",
+    "<h4 style='text-align: center;'>Previsões de Ocorrencias Mensais<br><span style='font-size: 0.7em; color: #777;'>(Monthly Occurrence Predictions)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -819,7 +824,7 @@ with col7:
 
 with col8:
     st.markdown(
-        "<h4 style='text-align: center;'>Previsão Anual por Distrito e Tipo</h4>",
+        "<h4 style='text-align: center;'>Previsão Anual por Distrito e Tipo<br><span style='font-size: 0.7em; color: #777;'>(Annual Prediction by District and Type)</span></h4>",
         unsafe_allow_html=True
     )
 
@@ -862,7 +867,7 @@ with col8:
 
 with col9:
     st.markdown(
-        "<h4 style='text-align: center;'>Mapa de Previsões 2026</h4>",
+        "<h4 style='text-align: center;'>Mapa de Previsões 2026<br><span style='font-size: 0.7em; color: #777;'>(2026 Predictions Map)</span></h4>",
         unsafe_allow_html=True
     )
 
