@@ -219,11 +219,9 @@ def carregar_disasters():
 
     return df.dropna(subset=["year", "month", "date"])
 
-
-
-
 @st.cache_data
 def carregar_localizacoes_disasters():
+    # Carrega e filtra localizações válidas
     todos = []
     passo = 1000
     inicio = 0
@@ -241,8 +239,13 @@ def carregar_localizacoes_disasters():
         inicio += passo
 
     df = pd.DataFrame(todos)
-    return df.dropna(subset=["latitude", "longitude"])
-
+    df = df[
+        df["latitude"].notna() &
+        df["longitude"].notna() &
+        (df["latitude"] != -999) &
+        (df["longitude"] != -999)
+    ]
+    return df
 
 @st.cache_data
 def carregar_scraper():
@@ -437,19 +440,20 @@ with col3:
     unsafe_allow_html=True
 )
 
-    df_merge1 = pd.merge(df_disasters_raw, df_loc_disasters, on="id")
+    df_merge1 = pd.merge(df_disasters_raw, df_loc_disasters, on="id", how="inner")
+    df_merge1 = df_merge1[["latitude", "longitude", "district", "municipality", "year", "month", "type"]].copy()
 
-    tipo_mapa1_val = st.session_state.get("mapa1", "Todos")
+    # Limpeza de dados
+    df_merge1["district"] = df_merge1["district"].fillna("Desconhecido").astype(str).str.strip().str.title()
+    df_merge1["municipality"] = df_merge1["municipality"].fillna("Desconhecido").astype(str).str.strip().str.title()
+    df_merge1["year"] = df_merge1["year"].fillna(0).astype(int)
+    df_merge1["month"] = df_merge1["month"].fillna(0).astype(int)
+    df_merge1["type"] = df_merge1["type"].astype(str)
+    df_merge1["district"] = df_merge1["district"].replace(substituir_distritos)
 
-    if tipo_mapa1_val != "Todos":
-        df_merge1 = df_merge1[df_merge1["type"] == tipo_mapa1_val]
-        cor = COR_FLOOD if tipo_mapa1_val == "Flood" else COR_LANDSLIDE
-        df_merge1["color"] = [cor] * len(df_merge1)
-    else:
-        df_merge1["color"] = df_merge1["type"].map({
-            "Flood": COR_FLOOD,
-            "Landslide": COR_LANDSLIDE
-        })
+    tipo_mapa_1 = st.session_state.get("mapa1", "Todos")
+    if tipo_mapa_1 != "Todos":
+        df_merge1 = df_merge1[df_merge1["type"] == tipo_mapa_1]
 
     if not df_merge1.empty:
         fig_map1 = px.scatter_map(
@@ -457,28 +461,29 @@ with col3:
             lat="latitude",
             lon="longitude",
             color="type",
-            hover_data=["district", "municipality", "year", "month"],
-            zoom=4.5, 
+            hover_name="district",
+            hover_data=["municipality", "year", "month"],
+            zoom=4.5,
             height=400,
-            center={"lat": 39.5, "lon": -8.0},  # Center on Portugal mainland
+            center={"lat": 39.5, "lon": -8.0},
             color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
         )
         fig_map1.update_layout(
             mapbox_style="stamen-terrain",
             showlegend=True,
-            margin={"r":0,"t":30,"l":0,"b":0}
+            margin={"r":0, "t":30, "l":0, "b":0}
         )
         st.plotly_chart(fig_map1, use_container_width=True)
-
-        # Filtro abaixo do mapa
-        tipo_mapa_1 = st.radio(
-            "Selecionar tipo de desastre (mapa):",
-            ["Todos", "Flood", "Landslide"],
-            horizontal=True,
-            key="mapa1"
-        )
     else:
         st.warning("Sem dados de localização disponíveis.")
+
+    # Filtro de tipo de desastre após o mapa
+    tipo_mapa_1 = st.radio(
+        "Selecionar tipo de desastre (mapa):",
+        ["Todos", "Flood", "Landslide"],
+        horizontal=True,
+        key="mapa1"
+    )
 
 
 st.markdown("""
@@ -997,7 +1002,7 @@ with col_right:
         </p>
     </div>
     """, unsafe_allow_html=True)
-
+    
 # Carregar dados das tabelas
 df_disasters = carregar_disasters()
 df_human_impacts = carregar_human_impacts()
