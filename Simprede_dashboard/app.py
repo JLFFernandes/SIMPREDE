@@ -189,8 +189,6 @@ st.markdown(f"""
     <hr>
 """, unsafe_allow_html=True)
 
-
-
 # --- Carregamento de dados ---
 @st.cache_data
 def carregar_disasters():
@@ -221,11 +219,9 @@ def carregar_disasters():
 
     return df.dropna(subset=["year", "month", "date"])
 
-
-
-
 @st.cache_data
 def carregar_localizacoes_disasters():
+    # Carrega e filtra localizações válidas
     todos = []
     passo = 1000
     inicio = 0
@@ -243,8 +239,13 @@ def carregar_localizacoes_disasters():
         inicio += passo
 
     df = pd.DataFrame(todos)
-    return df.dropna(subset=["latitude", "longitude"])
-
+    df = df[
+        df["latitude"].notna() &
+        df["longitude"].notna() &
+        (df["latitude"] != -999) &
+        (df["longitude"] != -999)
+    ]
+    return df
 
 @st.cache_data
 def carregar_scraper():
@@ -346,7 +347,7 @@ df_human_impacts = carregar_human_impacts()
 
 
 # === Parte 1 ===
-st.markdown("<h2 style='text-align: center;'>Ocorrências Históricas de Desastres (1865 - 2025)</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Ocorrências Históricas de Desastres (1865 - 2025)<br><span style='font-size: 0.8em; color: #777;'>(Historical Disaster Occurrences 1865 - 2025)</span></h2>", unsafe_allow_html=True)
 
 
 # --- Agrupar dados históricos por mês/tipo ---
@@ -359,7 +360,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown(
-    "<h4 style='text-align: center;'>Dados históricos agregados por ano e tipologia</h4>",
+    "<h4 style='text-align: center;'>Dados históricos agregados por ano e tipologia<br><span style='font-size: 0.7em; color: #777;'>(Historical data aggregated by year and type)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -368,7 +369,7 @@ with col1:
 
 with col2:
     st.markdown(
-    "<h4 style='text-align: center;'>Vítimas mortais por distrito e tipologia de desastre</h4>",
+    "<h4 style='text-align: center;'>Vítimas mortais por distrito e tipologia de desastre<br><span style='font-size: 0.7em; color: #777;'>(Fatalities by district and disaster type)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -435,23 +436,24 @@ COR_LANDSLIDE = [255, 127, 14, 160]   # Laranja
 
 with col3:
     st.markdown(
-    "<h4 style='text-align: center;'>Ocorrências Históricas no Mapa</h4>",
+    "<h4 style='text-align: center;'>Ocorrências Históricas no Mapa<br><span style='font-size: 0.7em; color: #777;'>(Historical Occurrences on Map)</span></h4>",
     unsafe_allow_html=True
 )
 
-    df_merge1 = pd.merge(df_disasters_raw, df_loc_disasters, on="id")
+    df_merge1 = pd.merge(df_disasters_raw, df_loc_disasters, on="id", how="inner")
+    df_merge1 = df_merge1[["latitude", "longitude", "district", "municipality", "year", "month", "type"]].copy()
 
-    tipo_mapa1_val = st.session_state.get("mapa1", "Todos")
+    # Limpeza de dados
+    df_merge1["district"] = df_merge1["district"].fillna("Desconhecido").astype(str).str.strip().str.title()
+    df_merge1["municipality"] = df_merge1["municipality"].fillna("Desconhecido").astype(str).str.strip().str.title()
+    df_merge1["year"] = df_merge1["year"].fillna(0).astype(int)
+    df_merge1["month"] = df_merge1["month"].fillna(0).astype(int)
+    df_merge1["type"] = df_merge1["type"].astype(str)
+    df_merge1["district"] = df_merge1["district"].replace(substituir_distritos)
 
-    if tipo_mapa1_val != "Todos":
-        df_merge1 = df_merge1[df_merge1["type"] == tipo_mapa1_val]
-        cor = COR_FLOOD if tipo_mapa1_val == "Flood" else COR_LANDSLIDE
-        df_merge1["color"] = [cor] * len(df_merge1)
-    else:
-        df_merge1["color"] = df_merge1["type"].map({
-            "Flood": COR_FLOOD,
-            "Landslide": COR_LANDSLIDE
-        })
+    tipo_mapa_1 = st.session_state.get("mapa1", "Todos")
+    if tipo_mapa_1 != "Todos":
+        df_merge1 = df_merge1[df_merge1["type"] == tipo_mapa_1]
 
     if not df_merge1.empty:
         fig_map1 = px.scatter_map(
@@ -459,33 +461,38 @@ with col3:
             lat="latitude",
             lon="longitude",
             color="type",
-            hover_data=["district", "municipality", "year", "month"],
-            zoom=4.5, 
+            hover_name="district",
+            hover_data=["municipality", "year", "month"],
+            zoom=4.5,
             height=400,
-            center={"lat": 39.5, "lon": -8.0},  # Center on Portugal mainland
+            center={"lat": 39.5, "lon": -8.0},
             color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
         )
         fig_map1.update_layout(
             mapbox_style="stamen-terrain",
             showlegend=True,
-            margin={"r":0,"t":30,"l":0,"b":0}
+            margin={"r":0, "t":30, "l":0, "b":0}
         )
         st.plotly_chart(fig_map1, use_container_width=True)
-
-        # Filtro abaixo do mapa
-        tipo_mapa_1 = st.radio(
-            "Selecionar tipo de desastre (mapa):",
-            ["Todos", "Flood", "Landslide"],
-            horizontal=True,
-            key="mapa1"
-        )
     else:
         st.warning("Sem dados de localização disponíveis.")
 
+    # Filtro de tipo de desastre após o mapa
+    tipo_mapa_1 = st.radio(
+        "Selecionar tipo de desastre (mapa):",
+        ["Todos", "Flood", "Landslide"],
+        horizontal=True,
+        key="mapa1"
+    )
+
 
 st.markdown("""
-<div style='font-size: 0.9em; color: #555; margin-top: 1em;text-align: center;'>
-<strong>Fontes:</strong> Disasters, ESWD, EMDAT e ANEPC
+<div style='font-size: 0.9em; color: #555; margin-top: 1em; text-align: center;'>
+<strong>Fontes:</strong><br>
+<a href="https://idlcc.fc.ul.pt/pdf/Zezere_2014_DISASTER.pdf" target="_blank">Disaster (Zêzere et al., 2014)</a> |
+<a href="https://eswd.eu/" target="_blank">ESWD</a> |
+<a href="https://www.emdat.be/" target="_blank">EM-DAT</a> |
+<a href="https://prociv.gov.pt/" target="_blank">ANEPC</a>
 </div>
 """, unsafe_allow_html=True)
 
@@ -496,7 +503,7 @@ st.markdown("""
 
 
 # === Parte 2 ===
-st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025) - Webscraping</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025) - Webscraping<br><span style='font-size: 0.8em; color: #777;'>(Recent Occurrences 2024 - 2025 - Webscraping)</span></h2>", unsafe_allow_html=True)
 
 
 
@@ -511,7 +518,7 @@ col4, col5, col6 = st.columns(3)
 
 with col4:
     st.markdown(
-    "<h4 style='text-align: center;'>Ocorrências agregadas por mês e tipologia</h4>",
+    "<h4 style='text-align: center;'>Ocorrências agregadas por mês e tipologia<br><span style='font-size: 0.7em; color: #777;'>(Occurrences aggregated by month and type)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -521,7 +528,7 @@ with col4:
 
 with col5:
     st.markdown(
-    "<h4 style='text-align: center;'>Ocorrências por distrito e tipo</h4>",
+    "<h4 style='text-align: center;'>Ocorrências por distrito e tipo<br><span style='font-size: 0.7em; color: #777;'>(Occurrences by district and type)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -561,7 +568,7 @@ with col5:
 
 with col6:
     st.markdown(
-    "<h4 style='text-align: center;'>Ocorrências Recentes no Mapa (Scraper)</h4>",
+    "<h4 style='text-align: center;'>Ocorrências Recentes no Mapa (Scraper)<br><span style='font-size: 0.7em; color: #777;'>(Recent Occurrences on Map - Scraper)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -613,8 +620,9 @@ with col6:
 
 
 st.markdown("""
-<div style='font-size: 0.9em; color: #555; margin-top: 1em;text-align: center;'>
-<strong>Fontes:</strong> Jornais nacionais - Google News 
+<div style='font-size: 0.9em; color: #555; margin-top: 1em; text-align: center;'>
+<strong>Fontes:</strong> Jornais nacionais - 
+<a href="https://news.google.com/rss" target="_blank">Google News RSS</a>
 </div>
 """, unsafe_allow_html=True)
 
@@ -625,7 +633,7 @@ st.markdown("""
 
 
 # === Parte 3 ===
-st.markdown("<h2 style='text-align: center;'>Previsão de Ocorrências para 2026</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Previsão de Ocorrências para 2026<br><span style='font-size: 0.8em; color: #777;'>(Occurrence Predictions for 2026)</span></h2>", unsafe_allow_html=True)
 
 # --- Enhanced Prediction with Time Series Analysis ---
 def criar_features_temporais(df):
@@ -803,7 +811,7 @@ col7, col8, col9 = st.columns(3)
 
 with col7:
     st.markdown(
-    "<h4 style='text-align: center;'>Previsões de Ocorrencias Mensais</h4>",
+    "<h4 style='text-align: center;'>Previsões de Ocorrencias Mensais<br><span style='font-size: 0.7em; color: #777;'>(Monthly Occurrence Predictions)</span></h4>",
     unsafe_allow_html=True
 )
 
@@ -819,7 +827,7 @@ with col7:
 
 with col8:
     st.markdown(
-        "<h4 style='text-align: center;'>Previsão Anual por Distrito e Tipo</h4>",
+        "<h4 style='text-align: center;'>Previsão Anual por Distrito e Tipo<br><span style='font-size: 0.7em; color: #777;'>(Annual Prediction by District and Type)</span></h4>",
         unsafe_allow_html=True
     )
 
@@ -862,7 +870,7 @@ with col8:
 
 with col9:
     st.markdown(
-        "<h4 style='text-align: center;'>Mapa de Previsões 2026</h4>",
+        "<h4 style='text-align: center;'>Mapa de Previsões 2026<br><span style='font-size: 0.7em; color: #777;'>(2026 Predictions Map)</span></h4>",
         unsafe_allow_html=True
     )
 
@@ -918,8 +926,83 @@ with col9:
 
 # --- Rodapé ---
 st.markdown("---")
-st.caption("Projeto de Engenharia Informática<br>Autores: Luis Fernandes, Nuno Figueiredo, Paulo Couto, Rui Carvalho.", unsafe_allow_html=True)
 
+# Add the dashboard explanation section here at the bottom
+st.markdown("""
+<div style='background-color: #f8f9fa; border-radius: 12px; padding: 2em; margin-bottom: 2em; border: 1px solid #e9ecef;'>
+    <h3 style='color: #2c3e50; margin-top: 0; text-align: center;'>Sobre o Dashboard
+    <br><span style='font-size: 0.75em; color: #777; font-weight: normal;'>(About the Dashboard)</span></h3>
+</div>
+""", unsafe_allow_html=True)
+
+# Use Streamlit columns instead of CSS grid for better compatibility
+col_left, col_right = st.columns(2)
+
+with col_left:
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Propósito</h4>
+        <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
+            Este dashboard apresenta uma análise abrangente de desastres naturais em Portugal, combinando dados históricos 
+            com ocorrências recentes e previsões baseadas em machine learning para apoiar a tomada de decisões em gestão de riscos.
+        </p>
+        <p style='margin-bottom: 0; line-height: 1.6; font-size: 0.85em; color: #666; font-style: italic;'>
+            Trabalho de âmbito académico, proposta na unidade curricular 21184 - Projeto de Engenharia Informática.
+            <br><br>
+            Autores: Luis Fernandes, Nuno Figueiredo, Paulo Couto, Rui Carvalho.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Dados Históricos</h4>
+        <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
+            Compilação de múltiplas fontes científicas e institucionais:
+        </p>
+        <ul style='margin-left: 1em; font-size: 0.9em;'>
+            <li><a href="https://idlcc.fc.ul.pt/pdf/Zezere_2014_DISASTER.pdf" target="_blank" style='color: #3498db;'>Disaster Database (Zêzere et al.)</a></li>
+            <li><a href="https://eswd.eu/" target="_blank" style='color: #3498db;'>European Severe Weather Database</a></li>
+            <li><a href="https://www.emdat.be/" target="_blank" style='color: #3498db;'>EM-DAT International Database</a></li>
+            <li><a href="https://prociv.gov.pt/" target="_blank" style='color: #3498db;'>ANEPC - Autoridade Nacional de Emergência</a></li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_right:
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Dados Recentes</h4>
+        <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
+            Ocorrências de 2024-2025 obtidas via webscraping de fontes noticiosas nacionais através do 
+            <a href="https://news.google.com/rss" target="_blank" style='color: #3498db;'>Google News RSS</a>. 
+            Os dados são validados contra bases existentes e georeferenciados automaticamente.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Modelos Preditivos</h4>
+        <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
+            Previsões para 2026 utilizando algoritmos de Random Forest com características sazonais, 
+            tendências temporais e padrões históricos específicos para Portugal.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Tecnologias</h4>
+        <p style='margin-bottom: 0; line-height: 1.6; font-size: 0.9em;'>
+            <strong>Backend:</strong> Python, Scikit-learn, Pandas<br>
+            <strong>Frontend:</strong> Streamlit, Plotly, Altair<br>
+            <strong>Dados:</strong> Supabase, PostgreSQL<br>
+            <strong>Deployment:</strong> Streamlit Cloud<br>
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
 # Carregar dados das tabelas
 df_disasters = carregar_disasters()
 df_human_impacts = carregar_human_impacts()
