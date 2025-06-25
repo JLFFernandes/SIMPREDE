@@ -27,3 +27,71 @@ Traceback (most recent call last):
                ^^
 SyntaxError: invalid syntax
 2025-06-25 11:35:03.026 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-06-25 12:02:16.221 Script compilation error
+Traceback (most recent call last):
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 571, in _run_script
+    code = self._script_cache.get_bytecode(script_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_cache.py", line 72, in get_bytecode
+    filebody = magic.add_magic(filebody, script_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/magic.py", line 45, in add_magic
+    tree = ast.parse(code, script_path, "exec")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/ast.py", line 50, in parse
+    return compile(source, filename, mode, flags,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/app.py", line 1019
+    df_scraper to=excel(writer, sheet_name="google_scraper", index=False)
+               ^^
+SyntaxError: invalid syntax
+2025-06-25 12:02:16.223 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-06-25 12:06:34.121 Script compilation error
+Traceback (most recent call last):
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 571, in _run_script
+    code = self._script_cache.get_bytecode(script_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_cache.py", line 72, in get_bytecode
+    filebody = magic.add_magic(filebody, script_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/magic.py", line 45, in add_magic
+    tree = ast.parse(code, script_path, "exec")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/ast.py", line 50, in parse
+    return compile(source, filename, mode, flags,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/app.py", line 1019
+    df_scraper to=excel(writer, sheet_name="google_scraper", index=False)
+               ^^
+SyntaxError: invalid syntax
+2025-06-25 12:06:34.124 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2025-06-25 12:14:02.253 Uncaught app execution
+Traceback (most recent call last):
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 128, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 669, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/app.py", line 581, in <module>
+    df_scraper_grouped["month"].astype(int).astype_str().str.zfill(2)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/pandas/core/generic.py", line 6318, in __getattr__
+    return object.__getattribute__(self, name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Series' object has no attribute 'astype_str'
+2025-06-25 12:22:54.808 Uncaught app execution
+Traceback (most recent call last):
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 128, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 669, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/app.py", line 509, in <module>
+    df_scraper_grouped["month"].astype(int).astype_str().str.zfill(2)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ruicarvalho/Desktop/projects/SIMPREDE/Simprede_dashboard/env/lib/python3.11/site-packages/pandas/core/generic.py", line 6318, in __getattr__
+    return object.__getattribute__(self, name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Series' object has no attribute 'astype_str'

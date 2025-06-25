@@ -189,8 +189,6 @@ st.markdown(f"""
     <hr>
 """, unsafe_allow_html=True)
 
-
-
 # --- Carregamento de dados ---
 @st.cache_data
 def carregar_disasters():
@@ -923,6 +921,78 @@ with col9:
 
 # --- Rodapé ---
 st.markdown("---")
+
+# Add the dashboard explanation section here at the bottom
+st.markdown("""
+<div style='background-color: #f8f9fa; border-radius: 12px; padding: 2em; margin-bottom: 2em; border: 1px solid #e9ecef;'>
+    <h3 style='color: #2c3e50; margin-top: 0; text-align: center;'>Sobre o Dashboard
+    <br><span style='font-size: 0.75em; color: #777; font-weight: normal;'>(About the Dashboard)</span></h3>
+</div>
+""", unsafe_allow_html=True)
+
+# Use Streamlit columns instead of CSS grid for better compatibility
+col_left, col_right = st.columns(2)
+
+with col_left:
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Propósito</h4>
+        <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
+            Este dashboard apresenta uma análise abrangente de desastres naturais em Portugal, combinando dados históricos 
+            com ocorrências recentes e previsões baseadas em machine learning para apoiar a tomada de decisões em gestão de riscos.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Dados Históricos</h4>
+        <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
+            Compilação de múltiplas fontes científicas e institucionais:
+        </p>
+        <ul style='margin-left: 1em; font-size: 0.9em;'>
+            <li><a href="https://idlcc.fc.ul.pt/pdf/Zezere_2014_DISASTER.pdf" target="_blank" style='color: #3498db;'>Disaster Database (Zêzere et al.)</a></li>
+            <li><a href="https://eswd.eu/" target="_blank" style='color: #3498db;'>European Severe Weather Database</a></li>
+            <li><a href="https://www.emdat.be/" target="_blank" style='color: #3498db;'>EM-DAT International Database</a></li>
+            <li><a href="https://prociv.gov.pt/" target="_blank" style='color: #3498db;'>ANEPC - Autoridade Nacional de Emergência</a></li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_right:
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Dados Recentes</h4>
+        <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
+            Ocorrências de 2024-2025 obtidas via webscraping de fontes noticiosas nacionais através do 
+            <a href="https://news.google.com/rss" target="_blank" style='color: #3498db;'>Google News RSS</a>. 
+            Os dados são validados contra bases existentes e georeferenciados automaticamente.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Modelos Preditivos</h4>
+        <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
+            Previsões para 2026 utilizando algoritmos de Random Forest com características sazonais, 
+            tendências temporais e padrões históricos específicos para Portugal.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
+        <h4 style='color: #34495e; margin-bottom: 0.8em;'>Tecnologias</h4>
+        <p style='margin-bottom: 0; line-height: 1.6; font-size: 0.9em;'>
+            <strong>Backend:</strong> Python, Scikit-learn, Pandas<br>
+            <strong>Frontend:</strong> Streamlit, Plotly, Altair<br>
+            <strong>Dados:</strong> Supabase, PostgreSQL<br>
+            <strong>Deployment:</strong> Cloud Computing
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
 st.caption("Projeto de Engenharia Informática<br>Autores: Luis Fernandes, Nuno Figueiredo, Paulo Couto, Rui Carvalho.", unsafe_allow_html=True)
 
 # Carregar dados das tabelas
