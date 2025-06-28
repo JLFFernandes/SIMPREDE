@@ -77,11 +77,11 @@ for _, row in df.iterrows():
             VALUES (%s, %s, %s, %s, %s, %s);
         """, (
             disaster_id,
-            int(row['FATALITIES']) if 'FATALITIES' in row and pd.notnull(row['FATALITIES']) else None,
-            int(row['INJURED']) if 'INJURED' in row and pd.notnull(row['INJURED']) else None,
-            int(row['EVACUATED']) if 'EVACUATED' in row and pd.notnull(row['EVACUATED']) else None,
-            int(row['DISPLACED']) if 'DISPLACED' in row and pd.notnull(row['DISPLACED']) else None,
-            int(row['MISSING']) if 'MISSING' in row and pd.notnull(row['MISSING']) else None
+            int(row['FATALITIES']) if 'FATALITIES' in row and pd.notnull(row['FATALITIES']) else 0,
+            int(row['INJURED']) if 'INJURED' in row and pd.notnull(row['INJURED']) else 0,
+            int(row['EVACUATED']) if 'EVACUATED' in row and pd.notnull(row['EVACUATED']) else 0,
+            int(row['DISPLACED']) if 'DISPLACED' in row and pd.notnull(row['DISPLACED']) else 0,
+            int(row['MISSING']) if 'MISSING' in row and pd.notnull(row['MISSING']) else 0
         ))
 
         # === FONTE DE INFORMAÇÃO ===
