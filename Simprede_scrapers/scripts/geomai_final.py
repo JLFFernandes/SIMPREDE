@@ -95,23 +95,34 @@ def fetch_records():
 
 def build_dataframe(records):
     df = pd.DataFrame(records)
+    if df.empty:
+        print("Nenhum registo encontrado. DataFrame vazio.", file=sys.stderr)
+        return df
 
-    dt_iso = pd.to_datetime(df["DataInicioOcorrencia"], errors="coerce")
-    dt_ms  = pd.to_datetime(df["DataOcorrencia"], unit="ms", errors="coerce")
+    # Helper to safely get a column or NA
+    def safe_col(col):
+        if col in df:
+            return df[col]
+        else:
+            print(f"[WARN] Coluna '{col}' não encontrada nos dados.", file=sys.stderr)
+            return pd.Series([pd.NA] * len(df))
+
+    dt_iso = pd.to_datetime(safe_col("DataInicioOcorrencia"), errors="coerce")
+    dt_ms  = pd.to_datetime(safe_col("DataOcorrencia"), unit="ms", errors="coerce")
     full_dt = dt_iso.fillna(dt_ms)
     date_col = full_dt.dt.normalize()
-    src_dt = pd.to_datetime(df["DataDosDados"], unit="ms", errors="coerce").dt.normalize()
-    geom = "POINT(" + df["Longitude"].astype(str) + " " + df["Latitude"].astype(str) + ")"
+    src_dt = pd.to_datetime(safe_col("DataDosDados"), unit="ms", errors="coerce").dt.normalize()
+    geom = "POINT(" + safe_col("Longitude").astype(str) + " " + safe_col("Latitude").astype(str) + ")"
 
     return pd.DataFrame({
-        "type":        df["Natureza"],
+        "type":        safe_col("Natureza"),
         "date":        date_col,
         "year":        date_col.dt.year,
         "month":       date_col.dt.month,
         "day":         date_col.dt.day,
         "hour":        full_dt.dt.strftime("%H:%M"),
-        "latitude":    df["Latitude"],
-        "longitude":   df["Longitude"],
+        "latitude":    safe_col("Latitude"),
+        "longitude":   safe_col("Longitude"),
         "source":      EXP_URL,
         "sourcedate":  src_dt,
         "sourcetype":  "ArcGISFeatureServer",
@@ -119,10 +130,10 @@ def build_dataframe(records):
         "fatalities":  0, "injured":    0,
         "evacuated":   0, "displaced":  0,
         "missing":     0,
-        "district":    df["Concelho"],
-        "municipali":  df["Concelho"],
-        "parish":      df["Freguesia"],
-        "dicofreg":    df["DICOFRE"],
+        "district":    safe_col("Concelho"),
+        "municipali":  safe_col("Concelho"),
+        "parish":      safe_col("Freguesia"),
+        "dicofreg":    safe_col("DICOFRE"),
         "geom":        geom
     })
 
@@ -261,6 +272,9 @@ def main():
     new_recs = fetch_records()
     print(f"{len(new_recs)} registos encontrados")
     df_new = build_dataframe(new_recs)
+    if df_new.empty:
+        print("Nenhum dado novo para importar. Encerrando script.")
+        return
     insert_into_db(df_new)
 
 if __name__ == "__main__":
