@@ -496,7 +496,7 @@ st.markdown("""
 
 
 # === Parte 2 ===
-st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025) - Webscraping<br><span style='font-size: 0.8em; color: #777;'>(Recent Occurrences 2024 - 2025 - Webscraping)</span></h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Ocorrências Recentes (2024 - 2025)<br><span style='font-size: 0.8em; color: #777;'>(Recent Occurrences 2024 - 2025)</span></h2>", unsafe_allow_html=True)
 
 
 
