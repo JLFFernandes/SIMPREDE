@@ -936,7 +936,7 @@ with col_left:
     <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
         <h4 style='color: #34495e; margin-bottom: 0.8em;'>Propósito</h4>
         <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
-            Este dashboard apresenta uma análise abrangente de desastres naturais em Portugal, combinando dados históricos 
+            Este dashboard apresenta uma análise focada em inundações e deslizamentos de terra em Portugal, combinando dados históricos 
             com ocorrências recentes e previsões baseadas em machine learning para apoiar a tomada de decisões em gestão de riscos.
         </p>
         <p style='margin-bottom: 0; line-height: 1.6; font-size: 0.85em; color: #666; font-style: italic;'>
@@ -951,7 +951,8 @@ with col_left:
     <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
         <h4 style='color: #34495e; margin-bottom: 0.8em;'>Dados Históricos</h4>
         <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
-            Compilação de múltiplas fontes científicas e institucionais:
+            Compilação de múltiplas fontes científicas e institucionais.<br>
+            Os dados foram validados com base em datas, localizações e número de vítimas. 
         </p>
         <ul style='margin-left: 1em; font-size: 0.9em;'>
             <li><a href="https://idlcc.fc.ul.pt/pdf/Zezere_2014_DISASTER.pdf" target="_blank" style='color: #3498db;'>Disaster Database (Zêzere et al.)</a></li>
@@ -969,7 +970,11 @@ with col_right:
         <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
             Ocorrências de 2024-2025 obtidas via webscraping de fontes noticiosas nacionais através do 
             <a href="https://news.google.com/rss" target="_blank" style='color: #3498db;'>Google News RSS</a>. 
-            Os dados são validados contra bases existentes e georeferenciados automaticamente.
+            Os dados são georreferenciados automaticamente e foram parcialmente validados até 12 de abril de 2025. 
+            A partir dessa data, os dados são informativos e ainda não foram validados por fontes oficiais.
+        </p>
+        <p style='margin-bottom: 0; line-height: 1.6; font-size: 0.85em; color: #666;'>
+            🛈 Validação cruzada parcial: Cerca de 59% dos eventos registados na ESWD (entre 1 de janeiro e 12 de abril de 2025) foram confirmados automaticamente com artigos recolhidos pelo scraper, usando margem de ±2 dias, distrito e número de vítimas.
         </p>
     </div>
     """, unsafe_allow_html=True)
