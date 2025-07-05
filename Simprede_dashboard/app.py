@@ -936,7 +936,7 @@ with col_left:
     <div style='background-color: #ffffff; border-radius: 8px; padding: 1.5em; margin-bottom: 1em; border: 1px solid #e9ecef;'>
         <h4 style='color: #34495e; margin-bottom: 0.8em;'>Propósito</h4>
         <p style='margin-bottom: 1em; line-height: 1.6; font-size: 0.9em;'>
-            Este dashboard apresenta uma análise focada em inundações e deslizamentos de terra em Portugal, combinando dados históricos 
+            Este dashboard apresenta uma análise direcionada para inundações e deslizamentos de terra em Portugal, combinando dados históricos 
             com ocorrências recentes e previsões baseadas em machine learning para apoiar a tomada de decisões em gestão de riscos.
         </p>
         <p style='margin-bottom: 0; line-height: 1.6; font-size: 0.85em; color: #666; font-style: italic;'>
