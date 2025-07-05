@@ -273,10 +273,6 @@ def carregar_scraper():
     return df.dropna(subset=["year", "month", "latitude", "longitude"])
 
 
-#df = carregar_disasters()
-#st.write("✅ Registos carregados após correção:", len(df))
-
-
 # Dicionário com correções conhecidas de nomes de distritos
 substituir_distritos = {
     "Azores ": "Azores",
@@ -307,14 +303,6 @@ df_loc_disasters["district"] = df_loc_disasters["district"].str.strip().str.titl
 
 # Aplicar substituições
 df_loc_disasters["district"] = df_loc_disasters["district"].replace(substituir_distritos)
-
-
-
-# Ver os distritos já limpos
-distritos_corrigidos = sorted(df_loc_disasters["district"].dropna().unique())
-#st.write("Distritos após padronização:", distritos_corrigidos)
-
-
 
 
 @st.cache_data
@@ -373,7 +361,6 @@ with col2:
     unsafe_allow_html=True
 )
 
-
     # Merge com impactos humanos e localização
     df_merged = pd.merge(
         df_disasters_raw,
@@ -394,8 +381,14 @@ with col2:
     df_merged["district"] = df_merged["district"].astype(str).str.strip().str.title()
     df_merged["type"] = df_merged["type"].str.capitalize()
 
-    # Remover distritos nulos ou vazios
-    df_merged = df_merged[df_merged["district"].notna() & (df_merged["district"] != "")]
+    # Remover distritos nulos, vazios, ou 'nan' strings
+    df_merged = df_merged[
+        df_merged["district"].notna() & 
+        (df_merged["district"] != "") & 
+        (df_merged["district"] != "Nan") &
+        (df_merged["district"] != "None") &
+        (df_merged["district"] != "nan")
+    ]
 
     # Agrupar por distrito e tipo
     df_grouped = df_merged.groupby(["district", "type"])["fatalities"].sum().reset_index()
