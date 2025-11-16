@@ -316,6 +316,7 @@ def processar_staging_para_eventos(**context):
     staging_table = staging_info['table_name']
     
     # Query otimizada de inserção com tratamento de conflitos
+    # Formata datas como YYYY/MM/DD
     insert_query = f"""
         INSERT INTO google_scraper.google_scraper_eventos (
             id, type, subtype, date, year, month, day, hour,
@@ -327,7 +328,7 @@ def processar_staging_para_eventos(**context):
             af.id,
             COALESCE(af.type, 'Other'),
             COALESCE(af.subtype, 'Other'),
-            TO_DATE(af.date, 'DD/MM/YYYY'),
+            TO_CHAR(TO_DATE(af.date, 'DD/MM/YYYY'), 'YYYY/MM/DD'),
             EXTRACT(YEAR FROM TO_DATE(af.date, 'DD/MM/YYYY')),
             EXTRACT(MONTH FROM TO_DATE(af.date, 'DD/MM/YYYY')),
             EXTRACT(DAY FROM TO_DATE(af.date, 'DD/MM/YYYY')),
@@ -343,7 +344,7 @@ def processar_staging_para_eventos(**context):
             COALESCE(af.displaced, 0),
             COALESCE(af.missing, 0),
             af.source,
-            af.sourcedate,
+            TO_CHAR(TO_DATE(af.sourcedate, 'DD/MM/YYYY'), 'YYYY/MM/DD'),
             COALESCE(af.sourcetype, 'news_article'),
             af.page,
             NULL
@@ -494,6 +495,99 @@ def atualizar_geometria(**context):
     
     return {'events_updated': eventos_atualizados}
 
+def fundir_para_tabela_principal(**context):
+    """
+    Funde dados de google_scraper.google_scraper_eventos para public.google_scraper_ocorrencias
+    Esta é a tabela principal utilizada pelo dashboard
+    """
+    print("🔀 A fundir dados para tabela principal...")
+    
+    connection_uri = context['task_instance'].xcom_pull(
+        task_ids='configurar_ligacao', key='db_connection'
+    )
+    
+    db_manager = DatabaseManager(context)
+    db_manager.connection_uri = connection_uri
+    
+    # Query de merge otimizada: insere novos eventos ou atualiza existentes
+    # Formata datas como YYYY/MM/DD
+    merge_query = """
+        INSERT INTO public.google_scraper_ocorrencias (
+            id, type, subtype, date, year, month, day, hour,
+            latitude, longitude, georef_class, district, municipality, parish, dicofreg,
+            fatalities, injured, evacuated, displaced, missing,
+            source_name, source_date, source_type, page, location_geom
+        )
+        SELECT 
+            e.id,
+            e.type,
+            e.subtype,
+            TO_CHAR(CAST(e.date AS DATE), 'YYYY/MM/DD'),
+            e.year,
+            e.month,
+            e.day,
+            e.hour,
+            e.latitude,
+            e.longitude,
+            e.georef_class,
+            e.district,
+            e.municipality,
+            e.parish,
+            e.dicofreg,
+            COALESCE(e.fatalities, 0),
+            COALESCE(e.injured, 0),
+            COALESCE(e.evacuated, 0),
+            COALESCE(e.displaced, 0),
+            COALESCE(e.missing, 0),
+            e.source_name,
+            TO_CHAR(CAST(e.source_date AS DATE), 'YYYY/MM/DD'),
+            e.source_type,
+            e.page,
+            e.location_geom
+        FROM google_scraper.google_scraper_eventos e
+        WHERE e.latitude IS NOT NULL 
+        AND e.longitude IS NOT NULL
+        AND e.date IS NOT NULL
+        AND LOWER(e.type) != 'other'
+        ON CONFLICT (id) DO UPDATE SET
+            type = EXCLUDED.type,
+            subtype = EXCLUDED.subtype,
+            date = EXCLUDED.date,
+            year = EXCLUDED.year,
+            month = EXCLUDED.month,
+            day = EXCLUDED.day,
+            hour = EXCLUDED.hour,
+            latitude = EXCLUDED.latitude,
+            longitude = EXCLUDED.longitude,
+            georef_class = EXCLUDED.georef_class,
+            district = EXCLUDED.district,
+            municipality = EXCLUDED.municipality,
+            parish = EXCLUDED.parish,
+            dicofreg = EXCLUDED.dicofreg,
+            fatalities = EXCLUDED.fatalities,
+            injured = EXCLUDED.injured,
+            evacuated = EXCLUDED.evacuated,
+            displaced = EXCLUDED.displaced,
+            missing = EXCLUDED.missing,
+            source_name = EXCLUDED.source_name,
+            source_date = EXCLUDED.source_date,
+            source_type = EXCLUDED.source_type,
+            page = EXCLUDED.page,
+            location_geom = EXCLUDED.location_geom,
+            updated_at = CURRENT_TIMESTAMP
+    """
+    
+    linhas_fundidas = db_manager.execute_query(merge_query)
+    
+    print(f"✅ {linhas_fundidas} registos fundidos para a tabela principal")
+    
+    context['task_instance'].xcom_push(
+        key='merge_result', 
+        value={'merged_rows': linhas_fundidas}
+    )
+    
+    return {'merged_rows': linhas_fundidas}
+
 # Define tarefas optimizadas
 configurar_ligacao_task = PythonOperator(
     task_id='configurar_ligacao',
@@ -525,6 +619,13 @@ atualizar_geometria_task = PythonOperator(
     dag=dag,
 )
 
+fundir_para_principal_task = PythonOperator(
+    task_id='fundir_para_tabela_principal',
+    python_callable=fundir_para_tabela_principal,
+    dag=dag,
+)
+
 # Define dependências de forma limpa
 configurar_ligacao_task >> verificar_staging_task >> processar_dados_task
 processar_dados_task >> atualizar_coordenadas_task >> atualizar_geometria_task
+atualizar_geometria_task >> fundir_para_principal_task

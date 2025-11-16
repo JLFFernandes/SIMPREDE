@@ -1,15 +1,18 @@
-import streamlit as st
-import pandas as pd
-import io
-import altair as alt
-import pydeck as pdk
-from supabase import create_client, Client
-from sklearn.linear_model import LinearRegression
-import numpy as np
-import plotly.express as px
-from sklearn.ensemble import RandomForestRegressor
 import base64
+import io
+import os
 from pathlib import Path
+
+import altair as alt
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import pydeck as pdk
+import streamlit as st
+from dotenv import load_dotenv
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sqlalchemy import create_engine
 
 # --- Configuração da página (DEVE SER A PRIMEIRA COMANDO STREAMLIT) ---
 st.set_page_config(layout="wide", page_title="SIMPREDE", page_icon="🌍")
@@ -29,6 +32,7 @@ def get_base64_image(image_path):
         st.warning(f"Image file {image_path} not found at {full_image_path}. Using placeholder.")
         # Criar um PNG transparente simples 1x1 como alternativa
         import io
+
         from PIL import Image
         img = Image.new('RGBA', (1, 1), (0, 0, 0, 0))
         buffer = io.BytesIO()
@@ -44,9 +48,36 @@ except Exception as e:
     logo_uab = ""
     logo_lei = ""
 
-url = "https://kyrfsylobmsdjlrrpful.supabase.co"
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5cmZzeWxvYm1zZGpscnJwZnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUzNTY4MzEsImV4cCI6MjA2MDkzMjgzMX0.DkPGAw89OH6MPNnCvimfsVJICr5J9n9hcgdgF17cP34"
-supabase: Client = create_client(url, key)
+# Load environment variables
+load_dotenv()
+
+# PostgreSQL connection configuration using SQLAlchemy
+db_host = os.getenv("DB_HOST", "aws-0-eu-west-3.pooler.supabase.com")
+db_port = os.getenv("DB_PORT", 6543)
+db_name = os.getenv("DB_NAME", "postgres")
+db_user = os.getenv("DB_USER", "postgres.kyrfsylobmsdjlrrpful")
+db_password = os.getenv("DB_PASSWORD", "HXU3tLVVXRa1jtjo")
+
+db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+# Helper function to get database engine
+@st.cache_resource
+def get_db_engine():
+    return create_engine(db_url)
+
+# Helper function to query database
+def query_table(table_name, columns="*", limit_rows=None):
+    """Query a table from PostgreSQL and return as DataFrame"""
+    try:
+        engine = get_db_engine()
+        query = f"SELECT {columns} FROM public.{table_name}"
+        if limit_rows:
+            query += f" LIMIT {limit_rows}"
+        df = pd.read_sql(query, engine)
+        return df
+    except Exception as e:
+        print(f"Erro ao consultar {table_name}: {e}")
+        return pd.DataFrame()
 
 
 # Definir cores globais consistentes
@@ -192,85 +223,59 @@ st.markdown(f"""
 # --- Carregamento de dados ---
 @st.cache_data
 def carregar_disasters():
-    todos_os_dados = []
-    passo = 1000
-    inicio = 0
+    try:
+        df = query_table("disasters", "id, year, month, type, subtype, date")
+        
+        if df.empty or "type" not in df.columns:
+            print(f"Warning: Disasters dataframe vazio. Total registos: {len(df)}")
+            return pd.DataFrame(columns=["id", "year", "month", "type", "subtype", "date"])
+        
+        df["type"] = df["type"].str.capitalize()
+        df = df[df["type"].isin(["Flood", "Landslide"])]
+        df["year"] = pd.to_numeric(df["year"], errors="coerce")
+        df["month"] = pd.to_numeric(df["month"], errors="coerce")
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
 
-    while True:
-        response = supabase.table("disasters").select(
-            "id, year, month, type, subtype, date"
-        ).range(inicio, inicio + passo - 1).execute()
-
-        dados_pagina = response.data
-
-        if not dados_pagina:
-            break  # terminou a leitura
-
-        todos_os_dados.extend(dados_pagina)
-        inicio += passo
-
-    df = pd.DataFrame(todos_os_dados)
-
-    df["type"] = df["type"].str.capitalize()
-    df = df[df["type"].isin(["Flood", "Landslide"])]
-    df["year"] = pd.to_numeric(df["year"], errors="coerce")
-    df["month"] = pd.to_numeric(df["month"], errors="coerce")
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-
-    return df.dropna(subset=["year", "month", "date"])
+        return df.dropna(subset=["year", "month", "date"])
+    except Exception as e:
+        print(f"Erro ao carregar disasters: {e}")
+        return pd.DataFrame(columns=["id", "year", "month", "type", "subtype", "date"])
 
 @st.cache_data
 def carregar_localizacoes_disasters():
     # Carrega e filtra localizações válidas
-    todos = []
-    passo = 1000
-    inicio = 0
-
-    while True:
-        response = supabase.table("location").select(
-            "id, latitude, longitude, district, municipality"
-        ).range(inicio, inicio + passo - 1).execute()
-
-        dados = response.data
-        if not dados:
-            break
-
-        todos.extend(dados)
-        inicio += passo
-
-    df = pd.DataFrame(todos)
-    df = df[
-        df["latitude"].notna() &
-        df["longitude"].notna() &
-        (df["latitude"] != -999) &
-        (df["longitude"] != -999)
-    ]
-    return df
+    try:
+        df = query_table("location", "id, latitude, longitude, district, municipality")
+        
+        df = df[
+            df["latitude"].notna() &
+            df["longitude"].notna() &
+            (df["latitude"] != -999) &
+            (df["longitude"] != -999)
+        ]
+        return df
+    except Exception as e:
+        print(f"Erro ao carregar localizações: {e}")
+        return pd.DataFrame(columns=["id", "latitude", "longitude", "district", "municipality"])
 
 @st.cache_data
 def carregar_scraper():
-    todos = []
-    passo = 1000
-    inicio = 0
-
-    while True:
-        response = supabase.table("google_scraper_ocorrencias").select(
-            "id, type, year, month, latitude, longitude, district"
-        ).range(inicio, inicio + passo - 1).execute()
-
-        dados = response.data
-        if not dados:
-            break
-
-        todos.extend(dados)
-        inicio += passo
-
-    df = pd.DataFrame(todos)
-    df["type"] = df["type"].str.capitalize()
-    df = df[df["type"].isin(["Flood", "Landslide"])]
-    df["year"] = pd.to_numeric(df["year"], errors="coerce")
-    df["month"] = pd.to_numeric(df["month"], errors="coerce")
-    return df.dropna(subset=["year", "month", "latitude", "longitude"])
+    try:
+        df = query_table("google_scraper_ocorrencias", "id, type, year, month, latitude, longitude, district")
+        
+        # Check if dataframe is empty or missing required columns
+        if df.empty or "type" not in df.columns:
+            print(f"Warning: Scraper dataframe vazio. Total registos: {len(df)}")
+            return pd.DataFrame(columns=["id", "type", "year", "month", "latitude", "longitude", "district"])
+        
+        df["type"] = df["type"].str.capitalize()
+        df = df[df["type"].isin(["Flood", "Landslide"])]
+        df["year"] = pd.to_numeric(df["year"], errors="coerce")
+        df["month"] = pd.to_numeric(df["month"], errors="coerce")
+        return df.dropna(subset=["year", "month", "latitude", "longitude"])
+    except Exception as e:
+        print(f"Erro ao carregar scraper: {e}")
+        return pd.DataFrame(columns=["id", "type", "year", "month", "latitude", "longitude", "district"])
 
 
 # Dicionário com correções conhecidas de nomes de distritos
@@ -307,23 +312,12 @@ df_loc_disasters["district"] = df_loc_disasters["district"].replace(substituir_d
 
 @st.cache_data
 def carregar_human_impacts():
-    todos = []
-    passo = 1000
-    inicio = 0
-
-    while True:
-        response = supabase.table("human_impacts").select(
-            "id, fatalities"
-        ).range(inicio, inicio + passo - 1).execute()
-
-        dados = response.data
-        if not dados:
-            break
-
-        todos.extend(dados)
-        inicio += passo
-
-    return pd.DataFrame(todos)
+    try:
+        df = query_table("human_impacts", "id, fatalities")
+        return df
+    except Exception as e:
+        print(f"Erro ao carregar human_impacts: {e}")
+        return pd.DataFrame(columns=["id", "fatalities"])
 
 
 # --- Carregamento ---
@@ -1009,30 +1003,19 @@ df_scraper = carregar_scraper()
 
 # Tabelas adicionais
 def carregar_information_sources():
-    todos = []
-    passo = 1000
-    inicio = 0
-    while True:
-        response = supabase.table("information_sources").select("*").range(inicio, inicio + passo - 1).execute()
-        dados = response.data
-        if not dados:
-            break
-        todos.extend(dados)
-        inicio += passo
-    return pd.DataFrame(todos)
+    try:
+        return query_table("information_sources")
+    except Exception as e:
+        print(f"Erro ao carregar information_sources: {e}")
+        return pd.DataFrame()
 
 def carregar_spatial_ref_sys():
-    todos = []
-    passo = 1000
-    inicio = 0
-    while True:
-        response = supabase.table("spatial_ref_sys").select("*").range(inicio, inicio + passo - 1).execute()
-        dados = response.data
-        if not dados:
-            break
-        todos.extend(dados)
-        inicio += passo
-    return pd.DataFrame(todos)
+    try:
+        # spatial_ref_sys is a system table, skip it if it causes issues
+        return pd.DataFrame()
+    except Exception as e:
+        print(f"Erro ao carregar spatial_ref_sys: {e}")
+        return pd.DataFrame()
 
 df_info_sources = carregar_information_sources()
 df_spatial_ref = carregar_spatial_ref_sys()
