@@ -323,7 +323,14 @@ def carregar_human_impacts():
 # --- Carregamento ---
 df_disasters_raw = carregar_disasters()
 df_scraper = carregar_scraper()
-df_disasters = df_disasters_raw.groupby(["year", "month", "type"]).size().reset_index(name="ocorrencias")
+
+# Verificar se df_disasters_raw tem dados e coluna 'type' antes de agrupar
+if df_disasters_raw.empty or "type" not in df_disasters_raw.columns:
+    df_disasters = pd.DataFrame(columns=["year", "month", "type", "ocorrencias"])
+    st.warning("Dados históricos de desastres não disponíveis. Por favor, tente novamente mais tarde.")
+else:
+    df_disasters = df_disasters_raw.groupby(["year", "month", "type"]).size().reset_index(name="ocorrencias")
+
 df_human_impacts = carregar_human_impacts()
 
 
@@ -333,10 +340,13 @@ st.markdown("<h2 style='text-align: center;'>Ocorrências Históricas de Desastr
 
 
 # --- Agrupar dados históricos por mês/tipo ---
-df_disasters_ano_tipo = df_disasters_raw.groupby(["year", "type"]).size().reset_index(name="ocorrencias")
-df_disasters["date"] = pd.to_datetime(
-    df_disasters["year"].astype(str) + "-" + df_disasters["month"].astype(str).str.zfill(2) + "-01"
-)
+if not df_disasters_raw.empty and "type" in df_disasters_raw.columns:
+    df_disasters_ano_tipo = df_disasters_raw.groupby(["year", "type"]).size().reset_index(name="ocorrencias")
+    df_disasters["date"] = pd.to_datetime(
+        df_disasters["year"].astype(str) + "-" + df_disasters["month"].astype(str).str.zfill(2) + "-01"
+    )
+else:
+    df_disasters_ano_tipo = pd.DataFrame(columns=["year", "type", "ocorrencias"])
 
 col1, col2, col3 = st.columns(3)
 
@@ -346,8 +356,11 @@ with col1:
     unsafe_allow_html=True
 )
 
-    df_ano_tipo = df_disasters_raw.groupby(["year", "type"]).size().reset_index(name="ocorrencias")
-    st.dataframe(df_ano_tipo, use_container_width=True)
+    if not df_disasters_raw.empty and "type" in df_disasters_raw.columns:
+        df_ano_tipo = df_disasters_raw.groupby(["year", "type"]).size().reset_index(name="ocorrencias")
+        st.dataframe(df_ano_tipo, use_container_width=True)
+    else:
+        st.warning("Sem dados históricos disponíveis.")
 
 with col2:
     st.markdown(
@@ -355,65 +368,68 @@ with col2:
     unsafe_allow_html=True
 )
 
-    # Merge com impactos humanos e localização
-    df_merged = pd.merge(
-        df_disasters_raw,
-        df_human_impacts[["id", "fatalities"]],
-        on="id",
-        how="left"
-    )
+    if not df_disasters_raw.empty and "type" in df_disasters_raw.columns:
+        # Merge com impactos humanos e localização
+        df_merged = pd.merge(
+            df_disasters_raw,
+            df_human_impacts[["id", "fatalities"]],
+            on="id",
+            how="left"
+        )
 
-    df_merged = pd.merge(
-        df_merged,
-        df_loc_disasters[["id", "district"]],
-        on="id",
-        how="left"
-    )
+        df_merged = pd.merge(
+            df_merged,
+            df_loc_disasters[["id", "district"]],
+            on="id",
+            how="left"
+        )
 
-    # Limpeza
-    df_merged["fatalities"] = pd.to_numeric(df_merged["fatalities"], errors="coerce").fillna(0)
-    df_merged["district"] = df_merged["district"].astype(str).str.strip().str.title()
-    df_merged["type"] = df_merged["type"].str.capitalize()
+        # Limpeza
+        df_merged["fatalities"] = pd.to_numeric(df_merged["fatalities"], errors="coerce").fillna(0)
+        df_merged["district"] = df_merged["district"].astype(str).str.strip().str.title()
+        df_merged["type"] = df_merged["type"].str.capitalize()
 
-    # Remover distritos nulos, vazios, ou 'nan' strings
-    df_merged = df_merged[
-        df_merged["district"].notna() & 
-        (df_merged["district"] != "") & 
-        (df_merged["district"] != "Nan") &
-        (df_merged["district"] != "None") &
-        (df_merged["district"] != "nan")
-    ]
+        # Remover distritos nulos, vazios, ou 'nan' strings
+        df_merged = df_merged[
+            df_merged["district"].notna() & 
+            (df_merged["district"] != "") & 
+            (df_merged["district"] != "Nan") &
+            (df_merged["district"] != "None") &
+            (df_merged["district"] != "nan")
+        ]
 
-    # Agrupar por distrito e tipo
-    df_grouped = df_merged.groupby(["district", "type"])["fatalities"].sum().reset_index()
-    df_grouped = df_grouped[df_grouped["fatalities"] > 0]
+        # Agrupar por distrito e tipo
+        df_grouped = df_merged.groupby(["district", "type"])["fatalities"].sum().reset_index()
+        df_grouped = df_grouped[df_grouped["fatalities"] > 0]
 
-    # Escala do eixo Y com margem de 10%
-    max_fatal = df_grouped["fatalities"].max()
-    y_lim = max_fatal * 1.1
+        # Escala do eixo Y com margem de 10%
+        max_fatal = df_grouped["fatalities"].max()
+        y_lim = max_fatal * 1.1
 
-    chart = alt.Chart(df_grouped).mark_bar().encode(
-        x=alt.X("district:N", title=None, sort="-y"),
-        y=alt.Y("fatalities:Q", title="Nº de Vítimas Mortais", scale=alt.Scale(domain=[0, y_lim])),
-        color=alt.Color(
-            "type:N",
-            title="Tipo",
-            scale=alt.Scale(
-                domain=["Flood", "Landslide"],
-                range=[COR_HEX["Flood"], COR_HEX["Landslide"]]
+        chart = alt.Chart(df_grouped).mark_bar().encode(
+            x=alt.X("district:N", title=None, sort="-y"),
+            y=alt.Y("fatalities:Q", title="Nº de Vítimas Mortais", scale=alt.Scale(domain=[0, y_lim])),
+            color=alt.Color(
+                "type:N",
+                title="Tipo",
+                scale=alt.Scale(
+                    domain=["Flood", "Landslide"],
+                    range=[COR_HEX["Flood"], COR_HEX["Landslide"]]
+                ),
+                legend=alt.Legend(title="type")
             ),
-            legend=alt.Legend(title="type")
-        ),
-        tooltip=["district", "type", "fatalities"]
-    ).properties(
-        height=400,
-        width=600
-    )
+            tooltip=["district", "type", "fatalities"]
+        ).properties(
+            height=400,
+            width=600
+        )
 
-    if df_grouped.empty:
-        st.warning("Sem dados de vítimas mortais disponíveis.")
+        if df_grouped.empty:
+            st.warning("Sem dados de vítimas mortais disponíveis.")
+        else:
+            st.altair_chart(chart, use_container_width=True)
     else:
-        st.altair_chart(chart, use_container_width=True)
+        st.warning("Sem dados de vítimas mortais disponíveis.")
 
 
 
@@ -427,50 +443,56 @@ with col3:
     unsafe_allow_html=True
 )
 
-    df_merge1 = pd.merge(df_disasters_raw, df_loc_disasters, on="id", how="inner")
-    df_merge1 = df_merge1[["latitude", "longitude", "district", "municipality", "year", "month", "type"]].copy()
+    if not df_disasters_raw.empty and "type" in df_disasters_raw.columns:
+        df_merge1 = pd.merge(df_disasters_raw, df_loc_disasters, on="id", how="inner")
+        if not df_merge1.empty:
+            df_merge1 = df_merge1[["latitude", "longitude", "district", "municipality", "year", "month", "type"]].copy()
 
-    # Limpeza de dados
-    df_merge1["district"] = df_merge1["district"].fillna("Desconhecido").astype(str).str.strip().str.title()
-    df_merge1["municipality"] = df_merge1["municipality"].fillna("Desconhecido").astype(str).str.strip().str.title()
-    df_merge1["year"] = df_merge1["year"].fillna(0).astype(int)
-    df_merge1["month"] = df_merge1["month"].fillna(0).astype(int)
-    df_merge1["type"] = df_merge1["type"].astype(str)
-    df_merge1["district"] = df_merge1["district"].replace(substituir_distritos)
+            # Limpeza de dados
+            df_merge1["district"] = df_merge1["district"].fillna("Desconhecido").astype(str).str.strip().str.title()
+            df_merge1["municipality"] = df_merge1["municipality"].fillna("Desconhecido").astype(str).str.strip().str.title()
+            df_merge1["year"] = df_merge1["year"].fillna(0).astype(int)
+            df_merge1["month"] = df_merge1["month"].fillna(0).astype(int)
+            df_merge1["type"] = df_merge1["type"].astype(str)
+            df_merge1["district"] = df_merge1["district"].replace(substituir_distritos)
 
-    tipo_mapa_1 = st.session_state.get("mapa1", "Todos")
-    if tipo_mapa_1 != "Todos":
-        df_merge1 = df_merge1[df_merge1["type"] == tipo_mapa_1]
+            tipo_mapa_1 = st.session_state.get("mapa1", "Todos")
+            if tipo_mapa_1 != "Todos":
+                df_merge1 = df_merge1[df_merge1["type"] == tipo_mapa_1]
 
-    if not df_merge1.empty:
-        fig_map1 = px.scatter_map(
-            df_merge1,
-            lat="latitude",
-            lon="longitude",
-            color="type",
-            hover_name="district",
-            hover_data=["municipality", "year", "month"],
-            zoom=4.5,
-            height=400,
-            center={"lat": 39.5, "lon": -8.0},
-            color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
-        )
-        fig_map1.update_layout(
-            mapbox_style="stamen-terrain",
-            showlegend=True,
-            margin={"r":0, "t":30, "l":0, "b":0}
-        )
-        st.plotly_chart(fig_map1, use_container_width=True)
+            if not df_merge1.empty:
+                fig_map1 = px.scatter_map(
+                    df_merge1,
+                    lat="latitude",
+                    lon="longitude",
+                    color="type",
+                    hover_name="district",
+                    hover_data=["municipality", "year", "month"],
+                    zoom=4.5,
+                    height=400,
+                    center={"lat": 39.5, "lon": -8.0},
+                    color_discrete_map={"Flood": COR_HEX["Flood"], "Landslide": COR_HEX["Landslide"]}
+                )
+                fig_map1.update_layout(
+                    mapbox_style="stamen-terrain",
+                    showlegend=True,
+                    margin={"r":0, "t":30, "l":0, "b":0}
+                )
+                st.plotly_chart(fig_map1, use_container_width=True)
+            else:
+                st.warning("Sem dados de localização disponíveis.")
+
+            # Filtro de tipo de desastre após o mapa
+            tipo_mapa_1 = st.radio(
+                "Selecionar tipo de desastre (mapa):",
+                ["Todos", "Flood", "Landslide"],
+                horizontal=True,
+                key="mapa1"
+            )
+        else:
+            st.warning("Sem dados de localização disponíveis.")
     else:
-        st.warning("Sem dados de localização disponíveis.")
-
-    # Filtro de tipo de desastre após o mapa
-    tipo_mapa_1 = st.radio(
-        "Selecionar tipo de desastre (mapa):",
-        ["Todos", "Flood", "Landslide"],
-        horizontal=True,
-        key="mapa1"
-    )
+        st.warning("Sem dados históricos disponíveis.")
 
 
 st.markdown("""
