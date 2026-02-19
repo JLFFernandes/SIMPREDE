@@ -53,7 +53,7 @@ load_dotenv()
 
 # PostgreSQL connection configuration using SQLAlchemy
 db_host = os.getenv("DB_HOST", "aws-0-eu-west-3.pooler.supabase.com")
-db_port = os.getenv("DB_PORT", 5432)
+db_port = os.getenv("DB_PORT", 6543)
 db_name = os.getenv("DB_NAME", "postgres")
 db_user = os.getenv("DB_USER", "postgres.kyrfsylobmsdjlrrpful")
 db_password = os.getenv("DB_PASSWORD", "HXU3tLVVXRa1jtjo")
